@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GridShell</title>
+<meta name="description" content="A custom Windows Start Menu and taskbar replacement built around a fullscreen, controller-first launcher grid.">
+<style>
+  :root {
+    --bg: #15161a;
+    --surface: #1e2026;
+    --border: #2b2e36;
+    --text: #e8e9ec;
+    --muted: #9aa0ab;
+    --accent: #4a90d9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+
+  header.hero {
+    padding: 96px 0 72px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  header.hero h1 {
+    font-size: 3rem;
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+  }
+  header.hero p.tagline {
+    font-size: 1.25rem;
+    color: var(--muted);
+    max-width: 640px;
+    margin: 0 auto 32px;
+  }
+  .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+  section { padding: 64px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  section h2 { font-size: 1.75rem; margin: 0 0 32px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  .run-modes { display: grid; gap: 16px; }
+  .run-mode {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .run-mode h3 { margin: 0 0 6px; }
+  .run-mode p { margin: 0; color: var(--muted); }
+  .run-mode .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .badge-safe { background: #1f3b2a; color: #6fd198; }
+  .badge-risk { background: #3b241f; color: #e2876d; }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 0.88rem;
+  }
+  code { font-family: Consolas, "Courier New", monospace; }
+
+  footer {
+    padding: 40px 0 64px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>GridShell</h1>
+    <p class="tagline">A custom Windows Start Menu and taskbar replacement, built around a
+      fullscreen, controller-first launcher grid — with a dual-pane file explorer, a download
+      manager, and deep emulation tooling built in.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="https://github.com/theskysanctum/GridShell/releases/latest">Download</a>
+      <a class="btn btn-secondary" href="https://github.com/theskysanctum/GridShell">View on GitHub</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Features</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Launcher grid</h3>
+        <p>A fullscreen, Windows-8-Start-Screen-style grid of Apps, Web, and Games tiles —
+          fully navigable by keyboard, mouse, or game controller.</p>
+      </div>
+      <div class="card">
+        <h3>Taskbar sidebar</h3>
+        <p>Window list, clock, and battery (with per-device Bluetooth battery levels),
+          reserving real desktop space like a normal taskbar.</p>
+      </div>
+      <div class="card">
+        <h3>File Explorer</h3>
+        <p>Dual-pane, controller-navigable file management with archive extract/compress and
+          disc-image tooling (CHD, Xbox ISO) built in.</p>
+      </div>
+      <div class="card">
+        <h3>Download Manager</h3>
+        <p>Paste a link or magnet, resolved through Real-Debrid when configured, downloaded via
+          a bundled multi-connection aria2 daemon.</p>
+      </div>
+      <div class="card">
+        <h3>Emulation</h3>
+        <p>190+ platforms mapped to RetroArch or the best standalone emulator for that system,
+          each verified to launch in fullscreen, with one-click RetroAchievements login.</p>
+      </div>
+      <div class="card">
+        <h3>Installed-game detection</h3>
+        <p>Scans Steam, Epic Games, and GOG Galaxy for already-installed games and adds tiles
+          for them automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Two ways to run it</h2>
+    <div class="run-modes">
+      <div class="run-mode">
+        <h3>Alongside your desktop <span class="badge badge-safe">Safe, reversible</span></h3>
+        <p>Just run GridShell.exe. It hides the real taskbar and takes over the Win key/Start
+          button while running — closing it instantly restores normal Windows behavior.</p>
+      </div>
+      <div class="run-mode">
+        <h3>As your actual Windows shell <span class="badge badge-risk">Advanced, VM-first</span></h3>
+        <p>Registers GridShell in place of explorer.exe at login, with a watchdog that
+          relaunches it on crash and falls back to explorer.exe after repeated failures. Try
+          this in a VM or secondary account before your main one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Building from source</h2>
+    <p style="color: var(--muted)">Requires the .NET 10 SDK and Windows 10 (19041+) or Windows 11.</p>
+    <pre><code>git clone https://github.com/theskysanctum/GridShell.git
+cd GridShell
+dotnet build GridShell.slnx</code></pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    MIT licensed. See <a href="https://github.com/theskysanctum/GridShell/blob/master/LICENSE">LICENSE</a>
+    for bundled third-party tool/font licenses.
+  </div>
+</footer>
+
+</body>
+</html>
