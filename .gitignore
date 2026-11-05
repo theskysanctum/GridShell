@@ -11,5 +11,8 @@ obj/
 ## Installer build output
 installer/Output/
 
+## Local publish staging output (used to feed the installer)
+publish/
+
 ## Misc
 *.log
