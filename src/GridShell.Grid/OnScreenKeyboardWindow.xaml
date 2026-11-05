@@ -1,0 +1,137 @@
+<Window x:Class="GridShell.OnScreenKeyboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:GridShell"
+        mc:Ignorable="d"
+        Title="Keyboard"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        AllowsTransparency="True"
+        Background="Transparent"
+        FontFamily="{DynamicResource AppFontFamily}">
+    <Window.Resources>
+        <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
+        <local:StringToVisibilityConverter x:Key="StringToVisibility" />
+        <local:StringToVisibilityInverseConverter x:Key="StringToVisibilityInverse" />
+
+        <Style x:Key="OskKeyStyle" TargetType="Button">
+            <Setter Property="Width" Value="38" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="FontSize" Value="13" />
+            <Style.Triggers>
+                <!-- Only ever true on the Shift key itself: a one-shot tap gets a faint accent
+                     ring, a caps-lock (double-tap) gets a filled accent background — distinct
+                     from, and overridden by, the selection cue below if both apply at once. -->
+                <DataTrigger Binding="{Binding IsShiftActive}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsCapsLocked}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+
+                <!-- Only ever true on a Ctrl/Alt/Win key — toggled on, waiting for the next key
+                     to complete the combo. -->
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+
+                <!-- The XMB-style selection cue: a glowing accent-colored ring around the
+                     highlighted key, readable at a glance while navigating with a controller. -->
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+
+                <!-- A wide space bar, like a real keyboard, instead of a key the same size as
+                     everything else - see mainBottomRow in code-behind for its position. -->
+                <DataTrigger Binding="{Binding Action}" Value="Space">
+                    <Setter Property="Width" Value="206" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="KeyTemplate">
+            <Button Style="{StaticResource OskKeyStyle}" Tag="{Binding}" Click="Key_Click" Padding="0">
+                <Grid>
+                    <!-- Shift symbol badge, top-right — like a real keycap printing both
+                         characters, so the symbol is visible without toggling Shift first. -->
+                    <TextBlock Text="{Binding ShiftDisplay}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                               Margin="0,1,2,0" FontSize="9" Opacity="0.7"
+                               Visibility="{Binding ShiftDisplay, Converter={StaticResource StringToVisibility}}" />
+                    <TextBlock Text="{Binding IconGlyph}" FontFamily="{StaticResource IconFont}"
+                               FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding IconGlyph, Converter={StaticResource StringToVisibility}}" />
+                    <TextBlock Text="{Binding Display}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="12" FontWeight="Medium" TextTrimming="CharacterEllipsis" MaxWidth="36"
+                               Visibility="{Binding IconGlyph, Converter={StaticResource StringToVisibilityInverse}}" />
+                </Grid>
+            </Button>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- Opacity sits on a background-only layer behind the content, not on the content itself -
+         putting it on the same Border as the keys/text would fade those too, not just the
+         backdrop. -->
+    <Border CornerRadius="14" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="2">
+        <Grid>
+            <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.75" CornerRadius="12" />
+            <StackPanel Margin="16">
+            <!-- The PS3 OSK's signature layout: a prominent text preview above a large key
+                 grid, rather than a thin inline text box. -->
+            <Border Background="{DynamicResource SurfaceBackgroundBrush}" CornerRadius="6"
+                    Padding="8,6" Margin="0,0,0,10" MinHeight="32" ClipToBounds="True">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding TextBeforeCursor}" Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="17" />
+                    <!-- Blinking caret — marks where the next key lands, which can be mid-string
+                         once Left/Right have moved it, not just at the end. -->
+                    <Border Width="2" Height="19" Margin="1,0" Background="{DynamicResource AccentBrush}">
+                        <Border.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="1" To="0" Duration="0:0:0.5" AutoReverse="True" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Border.Triggers>
+                    </Border>
+                    <TextBlock Text="{Binding TextAfterCursor}" Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="17" />
+                </StackPanel>
+            </Border>
+
+            <ItemsControl ItemsSource="{Binding Rows}" HorizontalAlignment="Center">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ItemsControl ItemsSource="{Binding Keys}" ItemTemplate="{StaticResource KeyTemplate}"
+                                      Margin="{Binding Margin}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontSize="11"
+                       Foreground="{DynamicResource MutedForegroundBrush}"
+                       Text="D-pad: move   •   R-stick: move window   •   R3: shift   •   Cross/A: type   •   Square/X: backspace   •   Triangle/Y: space   •   Done: close" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

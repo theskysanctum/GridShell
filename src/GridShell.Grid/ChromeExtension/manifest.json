@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "GridShell Download Router",
+  "version": "1.0",
+  "description": "Routes Chrome downloads to GridShell's Download Manager (with Real-Debrid support) instead of Chrome's own download flow.",
+  "permissions": ["downloads"],
+  "host_permissions": ["<all_urls>", "http://127.0.0.1/*"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

@@ -1,0 +1,15 @@
+## .NET build output
+bin/
+obj/
+*.user
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.suo
+
+## Installer build output
+installer/Output/
+
+## Misc
+*.log

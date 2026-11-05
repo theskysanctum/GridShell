@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GridShell.Core/GridShell.Core.csproj" />
+    <Project Path="src/GridShell.Grid/GridShell.Grid.csproj" />
+    <Project Path="src/GridShell/GridShell.csproj" />
+    <Project Path="src/GridShell.Watchdog/GridShell.Watchdog.csproj" />
+  </Folder>
+</Solution>

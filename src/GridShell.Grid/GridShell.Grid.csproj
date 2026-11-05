@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>GridShell.Grid</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GridShell.Core\GridShell.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="VirtualizingWrapPanel" Version="2.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reuse the same physical font files as the GridShell (taskbar) project instead of
+         duplicating them on disk — each project still needs its own "Fonts" output folder
+         at this relative path, since the "./Fonts/#Family" pack URIs used throughout the
+         XAML resolve relative to the consuming assembly. -->
+    <Resource Include="..\GridShell\Fonts\Roboto.ttf" Link="Fonts\Roboto.ttf" />
+    <Resource Include="..\GridShell\Fonts\MaterialSymbolsOutlined.ttf" Link="Fonts\MaterialSymbolsOutlined.ttf" />
+    <Resource Include="..\GridShell\Fonts\Exo2.ttf" Link="Fonts\Exo2.ttf" />
+    <Resource Include="..\GridShell\Fonts\Rajdhani.ttf" Link="Fonts\Rajdhani.ttf" />
+    <Resource Include="..\GridShell\Fonts\Orbitron.ttf" Link="Fonts\Orbitron.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bundled third-party command-line tools, kept as loose files next to the exe (not
+         embedded Resources) since each needs to be launched as its own process rather than
+         read from this assembly. Each tool's own license file ships alongside it. -->
+    <None Include="Tools\chdman.exe" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Tools\extract-xiso.exe" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Tools\extract-xiso.LICENSE.TXT" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Tools\aria2c.exe" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Tools\aria2c.COPYING.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Tools\aria2c.LICENSE.OpenSSL.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The "Load unpacked" Chrome extension that routes browser downloads to the Download
+         Manager - bundled as loose files (not embedded) since Chrome needs to load this
+         folder directly from disk. -->
+    <None Include="ChromeExtension\manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="ChromeExtension\background.js" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

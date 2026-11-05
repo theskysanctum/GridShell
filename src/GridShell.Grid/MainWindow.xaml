@@ -1,0 +1,389 @@
+﻿<Window x:Class="GridShell.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GridShell"
+        xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        Title="GridShell"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        AllowsTransparency="True"
+        Background="Transparent"
+        FontFamily="{DynamicResource AppFontFamily}"
+        KeyDown="Window_KeyDown"
+        PreviewTextInput="Window_PreviewTextInput">
+    <Window.Resources>
+        <sys:Double x:Key="TileWidth">140</sys:Double>
+        <sys:Double x:Key="TileHeight">110</sys:Double>
+        <sys:Double x:Key="GameTileWidth">140</sys:Double>
+        <sys:Double x:Key="GameTileHeight">196</sys:Double>
+        <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
+
+        <!-- A soft ambient shadow under every tile/panel/button — the one thing that most makes
+             a flat dark UI read as "bare": nothing is visually lifted off the background. -->
+        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.4" BlurRadius="16"
+                           ShadowDepth="3" Direction="270" />
+
+        <!-- Rounded, flat, hover-reactive — replaces WPF's default beveled ButtonChrome, which
+             reads as dated next to the rest of GridShell's custom dark styling. Individual
+             buttons below layer their own active-tab/pressed triggers on top via BasedOn. -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="10" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PanelBorderBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Strips the default ListBoxItem selection chrome (a blocky filled rectangle plus a
+             dashed focus rect) entirely — the tile templates below draw their own selection ring
+             instead, so a selected/hovered tile gets a thin accent border rather than that. -->
+        <Style x:Key="TileContainerStyle" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Shared by both tile templates — a thin accent ring on selection/hover, matching the
+             tile's own corner radius, instead of a default WPF selection fill. -->
+        <Style x:Key="TileSelectionBorderStyle" TargetType="Border">
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Shared by both tile templates below, so Rename/Change Icon/Remove stay identical
+             regardless of which layout a tile's kind picks. -->
+        <ContextMenu x:Key="TileContextMenu">
+            <MenuItem Header="Rename..." Click="RenameTileMenuItem_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xf097;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Change Icon..." Click="ChangeIcon_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xe3f4;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="Remove" Click="RemoveTileMenuItem_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+
+        <!-- Game tiles alone get IGDB cover art, and the automatic best-match pick can be
+             wrong (common title, a remaster vs. the original, a region-specific release) - a
+             separate menu (rather than one shared item with a Kind-based Visibility binding)
+             keeps this out of Apps/Web tiles' menu entirely. -->
+        <ContextMenu x:Key="GameTileContextMenu">
+            <MenuItem Header="Rename..." Click="RenameTileMenuItem_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xf097;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Change Icon..." Click="ChangeIcon_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xe3f4;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Scrape Cover Art..." Click="ScrapeCoverMenuItem_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xef7a;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="Remove" Click="RemoveTileMenuItem_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+
+        <DataTemplate x:Key="RegularTileTemplate">
+            <Border Width="{DynamicResource TileWidth}" Height="{DynamicResource TileHeight}"
+                    Margin="8" CornerRadius="10"
+                    Background="{DynamicResource SurfaceBackgroundBrush}"
+                    ContextMenu="{StaticResource TileContextMenu}"
+                    Effect="{StaticResource CardShadow}"
+                    Style="{StaticResource TileSelectionBorderStyle}">
+                <StackPanel VerticalAlignment="Center" Margin="8">
+                    <Image Source="{Binding Icon}"
+                           Width="32" Height="32"
+                           Margin="0,0,0,8" />
+                    <TextBlock Text="{Binding Name}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}"
+                               FontSize="13"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- Box-art style: the cover fills the whole tile, with the name as a small label over
+             a gradient at the bottom edge — matches how IGDB cover art (portrait, like a game
+             box) reads best, unlike the small-icon-above-label layout the other kinds use. A
+             game with no IGDB match yet (no credentials, offline, no result) still gets this
+             layout with its .exe icon stretched to fill, rather than a different template
+             flickering in once a cover loads. -->
+        <DataTemplate x:Key="GameTileTemplate">
+            <!-- A Border always rounds its own Background fill to its CornerRadius natively —
+                 unlike ClipToBounds (which only clips to the rectangular bounding box, not the
+                 rounded shape), this needs no clip-geometry tricks. Cover art is an ImageBrush
+                 on its own full-size Border; the gradient+name overlay is a second Border with
+                 just its bottom corners rounded, since it only touches the bottom edge. -->
+            <Border Width="{DynamicResource GameTileWidth}" Height="{DynamicResource GameTileHeight}"
+                    Margin="8" CornerRadius="10"
+                    Background="{DynamicResource SurfaceBackgroundBrush}"
+                    ContextMenu="{StaticResource GameTileContextMenu}"
+                    Effect="{StaticResource CardShadow}"
+                    Style="{StaticResource TileSelectionBorderStyle}">
+                <Grid>
+                    <Border CornerRadius="10">
+                        <Border.Background>
+                            <ImageBrush ImageSource="{Binding Icon}" Stretch="UniformToFill" />
+                        </Border.Background>
+                    </Border>
+                    <Border VerticalAlignment="Bottom" Padding="8,20,8,8" CornerRadius="0,0,10,10">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="Transparent" Offset="0" />
+                                <GradientStop Color="#D0000000" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <TextBlock Text="{Binding Name}"
+                                   Foreground="White"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="CharacterEllipsis"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <local:GameTileTemplateSelector x:Key="TileTemplateSelector"
+                                         RegularTemplate="{StaticResource RegularTileTemplate}"
+                                         GameTemplate="{StaticResource GameTileTemplate}" />
+
+        <!-- Only grouped (by PlatformGroupName) while the Games tab is active - toggled in
+             code (ApplyFilter) rather than always-on, since Apps/Web were never asked to group
+             and a single "PC" header over every app/website tile would just be noise. -->
+        <CollectionViewSource x:Key="GroupedTiles" Source="{Binding Tiles}" />
+    </Window.Resources>
+    <Grid x:Name="RootGrid">
+        <Grid.RenderTransform>
+            <TranslateTransform x:Name="SlideTransform" />
+        </Grid.RenderTransform>
+
+        <!-- The window itself is fully transparent (AllowsTransparency) so this panel alone
+             controls the see-through amount — everything else (tiles, top bar, buttons) stays
+             fully opaque since Opacity only affects this element, not its siblings. -->
+        <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.82" />
+
+        <ListBox x:Name="TileList"
+                 ItemsSource="{Binding Source={StaticResource GroupedTiles}}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 Padding="24,72,24,24"
+                 ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling"
+                 ItemTemplateSelector="{StaticResource TileTemplateSelector}"
+                 ItemContainerStyle="{StaticResource TileContainerStyle}"
+                 MouseDoubleClick="TileList_MouseDoubleClick">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.Panel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </GroupStyle.Panel>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"
+                                       Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                       Margin="24,12,0,0" />
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListBox.GroupStyle>
+        </ListBox>
+
+        <!-- A 3-column Grid (not independently-positioned Left/Center/Right panels) so the
+             layout system itself keeps these from ever overlapping: the outer columns get
+             exactly what their buttons need, and the search bar's center column only ever gets
+             whatever's left — shrinking gracefully at narrow window widths instead of the
+             search bar and the add-tile button fighting over the same space. -->
+        <Grid Margin="24,16,24,0" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="Apps" Padding="14,6" Margin="0,0,8,0" Click="AppsTab_Click">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+                            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAppsTabActive}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="Web" Padding="14,6" Margin="0,0,8,0" Click="WebTab_Click">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+                            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsWebTabActive}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="Games" Padding="14,6" Click="GamesTab_Click">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+                            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsGamesTabActive}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Padding="8,6" Margin="8,0,0,0" Click="AddTileButton_Click" Style="{StaticResource ModernButtonStyle}"
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Add">
+                    <TextBlock Text="&#xe145;" FontFamily="{StaticResource IconFont}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="16" />
+                </Button>
+            </StackPanel>
+
+            <Border Grid.Column="1" Background="{DynamicResource SurfaceBackgroundBrush}" CornerRadius="10" Padding="14,8"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="400">
+                <TextBlock Text="{Binding SearchDisplay}"
+                           Foreground="{DynamicResource PrimaryForegroundBrush}"
+                           FontSize="16"
+                           TextTrimming="CharacterEllipsis"
+                           HorizontalAlignment="Center" />
+            </Border>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Padding="8" Margin="0,0,8,0" Click="ExplorerButton_Click" Style="{StaticResource ModernButtonStyle}"
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="File Explorer">
+                    <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
+                </Button>
+                <Button Padding="8" Margin="0,0,8,0" Click="DownloadManagerButton_Click" Style="{StaticResource ModernButtonStyle}"
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Downloads">
+                    <TextBlock Text="&#xf090;" FontFamily="{StaticResource IconFont}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
+                </Button>
+                <Button Padding="8" Click="SettingsButton_Click" Style="{StaticResource ModernButtonStyle}"
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Settings">
+                    <TextBlock Text="&#xe8b8;" FontFamily="{StaticResource IconFont}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Button x:Name="PowerButton" Padding="8" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,24,16" Click="PowerButton_Click" Style="{StaticResource ModernButtonStyle}"
+                Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Power">
+            <TextBlock Text="&#xf8c7;" FontFamily="{StaticResource IconFont}"
+                       Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
+            <Button.ContextMenu>
+                <ContextMenu x:Name="PowerMenu" Closed="PowerMenu_Closed">
+                    <MenuItem Header="Lock" Click="LockMenuItem_Click">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xe899;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Sign out" Click="SignOutMenuItem_Click">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xe9ba;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Sleep" Click="SleepMenuItem_Click">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xe213;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
+                    <MenuItem Header="Restart" Click="RestartMenuItem_Click">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xf053;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Shut down" Click="ShutDownMenuItem_Click">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xf8c7;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </Button.ContextMenu>
+        </Button>
+    </Grid>
+</Window>

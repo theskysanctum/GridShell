@@ -1,0 +1,152 @@
+<Window x:Class="GridShell.TaskbarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Title="GridShell Taskbar"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        FontFamily="{DynamicResource AppFontFamily}">
+    <Window.Resources>
+        <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
+
+        <Style x:Key="InitialFallbackStyle" TargetType="TextBlock">
+            <Style.Triggers>
+                <!-- Most real icons (e.g. a circular favicon) have transparent corners, so the
+                     fallback letter must be fully hidden once a real icon is showing — just
+                     layering the icon on top isn't enough, it still shows through around it. -->
+                <DataTrigger Binding="{Binding HasIcon}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.35" BlurRadius="10"
+                           ShadowDepth="2" Direction="270" />
+
+        <!-- Rounded + hover feedback, replacing WPF's default flat/square ButtonChrome — the
+             launcher button and the window-list buttons below both build on this. -->
+        <Style x:Key="BaseTaskbarButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Effect" Value="{StaticResource CardShadow}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="12" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PanelBorderBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The window-list buttons additionally darken while active (the accent indicator bar
+             itself is a sibling element in the DataTemplate below, not part of the button, so it
+             can sit in the sidebar's own margin outside the button's 40px width). -->
+        <Style x:Key="TaskbarWindowButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseTaskbarButtonStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PanelBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Button Grid.Row="0" Width="48" Height="48" Margin="0,12,0,12" Click="LauncherButton_Click"
+                Style="{StaticResource BaseTaskbarButtonStyle}" ToolTip="Open GridShell"
+                HorizontalAlignment="Center">
+            <Grid>
+                <!-- One of these two is visible at a time - the glyph by default, or a
+                     user-picked custom image when StartButtonIconImagePath is set. Swapped by
+                     ApplyLauncherIcon, called whenever settings load or change. -->
+                <TextBlock x:Name="LauncherIconGlyph" Text="&#xe5c3;" FontFamily="{StaticResource IconFont}"
+                           Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="26" />
+                <Image x:Name="LauncherIconImage" Width="28" Height="28" Stretch="Uniform"
+                       Visibility="Collapsed" />
+            </Grid>
+        </Button>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Windows}" HorizontalContentAlignment="Stretch">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- Stretches to fill whatever width the ScrollViewer actually gives it
+                             (rather than a hardcoded number, which could mismatch and clip once a
+                             scrollbar reserves space) — the active-window bar then sits flush at
+                             its real right edge via HorizontalAlignment="Right" below. -->
+                        <Grid>
+                            <Button Width="48" Height="48" Margin="0,6" HorizontalAlignment="Center"
+                                    Style="{StaticResource TaskbarWindowButtonStyle}"
+                                    Click="WindowButton_Click" Tag="{Binding}"
+                                    ToolTip="{Binding Title}">
+                                <Grid>
+                                    <TextBlock Text="{Binding Initial}" Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                               FontSize="18" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Style="{StaticResource InitialFallbackStyle}" />
+                                    <Image Source="{Binding Icon}" Width="26" Height="26"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                </Grid>
+                            </Button>
+                            <!-- Active-window indicator — the same language VS Code's own
+                                 left-edge activity bar uses for its active view: a thin accent
+                                 bar on the outer edge of the icon. -->
+                            <Border Width="4" HorizontalAlignment="Right" Margin="0,10,6,10" CornerRadius="2"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PanelBorderBrush}"
+                Margin="10,0" Padding="0,12,0,16">
+            <StackPanel>
+                <!-- Collapsed entirely on a desktop (or anything reporting no battery) rather
+                     than showing a meaningless 0%/unknown reading. -->
+                <StackPanel x:Name="BatteryPanel" HorizontalAlignment="Center" Margin="0,0,0,8" Visibility="Collapsed"
+                            Cursor="Hand" ToolTip="Click for Bluetooth device battery levels"
+                            MouseLeftButtonUp="BatteryPanel_Click">
+                    <TextBlock x:Name="BatteryIconText" FontFamily="{StaticResource IconFont}"
+                               FontSize="20" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                    <TextBlock x:Name="BatteryPercentText" FontSize="11" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+
+                <TextBlock x:Name="ClockText"
+                           Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="12" LineHeight="15"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
