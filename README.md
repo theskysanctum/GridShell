@@ -58,7 +58,7 @@ Each project's `bin/Debug/net10.0-windows10.0.19041.0/` folder contains the buil
 GridShell can run two ways:
 
 1. **Alongside your normal desktop** (safe, reversible, no setup) — just run `GridShell.exe`.
-   It hides the real taskbar and takes over the Win key / Start button while running; closing
+   It hides the real taskbar while running; closing
    it (or the "Restore Explorer" option) restores normal Windows behavior instantly.
 2. **As your actual Windows shell** — registers GridShell in place of `explorer.exe` at login,
    via `GridShell.Watchdog`, which relaunches GridShell if it crashes and falls back to
