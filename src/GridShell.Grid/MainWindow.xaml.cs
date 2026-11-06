@@ -361,6 +361,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // {DynamicResource AppFontFamily} instead of a hardcoded font, so switching this one
         // resource updates the whole process live.
         Application.Current.Resources["AppFontFamily"] = UiFontResolver.Resolve(_settings);
+
+        // Kiosk Mode's only unlock path is Settings (PIN-gated there) - these two surfaces get
+        // disabled rather than PIN-prompted here, so there's exactly one place a kid could even
+        // attempt to guess a PIN, not several.
+        AddTileButton.IsEnabled = !_settings.KioskModeEnabled;
+        PowerButton.IsEnabled = !_settings.KioskModeEnabled;
     }
 
     public void OpenSettings()
@@ -466,6 +472,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void PowerButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_settings.KioskModeEnabled)
+        {
+            return;
+        }
+
         // Clicking the button again while the menu is open should close it (not reopen it) —
         // but WPF's own light-dismiss already closes the menu on that same click, BEFORE this
         // Click handler runs, so by the time we get here IsOpen is already false either way.
@@ -515,13 +526,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private bool ConfirmPowerAction(string title, string message) =>
-        System.Windows.MessageBox.Show(
-            this,
-            message + "\n\nContinue?",
-            title,
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning,
-            MessageBoxResult.No) == MessageBoxResult.Yes;
+        ConfirmationWindow.Confirm(this, title, message);
 
     private void Window_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
@@ -602,6 +607,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void OpenAddTileDialog()
     {
+        if (_settings.KioskModeEnabled)
+        {
+            return;
+        }
+
         var dialog = new AddTileWindow
         {
             Owner = this,
@@ -635,7 +645,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RenameTileMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as MenuItem)?.CommandParameter is not Tile tile)
+        if (_settings.KioskModeEnabled || (sender as MenuItem)?.CommandParameter is not Tile tile)
         {
             return;
         }
@@ -653,7 +663,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ChangeIcon_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as MenuItem)?.CommandParameter is not Tile tile)
+        if (_settings.KioskModeEnabled || (sender as MenuItem)?.CommandParameter is not Tile tile)
         {
             return;
         }
@@ -681,7 +691,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ScrapeCoverMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as MenuItem)?.CommandParameter is not Tile tile)
+        if (_settings.KioskModeEnabled || (sender as MenuItem)?.CommandParameter is not Tile tile)
         {
             return;
         }
@@ -706,7 +716,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RemoveTile(Tile? tile)
     {
-        if (tile is null)
+        if (tile is null || _settings.KioskModeEnabled)
         {
             return;
         }

@@ -35,6 +35,7 @@ public partial class RenameTileWindow : Window, INotifyPropertyChanged
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.RecenterOnDisplayChange();
+        this.HideWindowIcon();
 
         Loaded += (_, _) =>
         {

@@ -314,7 +314,7 @@
                         </Style>
                     </Button.Style>
                 </Button>
-                <Button Padding="8,6" Margin="8,0,0,0" Click="AddTileButton_Click" Style="{StaticResource ModernButtonStyle}"
+                <Button x:Name="AddTileButton" Padding="8,6" Margin="8,0,0,0" Click="AddTileButton_Click" Style="{StaticResource ModernButtonStyle}"
                         Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Add">
                     <TextBlock Text="&#xe145;" FontFamily="{StaticResource IconFont}"
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="16" />

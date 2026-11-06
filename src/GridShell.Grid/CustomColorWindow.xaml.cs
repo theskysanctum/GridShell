@@ -62,6 +62,7 @@ public partial class CustomColorWindow : Window, INotifyPropertyChanged
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.RecenterOnDisplayChange();
+        this.HideWindowIcon();
 
         Loaded += (_, _) =>
         {

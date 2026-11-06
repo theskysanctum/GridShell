@@ -40,6 +40,7 @@ public partial class BluetoothPairingWindow : Window, INotifyPropertyChanged
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.RecenterOnDisplayChange();
+        this.HideWindowIcon();
     }
 
     private void Accept_Click(object sender, RoutedEventArgs e)

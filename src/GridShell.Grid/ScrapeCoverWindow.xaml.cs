@@ -72,6 +72,7 @@ public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.RecenterOnDisplayChange();
+        this.HideWindowIcon();
 
         Loaded += async (_, _) =>
         {

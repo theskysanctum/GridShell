@@ -19,6 +19,7 @@ public partial class WiFiPasswordWindow : Window
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.RecenterOnDisplayChange();
+        this.HideWindowIcon();
     }
 
     private void PasswordInput_PasswordChanged(object sender, RoutedEventArgs e) => _password = PasswordInput.Password;
