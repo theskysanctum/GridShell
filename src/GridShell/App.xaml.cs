@@ -1,6 +1,9 @@
 ﻿using System.Windows;
+using System.Windows.Interop;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
+using GridShell.Core.Widgets;
+using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 
 namespace GridShell;
@@ -10,6 +13,8 @@ public partial class App : System.Windows.Application
     private TaskbarWindow? _taskbarWindow;
     private WallpaperWindow? _wallpaperWindow;
     private ScreenshotMenuWindow? _screenshotMenu;
+    private readonly List<WidgetWindow> _widgetWindows = new();
+    private bool _wallpaperPausedForGame;
     private readonly GridLauncher _launcher = new();
     private readonly GlobalKeyboardHook _keyboardHook = new();
 
@@ -59,6 +64,7 @@ public partial class App : System.Windows.Application
 
         _wallpaperWindow = new WallpaperWindow();
         _wallpaperWindow.Show();
+        CreateWidgetWindows();
 
         _taskbarWindow = new TaskbarWindow(_launcher);
         _taskbarWindow.Show();
@@ -85,15 +91,7 @@ public partial class App : System.Windows.Application
 
             if (action == ControllerAction.ScreenshotMenu)
             {
-                if (_screenshotMenu is null)
-                {
-                    // Captured before the menu window exists - once it's shown/activated it
-                    // would itself be the foreground window.
-                    var previousForegroundWindow = GetForegroundWindow();
-                    _screenshotMenu = new ScreenshotMenuWindow(_controllerInput, previousForegroundWindow);
-                    _screenshotMenu.Closed += (_, _) => _screenshotMenu = null;
-                    _screenshotMenu.Show();
-                }
+                OpenScreenshotMenu();
                 return;
             }
 
@@ -118,7 +116,11 @@ public partial class App : System.Windows.Application
         _controllerInput.Start();
         _controllerMouse.Start();
 
-        _gameFullscreenTimer.Tick += (_, _) => UpdateSidebarVisibilityForGame();
+        _gameFullscreenTimer.Tick += (_, _) =>
+        {
+            UpdateSidebarVisibilityForGame();
+            UpdateWallpaperPauseForGame();
+        };
         _gameFullscreenTimer.Start();
     }
 
@@ -141,6 +143,56 @@ public partial class App : System.Windows.Application
         }
     }
 
+    /// <summary>Pauses/resumes the wallpaper's own video (if any) as a game opted in via
+    /// Tile.PauseWallpaperWhileRunning gains/loses foreground focus - shares this timer's tick
+    /// rather than running a second one, same latch pattern as the sidebar above.</summary>
+    private async void UpdateWallpaperPauseForGame()
+    {
+        var shouldPause = _gameDetector.ShouldPauseWallpaper();
+        if (shouldPause == _wallpaperPausedForGame || _wallpaperWindow is null)
+        {
+            return;
+        }
+
+        _wallpaperPausedForGame = shouldPause;
+        if (shouldPause)
+        {
+            await _wallpaperWindow.PauseAsync();
+        }
+        else
+        {
+            await _wallpaperWindow.ResumeAsync();
+        }
+    }
+
+    /// <summary>Creates one WidgetWindow per entry in WidgetStore.Load() - each places itself
+    /// at HWND_TOP (see WidgetWindow's own SendToTop), above the wallpaper without ever
+    /// claiming topmost status, so ordinary app windows still end up above them once
+    /// activated.</summary>
+    private void CreateWidgetWindows()
+    {
+        foreach (var widget in WidgetStore.Load())
+        {
+            var window = new WidgetWindow(widget);
+            window.Show();
+            _widgetWindows.Add(window);
+        }
+    }
+
+    /// <summary>Full recreate on any Settings-driven widget add/remove/edit - simplest correct
+    /// approach, no diffing, consistent with how Tiles/the wallpaper have no fine-grained
+    /// in-place edit either.</summary>
+    public void ReloadWidgets()
+    {
+        foreach (var window in _widgetWindows)
+        {
+            window.Close();
+        }
+
+        _widgetWindows.Clear();
+        CreateWidgetWindows();
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
         _taskbarHideTimer.Stop();
@@ -157,6 +209,11 @@ public partial class App : System.Windows.Application
 
         // Restore the real taskbar now that GridShell's own sidebar is going away.
         ShellTaskbarVisibility.Show();
+        foreach (var window in _widgetWindows)
+        {
+            window.Close();
+        }
+
         _wallpaperWindow?.Close();
         base.OnExit(e);
     }
@@ -198,6 +255,24 @@ public partial class App : System.Windows.Application
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
         }
+    }
+
+    /// <summary>Opens the Window/Snippet/Fullscreen screenshot picker - shared by the
+    /// controller's Select+B, the taskbar's camera button, and Shift+PrintScreen, so all three
+    /// entry points land on the exact same window instead of each tracking their own.</summary>
+    public void OpenScreenshotMenu()
+    {
+        if (_screenshotMenu is not null)
+        {
+            return;
+        }
+
+        // Captured before the menu window exists - once it's shown/activated it would itself
+        // be the foreground window.
+        var previousForegroundWindow = GetForegroundWindow();
+        _screenshotMenu = new ScreenshotMenuWindow(_controllerInput, previousForegroundWindow);
+        _screenshotMenu.Closed += (_, _) => _screenshotMenu = null;
+        _screenshotMenu.Show();
     }
 
     private static void NotifyGridOpenKeyboard()

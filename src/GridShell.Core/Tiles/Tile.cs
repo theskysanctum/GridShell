@@ -50,6 +50,12 @@ public class Tile : INotifyPropertyChanged
     /// <summary>User-chosen image file that overrides the auto-extracted/fetched icon, if set.</summary>
     public string? CustomIconPath { get; set; }
 
+    /// <summary>Whether the desktop wallpaper's video should pause while this tile's process
+    /// has foreground focus - opt-in per tile (defaults true for new Game tiles in
+    /// AddTileWindow, false otherwise) rather than a blanket rule, since not every game needs
+    /// it (e.g. a windowed indie game).</summary>
+    public bool PauseWallpaperWhileRunning { get; init; }
+
     private ImageSource? _icon;
     public ImageSource? Icon
     {

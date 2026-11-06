@@ -1,0 +1,112 @@
+<Window x:Class="GridShell.AddWidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Title="Add Widget"
+        Width="420" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource PrimaryForegroundBrush}"
+        FontFamily="{DynamicResource AppFontFamily}">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <Style x:Key="KindButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+        </Style>
+        <Style x:Key="MediaKindButtonStyle" TargetType="Button" BasedOn="{StaticResource KindButtonStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMediaKind}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ClockKindButtonStyle" TargetType="Button" BasedOn="{StaticResource KindButtonStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsClockKind}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="IconGridKindButtonStyle" TargetType="Button" BasedOn="{StaticResource KindButtonStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsIconGridKind}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SystemStatsKindButtonStyle" TargetType="Button" BasedOn="{StaticResource KindButtonStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSystemStatsKind}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <StackPanel Margin="16">
+        <TextBlock Text="Widget type" Margin="0,0,0,4" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+            <Button Content="Media" Click="MediaKind_Click" Style="{StaticResource MediaKindButtonStyle}" />
+            <Button Content="Clock" Click="ClockKind_Click" Style="{StaticResource ClockKindButtonStyle}" />
+            <Button Content="Desktop Icons" Click="IconGridKind_Click" Style="{StaticResource IconGridKindButtonStyle}" />
+            <Button Content="System Stats" Click="SystemStatsKind_Click" Style="{StaticResource SystemStatsKindButtonStyle}" />
+        </StackPanel>
+
+        <StackPanel Visibility="{Binding IsMediaKind, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Media file (image or video)" Margin="0,0,0,4" />
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Text="{Binding MediaPath}" IsReadOnly="True" Padding="4" Margin="0,0,8,0"
+                         Foreground="{DynamicResource PrimaryForegroundBrush}"
+                         Background="{DynamicResource SurfaceBackgroundBrush}" />
+                <Button Grid.Column="1" Content="Browse..." Padding="10,4" Click="BrowseButton_Click" />
+            </Grid>
+        </StackPanel>
+
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Text="X" Margin="0,0,0,4" />
+                <TextBox Text="{Binding X}" Padding="4" Foreground="{DynamicResource PrimaryForegroundBrush}"
+                         Background="{DynamicResource SurfaceBackgroundBrush}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Y" Margin="0,0,0,4" />
+                <TextBox Text="{Binding Y}" Padding="4" Foreground="{DynamicResource PrimaryForegroundBrush}"
+                         Background="{DynamicResource SurfaceBackgroundBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Text="Width" Margin="0,0,0,4" />
+                <TextBox Text="{Binding WidgetWidth}" Padding="4" Foreground="{DynamicResource PrimaryForegroundBrush}"
+                         Background="{DynamicResource SurfaceBackgroundBrush}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Height" Margin="0,0,0,4" />
+                <TextBox Text="{Binding WidgetHeight}" Padding="4" Foreground="{DynamicResource PrimaryForegroundBrush}"
+                         Background="{DynamicResource SurfaceBackgroundBrush}" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Padding="12,6" Margin="0,0,8,0" IsCancel="True" />
+            <Button Content="Add" Padding="12,6" Click="AddButton_Click" IsDefault="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

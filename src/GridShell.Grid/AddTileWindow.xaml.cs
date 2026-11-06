@@ -153,6 +153,7 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
     public Tile? ResultTile { get; private set; }
 
     private TileKind _requestedKind = TileKind.App;
+    private bool _pauseWallpaperWhileRunning;
 
     /// <summary>Which single kind of tile this dialog adds — set once, before showing, by
     /// whichever "+" the user clicked. There's no way to change it from within the dialog,
@@ -168,7 +169,18 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsWebsiteKind));
             OnPropertyChanged(nameof(IsGameKind));
             OnPropertyChanged(nameof(HeaderText));
+
+            // Defaults on for games (the main motivating case - "stop when anything in games"),
+            // off otherwise. Still a plain checkbox the user can flip either way.
+            PauseWallpaperWhileRunning = value == TileKind.Game;
         }
+    }
+
+    /// <summary>Only shown/wired on the Game tabs - see Tile.PauseWallpaperWhileRunning.</summary>
+    public bool PauseWallpaperWhileRunning
+    {
+        get => _pauseWallpaperWhileRunning;
+        set { _pauseWallpaperWhileRunning = value; OnPropertyChanged(); }
     }
 
     public bool IsAppKind => RequestedKind == TileKind.App;
@@ -190,6 +202,7 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.RecenterOnDisplayChange();
+        this.HideWindowIcon();
         Loaded += AddTileWindow_Loaded;
     }
 
@@ -322,6 +335,7 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
             TargetPath = path,
             Kind = TileKind.Game,
             IconSourcePath = path,
+            PauseWallpaperWhileRunning = PauseWallpaperWhileRunning,
         };
         DialogResult = true;
         Close();
@@ -381,6 +395,7 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
             IconSourcePath = config.EmulatorPath,
             Arguments = config.ArgumentTemplate.Replace("{rom}", romPath),
             Platform = SelectedPlatform.Slug,
+            PauseWallpaperWhileRunning = PauseWallpaperWhileRunning,
         };
         DialogResult = true;
         Close();

@@ -160,6 +160,9 @@
                         </Button>
                     </Grid>
 
+                    <CheckBox Content="Pause wallpaper while this is running"
+                              IsChecked="{Binding PauseWallpaperWhileRunning}" Margin="0,0,0,12" />
+
                     <Button Content="Add Game" Padding="8,4" HorizontalAlignment="Left"
                             Click="AddGame_Click" />
                 </StackPanel>
@@ -192,6 +195,9 @@
                                 </StackPanel>
                             </Button>
                         </Grid>
+
+                        <CheckBox Content="Pause wallpaper while this is running"
+                                  IsChecked="{Binding PauseWallpaperWhileRunning}" Margin="0,0,0,12" />
 
                         <Button Content="Add Game" Padding="8,4" HorizontalAlignment="Left"
                                 Click="AddEmulatedGame_Click" />

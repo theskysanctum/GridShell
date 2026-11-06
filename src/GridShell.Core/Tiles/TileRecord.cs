@@ -13,6 +13,7 @@ public class TileRecord
     public string? CustomIconPath { get; init; }
     public string? Arguments { get; init; }
     public string? Platform { get; init; }
+    public bool PauseWallpaperWhileRunning { get; init; }
 
     public static TileRecord FromTile(Tile tile) => new()
     {
@@ -24,6 +25,7 @@ public class TileRecord
         CustomIconPath = tile.CustomIconPath,
         Arguments = tile.Arguments,
         Platform = tile.Platform,
+        PauseWallpaperWhileRunning = tile.PauseWallpaperWhileRunning,
     };
 
     public Tile ToTile() => new()
@@ -36,6 +38,7 @@ public class TileRecord
         CustomIconPath = CustomIconPath,
         Arguments = Arguments,
         Platform = Platform ?? InferPlatformFromRomPath(Arguments),
+        PauseWallpaperWhileRunning = PauseWallpaperWhileRunning,
     };
 
     /// <summary>One-time migration for a Game tile saved before Tile.Platform existed - its

@@ -13,6 +13,7 @@ using GridShell.Core.Interop.Bluetooth;
 using GridShell.Core.Interop.Display;
 using GridShell.Core.Interop.WiFi;
 using GridShell.Core.Tiles;
+using GridShell.Core.Widgets;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using AppSettings = GridShell.Core.Settings.AppSettings;
@@ -49,6 +50,9 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     public ObservableCollection<Tile> AppTiles { get; } = new();
     public ObservableCollection<Tile> WebTiles { get; } = new();
     public ObservableCollection<Tile> GameTiles { get; } = new();
+
+    private List<DesktopWidget> _allWidgets = new();
+    public ObservableCollection<DesktopWidget> Widgets { get; } = new();
 
     private static readonly string[] PresetAccentColors =
         { "#4A90D9", "#D9534F", "#5CB85C", "#F0AD4E", "#9B59B6", "#1ABC9C" };
@@ -830,8 +834,67 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             _wallpaperUrl = value;
             OnPropertyChanged();
             _settings.WallpaperUrl = string.IsNullOrWhiteSpace(value) ? null : value;
+            OnPropertyChanged(nameof(WidgetsAvailable));
+            OnPropertyChanged(nameof(CanEditWidgets));
             _onSettingsChanged();
             NotifyTaskbarSettingsChanged();
+        }
+    }
+
+    /// <summary>Whether the wallpaper is set to a video/image file at all - the default
+    /// wallpaper (no WallpaperUrl override, falling back to the real current Windows wallpaper
+    /// image) deliberately doesn't count, nor does an .html page or a bare remote URL without
+    /// a recognized media extension. ANDed with Kiosk Mode via CanEditWidgets below, not
+    /// replaced by it - the two gates are independent reasons the tab can be unusable.</summary>
+    public bool WidgetsAvailable =>
+        !string.IsNullOrWhiteSpace(_settings.WallpaperUrl)
+        && (MediaWrapperHtml.IsVideo(_settings.WallpaperUrl) || MediaWrapperHtml.IsImage(_settings.WallpaperUrl));
+
+    public bool CanEditTiles => !KioskModeEnabled;
+    public bool CanEditAppearance => !KioskModeEnabled;
+    public bool CanEditWidgets => !KioskModeEnabled && WidgetsAvailable;
+
+    public string KioskModeButtonText => KioskModeEnabled ? "Disable Kiosk Mode..." : "Enable Kiosk Mode...";
+
+    /// <summary>Locks down Tiles/Appearance/Widgets editing and exiting GridShell. Changing
+    /// this directly (private setter) is only ever done after KioskModeButton_Click's PIN flow
+    /// succeeds - there's no plain two-way-bound checkbox, since turning it on requires setting
+    /// a PIN first and turning it off requires verifying one.</summary>
+    public bool KioskModeEnabled
+    {
+        get => _settings.KioskModeEnabled;
+        private set
+        {
+            _settings.KioskModeEnabled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(KioskModeButtonText));
+            OnPropertyChanged(nameof(CanEditTiles));
+            OnPropertyChanged(nameof(CanEditAppearance));
+            OnPropertyChanged(nameof(CanEditWidgets));
+            _onSettingsChanged();
+            NotifyTaskbarSettingsChanged();
+        }
+    }
+
+    private void KioskModeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (KioskModeEnabled)
+        {
+            var dialog = new KioskPinWindow(_settings.KioskModePinHash!, "Enter your PIN to disable Kiosk Mode.") { Owner = this };
+            if (dialog.ShowDialog() == true)
+            {
+                KioskModeEnabled = false;
+                _settings.KioskModePinHash = null;
+            }
+        }
+        else
+        {
+            var dialog = new KioskPinWindow { Owner = this };
+            if (dialog.ShowDialog() == true && dialog.ResultPinHash is { } hash)
+            {
+                _settings.KioskModePinHash = hash;
+                KioskModeEnabled = true;
+            }
         }
     }
 
@@ -1024,21 +1087,17 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
             if (value)
             {
-                var result = System.Windows.MessageBox.Show(
+                var confirmed = ConfirmationWindow.Confirm(
                     this,
+                    "Replace Windows Explorer as the shell?",
                     "This replaces Windows Explorer as the shell for EVERY account on this PC " +
                     "(machine-wide, not just yours), and for Safe Mode too. It only takes effect " +
                     "on the next login — this session keeps running normally either way. " +
                     "You'll see a Windows admin (UAC) prompt next to confirm the registry change.\n\n" +
                     "If something goes wrong after that: press Ctrl+Shift+Esc, then File → " +
-                    "Run new task → explorer.exe to get back to a normal desktop immediately.\n\n" +
-                    "Continue?",
-                    "Replace Windows Explorer as the shell?",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning,
-                    MessageBoxResult.No);
+                    "Run new task → explorer.exe to get back to a normal desktop immediately.");
 
-                if (result != MessageBoxResult.Yes)
+                if (!confirmed)
                 {
                     // Backing field never changed — re-raise so the checkbox's binding re-reads
                     // the unchanged value and visually snaps back to unchecked.
@@ -1048,12 +1107,8 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
                 if (!ShellRegistration.RegisterAsShell(WatchdogExePath))
                 {
-                    System.Windows.MessageBox.Show(
-                        this,
-                        "The admin prompt was declined or the change failed, so nothing was modified.",
-                        "Not changed",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    ConfirmationWindow.Info(this, "Not changed",
+                        "The admin prompt was declined or the change failed, so nothing was modified.");
                     OnPropertyChanged();
                     return;
                 }
@@ -1062,12 +1117,8 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             {
                 if (!ShellRegistration.UnregisterAsShell())
                 {
-                    System.Windows.MessageBox.Show(
-                        this,
-                        "The admin prompt was declined or the change failed, so nothing was modified.",
-                        "Not changed",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    ConfirmationWindow.Info(this, "Not changed",
+                        "The admin prompt was declined or the change failed, so nothing was modified.");
                     OnPropertyChanged();
                     return;
                 }
@@ -1094,6 +1145,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         DataContext = this;
         this.ExcludeFromTaskbar();
+        this.HideWindowIcon();
         this.ScaleToWorkArea(widthFraction: 0.6, heightFraction: 0.8,
             minWidth: 520, minHeight: 560, maxWidth: 760, maxHeight: 820);
 
@@ -1167,6 +1219,44 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         RefreshTileList(TileKind.App);
         RefreshTileList(TileKind.Website);
         RefreshTileList(TileKind.Game);
+
+        _allWidgets = WidgetStore.Load();
+        RefreshWidgetList();
+    }
+
+    private void RefreshWidgetList()
+    {
+        Widgets.Clear();
+        foreach (var widget in _allWidgets)
+        {
+            Widgets.Add(widget);
+        }
+    }
+
+    private void RemoveWidgetButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not DesktopWidget widget)
+        {
+            return;
+        }
+
+        _allWidgets.Remove(widget);
+        RefreshWidgetList();
+        WidgetStore.Save(_allWidgets);
+        NotifyTaskbarSettingsChanged();
+    }
+
+    private void AddWidgetButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new AddWidgetWindow { Owner = this };
+
+        if (dialog.ShowDialog() == true && dialog.ResultWidget is { } newWidget)
+        {
+            _allWidgets.Add(newWidget);
+            RefreshWidgetList();
+            WidgetStore.Save(_allWidgets);
+            NotifyTaskbarSettingsChanged();
+        }
     }
 
     private ObservableCollection<Tile> ListFor(TileKind kind) => kind switch
@@ -1336,6 +1426,15 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
     private void ExitGridShell_Click(object sender, RoutedEventArgs e)
     {
+        if (KioskModeEnabled)
+        {
+            var dialog = new KioskPinWindow(_settings.KioskModePinHash!, "Enter your PIN to exit GridShell.") { Owner = this };
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+        }
+
         // GridShell runs as two processes (this grid + the always-running taskbar) — signal
         // the taskbar to close too, not just this window, so "Exit" actually exits GridShell.
         // Not Process.CloseMainWindow() — that silently no-ops for the taskbar's window

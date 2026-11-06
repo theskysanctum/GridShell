@@ -354,6 +354,14 @@ public partial class FileExplorerWindow : Window, INotifyPropertyChanged
         if ((sender as ListView)?.Tag is FileExplorerPaneViewModel pane)
         {
             SetActivePane(pane);
+
+            // Right-click is the mouse-only equivalent of Square/X - without this, the actions
+            // menu (and everything only reachable through it, like archive extract/compress)
+            // had no mouse or keyboard path at all.
+            if (e.ChangedButton == MouseButton.Right)
+            {
+                OpenActionsMenu();
+            }
         }
     }
 
@@ -407,6 +415,10 @@ public partial class FileExplorerWindow : Window, INotifyPropertyChanged
                 break;
             case Key.V when ctrl:
                 PasteInto(ActivePane);
+                break;
+            case Key.Apps:
+            case Key.F10 when Keyboard.Modifiers == ModifierKeys.Shift:
+                OpenActionsMenu();
                 break;
         }
     }

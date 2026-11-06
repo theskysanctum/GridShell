@@ -27,9 +27,11 @@ public enum ControllerAction
     /// foreground focus; see App.xaml.cs.</summary>
     KillEmulator,
 
-    /// <summary>Select/View + B held together — opens the controller-navigable screenshot menu
-    /// (Window / Snippet / Fullscreen). Not Select+Home/Guide: that button isn't exposed to
-    /// apps at all, Windows reserves it exclusively for the Xbox Game Bar overlay.</summary>
+    /// <summary>Select/View + B held together — opens the screenshot menu (Window / Snippet /
+    /// Fullscreen). Not Select+Home/Guide: that button isn't exposed to apps at all, Windows
+    /// reserves it exclusively for the Xbox Game Bar overlay. Also reachable without a
+    /// controller via Shift+PrintScreen or the taskbar's camera button — see
+    /// App.OpenScreenshotMenu.</summary>
     ScreenshotMenu,
 
     /// <summary>Right stick click (R3) — currently only acted on by the on-screen keyboard, as

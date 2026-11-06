@@ -7,9 +7,11 @@ using Vanara.PInvoke;
 
 namespace GridShell;
 
-/// <summary>Select+B's screenshot menu - Window / Snippet / Fullscreen, navigable by D-pad/
-/// stick (Up/Down), Accept (A) to confirm, Back (B)/Escape to cancel. Also works with mouse/
-/// keyboard alone, for when there's no controller connected.</summary>
+/// <summary>The Window / Snippet / Fullscreen screenshot menu - navigable by D-pad/stick
+/// (Up/Down), Accept (A) to confirm, Back (B)/Escape to cancel. Also works with mouse/keyboard
+/// alone, for when there's no controller connected. Opened via Select+B, Shift+PrintScreen, or
+/// the taskbar's camera button - see App.OpenScreenshotMenu, the single shared entry point for
+/// all three.</summary>
 public partial class ScreenshotMenuWindow : Window
 {
     // Reads the live AccentBrush resource rather than hardcoding the default blue, so this

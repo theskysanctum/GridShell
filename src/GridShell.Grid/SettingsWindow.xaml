@@ -69,6 +69,21 @@
             </Setter>
         </Style>
 
+        <DataTemplate x:Key="WidgetRowTemplate">
+            <Grid Margin="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding SummaryText}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                <Button Grid.Column="1" Width="28" Margin="4,0,0,0"
+                        Click="RemoveWidgetButton_Click" CommandParameter="{Binding}" ToolTip="Remove">
+                    <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" FontSize="14" />
+                </Button>
+            </Grid>
+        </DataTemplate>
+
         <DataTemplate x:Key="TileRowTemplate">
             <Grid Margin="4">
                 <Grid.ColumnDefinitions>
@@ -137,13 +152,22 @@
 
                     <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
+                    <Button Content="{Binding KioskModeButtonText}" Padding="10,6" HorizontalAlignment="Left" Margin="0,0,0,4"
+                            Click="KioskModeButton_Click" />
+                    <TextBlock Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
+                               TextWrapping="Wrap" Margin="0,0,0,16"
+                               Text="Locks widgets, tiles, and wallpaper/appearance, and blocks the power menu and exiting GridShell. A PIN you set now is required to turn it back off." />
+
+                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+
                     <Button Content="Exit GridShell" Padding="10,6" HorizontalAlignment="Left"
                             Click="ExitGridShell_Click" />
                 </StackPanel>
             </TabItem>
 
             <TabItem Header="Tiles">
-                <TabControl Margin="0,12,0,0" Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0">
+                <TabControl Margin="0,12,0,0" Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0"
+                            IsEnabled="{Binding CanEditTiles}">
                     <TabItem Header="Apps">
                         <ListBox ItemsSource="{Binding AppTiles}" Background="{DynamicResource SurfaceBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}"
                                  ItemTemplate="{StaticResource TileRowTemplate}" />
@@ -201,8 +225,31 @@
                 </TabControl>
             </TabItem>
 
+            <TabItem Header="Widgets">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,12"
+                               Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
+                               Text="Widgets need the wallpaper set to a local image or video file (Appearance tab) - the default Windows wallpaper or an HTML/live wallpaper don't qualify." />
+                    <Grid Grid.Row="1" IsEnabled="{Binding CanEditWidgets}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ListBox Grid.Row="0" ItemsSource="{Binding Widgets}"
+                                 Background="{DynamicResource SurfaceBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                 ItemTemplate="{StaticResource WidgetRowTemplate}" />
+                        <Button Grid.Row="1" Content="Add Widget" Padding="10,6" Margin="0,8,0,0"
+                                HorizontalAlignment="Left" Click="AddWidgetButton_Click" />
+                    </Grid>
+                </Grid>
+            </TabItem>
+
             <TabItem Header="Appearance">
-                <StackPanel Margin="0,12,0,0">
+                <StackPanel Margin="0,12,0,0" IsEnabled="{Binding CanEditAppearance}">
                     <TextBlock Text="Theme" Margin="0,0,0,4" />
                     <ComboBox SelectedValue="{Binding Theme}" SelectedValuePath="Tag" Margin="0,0,0,16">
                         <ComboBoxItem Content="Dark" Tag="Dark" />

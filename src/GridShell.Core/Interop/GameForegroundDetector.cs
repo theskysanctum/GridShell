@@ -20,16 +20,27 @@ public sealed class GameForegroundDetector
     private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(3);
 
     private HashSet<string> _gamePaths = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Subset of _gamePaths whose tile opted in via Tile.PauseWallpaperWhileRunning -
+    /// deliberately separate from _gamePaths itself, since that set's own (unrelated) consumer,
+    /// controller/OSK suppression, must stay blanket for every game regardless of this flag.</summary>
+    private HashSet<string> _pauseWallpaperPaths = new(StringComparer.OrdinalIgnoreCase);
     private DateTime _lastLoad = DateTime.MinValue;
 
-    public bool IsGameForeground()
+    public bool IsGameForeground() => _gamePaths.Contains(GetForegroundProcessPath() ?? "");
+
+    /// <summary>Whether the desktop wallpaper's video should be paused right now - true only
+    /// when the foreground process belongs to a Game tile that opted in.</summary>
+    public bool ShouldPauseWallpaper() => _pauseWallpaperPaths.Contains(GetForegroundProcessPath() ?? "");
+
+    private string? GetForegroundProcessPath()
     {
         RefreshIfStale();
 
         var hwnd = GetForegroundWindow();
         if (hwnd.IsNull)
         {
-            return false;
+            return null;
         }
 
         GetWindowThreadProcessId(hwnd, out var pid);
@@ -37,12 +48,11 @@ public sealed class GameForegroundDetector
         try
         {
             using var process = Process.GetProcessById((int)pid);
-            var path = process.MainModule?.FileName;
-            return path is not null && _gamePaths.Contains(path);
+            return process.MainModule?.FileName;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            return false;
+            return null;
         }
     }
 
@@ -57,21 +67,23 @@ public sealed class GameForegroundDetector
 
         try
         {
-            var gameTilePaths = TileStore.Load()
-                .Where(t => t.Kind == TileKind.Game)
-                .Select(t => t.TargetPath);
+            var gameTiles = TileStore.Load().Where(t => t.Kind == TileKind.Game).ToList();
 
             var configuredEmulatorPaths = AppSettingsStore.Load().EmulatorConfigs.Values
                 .Select(c => c.EmulatorPath)
                 .Where(path => !string.IsNullOrWhiteSpace(path))
                 .Select(path => path!);
 
-            _gamePaths = gameTilePaths.Concat(configuredEmulatorPaths)
+            _gamePaths = gameTiles.Select(t => t.TargetPath).Concat(configuredEmulatorPaths)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            _pauseWallpaperPaths = gameTiles.Where(t => t.PauseWallpaperWhileRunning)
+                .Select(t => t.TargetPath)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            // Keep the previous (possibly stale) set rather than suppressing nothing.
+            // Keep the previous (possibly stale) sets rather than suppressing nothing.
         }
     }
 }

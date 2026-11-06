@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Interop;
+using GridShell.Core;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
 using Microsoft.Web.WebView2.Core;
@@ -18,12 +19,6 @@ namespace GridShell;
 /// but Settings can point it at a local image, video, .html file, or live URL instead.</summary>
 public partial class WallpaperWindow : Window
 {
-    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
-    private static readonly string[] VideoExtensions = { ".mp4", ".webm", ".mov", ".mkv", ".avi" };
-
-    // A generated wrapper page must be navigated to as a real file:// page, not via
-    // NavigateToString - Chromium's "URL safety check" rejects a <video>/<img> src pointing at
-    // file:// from a page that isn't itself file://, which NavigateToString's page isn't.
     private static readonly string GeneratedWrapperPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GridShell", "WallpaperWebView2", "wallpaper.html");
 
@@ -43,8 +38,20 @@ public partial class WallpaperWindow : Window
         {
             SendToBottom();
             ApplyScreenGeometryNative();
+            HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(WndProc);
         };
         Loaded += async (_, _) => await ReloadAsync();
+
+        // WS_EX_NOACTIVATE (via NeverActivate above) does NOT stop this window's WebView2 from
+        // stealing keyboard focus on click and activating the window anyway - confirmed
+        // empirically (WebView2 is a real windowed control; clicking it can activate its
+        // hosting window regardless of that style - also a known, unfixed WebView2 platform
+        // limitation, MicrosoftEdge/WebView2Feedback#1004). Activating a window promotes it
+        // toward the top of the z-order, which for this fullscreen, HWND_BOTTOM-pinned window
+        // means the entire wallpaper jumps in front of everything else (taskbar, every open
+        // app) the instant it's clicked. Rather than fight WebView2's activation (not
+        // controllable), just immediately undo the z-order fallout each time it happens.
+        Activated += (_, _) => SendToBottom();
     }
 
     private void SendToBottom()
@@ -52,6 +59,20 @@ public partial class WallpaperWindow : Window
         var hwnd = new HWND(new WindowInteropHelper(this).Handle);
         SetWindowPos(hwnd, HWND.HWND_BOTTOM, 0, 0, 0, 0,
             SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOACTIVATE);
+    }
+
+    /// <summary>Swallows Alt+F4/system-menu Close - this is infrastructure (the desktop
+    /// background), never meant to be individually closable, and it can become the Win32-active
+    /// window (see the Activated handler above), which would otherwise make Alt+F4 close it for
+    /// real. Same AltF4Blocker helper TaskbarWindow/MainWindow already use unconditionally.</summary>
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (AltF4Blocker.IsSysCommandClose(msg, wParam))
+        {
+            handled = true;
+        }
+
+        return IntPtr.Zero;
     }
 
     /// <summary>Sizes to the same bounds MainWindow's own ApplyScreenGeometryNative uses - the
@@ -105,21 +126,17 @@ public partial class WallpaperWindow : Window
         var url = settings.WallpaperUrl;
         if (!string.IsNullOrWhiteSpace(url))
         {
-            // Strip any query string before checking the extension - a remote URL like
-            // ".../video.webm?token=abc" is still a video, not an unrecognized URL.
-            var extension = Path.GetExtension(url.Split('?', '#')[0]);
-            var navigableUrl = ToNavigableUrl(url);
+            var navigableUrl = MediaWrapperHtml.ToNavigableUrl(url);
 
-            if (VideoExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+            if (MediaWrapperHtml.IsVideo(url))
             {
-                NavigateToWrapperPage(
-                    $"<video src=\"{navigableUrl}\" autoplay loop style=\"width:100vw;height:100vh;object-fit:cover\"></video>");
+                NavigateToWrapperPage(MediaWrapperHtml.BuildVideoHtml(navigableUrl, muted: false));
                 return;
             }
 
-            if (ImageExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+            if (MediaWrapperHtml.IsImage(url))
             {
-                NavigateToWrapperPage($"<img src=\"{navigableUrl}\" style=\"width:100vw;height:100vh;object-fit:cover\" />");
+                NavigateToWrapperPage(MediaWrapperHtml.BuildImageHtml(navigableUrl));
                 return;
             }
 
@@ -134,7 +151,7 @@ public partial class WallpaperWindow : Window
             return;
         }
 
-        NavigateToWrapperPage($"<img src=\"{new Uri(wallpaperPath).AbsoluteUri}\" style=\"width:100vw;height:100vh;object-fit:cover\" />");
+        NavigateToWrapperPage(MediaWrapperHtml.BuildImageHtml(new Uri(wallpaperPath).AbsoluteUri));
     }
 
     /// <summary>Writes a tiny wrapper page containing <paramref name="bodyHtml"/> to disk and
@@ -142,17 +159,29 @@ public partial class WallpaperWindow : Window
     /// NavigateToString can't be used when the body references a local file:// resource.</summary>
     private void NavigateToWrapperPage(string bodyHtml)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(GeneratedWrapperPath)!);
-        File.WriteAllText(GeneratedWrapperPath,
-            $"<html><body style=\"margin:0;overflow:hidden;background:#101010\">{bodyHtml}</body></html>");
-        Web.CoreWebView2!.Navigate(new Uri(GeneratedWrapperPath).AbsoluteUri);
+        var uri = MediaWrapperHtml.WriteAndGetUri(GeneratedWrapperPath, bodyHtml);
+        Web.CoreWebView2!.Navigate(uri);
     }
 
-    private static bool LooksLikeRemoteUrl(string value) =>
-        value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-        || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-        || value.StartsWith("file://", StringComparison.OrdinalIgnoreCase);
+    /// <summary>Pauses whatever &lt;video&gt; element the current wallpaper is showing - called
+    /// while a game (opted in via Tile.PauseWallpaperWhileRunning) has foreground focus. A
+    /// no-op when the current wallpaper is a static image (no &lt;video&gt; element to find).
+    /// Explicit pause rather than hiding the window - the wallpaper already sits at
+    /// HWND_BOTTOM, fully covered by a foreground game, so hiding it would have zero visual
+    /// effect and wouldn't reliably stop GPU/CPU decode the way an explicit pause does.</summary>
+    public async Task PauseAsync()
+    {
+        if (Web.CoreWebView2 is not null)
+        {
+            await Web.CoreWebView2.ExecuteScriptAsync("document.querySelector('video')?.pause();");
+        }
+    }
 
-    private static string ToNavigableUrl(string value) =>
-        LooksLikeRemoteUrl(value) ? value : new Uri(Path.GetFullPath(value)).AbsoluteUri;
+    public async Task ResumeAsync()
+    {
+        if (Web.CoreWebView2 is not null)
+        {
+            await Web.CoreWebView2.ExecuteScriptAsync("document.querySelector('video')?.play();");
+        }
+    }
 }

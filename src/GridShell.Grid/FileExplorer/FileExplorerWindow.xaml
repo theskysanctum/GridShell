@@ -108,7 +108,7 @@
 
         <Border Grid.Row="1" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
             <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"
-                       Text="D-pad/R-stick: move   •   Cross/A: open   •   Circle/B: up a folder (or close)   •   LB/RB: switch pane   •   Square/X: actions   •   Ctrl+C/X/V, Del, F2: copy/cut/paste, delete, rename   •   Esc: close" />
+                       Text="D-pad/R-stick: move   •   Cross/A: open   •   Circle/B: up a folder (or close)   •   LB/RB: switch pane   •   Square/X, right-click, or Menu key: actions   •   Ctrl+C/X/V, Del, F2: copy/cut/paste, delete, rename   •   Esc: close" />
         </Border>
     </Grid>
 </Window>

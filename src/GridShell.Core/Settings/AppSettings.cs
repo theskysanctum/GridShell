@@ -63,4 +63,15 @@ public class AppSettings
     /// subfolder) — lets ROMs live across multiple drives/locations instead of just the one
     /// default root.</summary>
     public List<string> ExtraRomPaths { get; set; } = new();
+
+    /// <summary>Locks down editing widgets/tiles/wallpaper-appearance and exiting GridShell
+    /// (Settings' Exit button, the power menu) - a PIN set via KioskPinWindow, hashed by
+    /// PinHasher, is required to turn this back off. Intended for handing the PC to a kid
+    /// without worrying about things getting changed or GridShell itself getting closed.</summary>
+    public bool KioskModeEnabled { get; set; }
+
+    /// <summary>"&lt;saltBase64&gt;:&lt;hashBase64&gt;" via PinHasher - null whenever
+    /// KioskModeEnabled is false (cleared on disable, so re-enabling always requires a fresh
+    /// PIN rather than silently reusing an old one).</summary>
+    public string? KioskModePinHash { get; set; }
 }
