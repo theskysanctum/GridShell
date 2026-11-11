@@ -1,15 +1,131 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GridShell</title>
-<meta name="description" content="A Windows Start Menu and taskbar replacement built around a fullscreen, controller-first launcher grid.">
-<link rel="canonical" href="https://theskysanctum.com/gridshell/">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="icon" href="favicon.ico" sizes="48x48">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GridShell</title>
+  <meta name="description" content="A Windows Start Menu and taskbar replacement built around a fullscreen, controller-first launcher grid.">
+  <link rel="canonical" href="https://theskysanctum.com/gridshell/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    :root {
+      --bg-base: #0b0d12;
+      --bg-surface: rgba(20, 23, 33, 0.72);
+      --border-subtle: rgba(139, 92, 246, 0.16);
+      --border-glow: rgba(139, 92, 246, 0.35);
+      --text-primary: #e2e8f0;
+      --text-secondary: #8b95a5;
+      --accent: #a78bfa;
+      --accent-glow: rgba(139, 92, 246, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(circle at 50% 0%, var(--accent-glow), transparent 65%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 48px 48px, 48px 48px;
+      background-position: center top, center center, center center;
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    main {
+      width: 100%;
+      max-width: 480px;
+      padding: 2.75rem 2.25rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      box-shadow: 
+        0 24px 48px -12px rgba(0, 0, 0, 0.65),
+        0 0 32px -8px var(--accent-glow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      text-align: center;
+      transition: border-color 0.4s ease, transform 0.4s ease;
+    }
+
+    main:hover {
+      border-color: var(--border-glow);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.85rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 999px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: breathe 3.5s ease-in-out infinite;
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 34ch;
+      margin: 0 auto;
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        opacity: 0.45;
+        transform: scale(0.95);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    }
+  </style>
+</head>
 <body>
-  <h1>Welcome</h1>
-  <p>This site is a placeholder for the Project known as GridShell.</p>
+  <main>
+    <div class="status-pill">
+      <span class="dot"></span>
+      <span>GridShell</span>
+    </div>
+    <h1>Welcome</h1>
+    <p>This site is a placeholder for the Project known as GridShell.</p>
+  </main>
 </body>
+</html>
