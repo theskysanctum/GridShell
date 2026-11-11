@@ -8,6 +8,8 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>GridShell.Grid</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +19,27 @@
   <ItemGroup>
     <PackageReference Include="VirtualizingWrapPanel" Version="2.5.4" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Custom SDL3 build (SDL_HIDAPI_LIBUSB=ON) replacing ppy.SDL3-CS's bundled binary, which
+         lacks libusb and therefore cannot see wired Nintendo Switch 1/2 controllers over USB.
+         See src/ThirdPartyNative/SDL3-libusb/README.txt. Copied after the package's own
+         runtime-asset copy so it overwrites it, not the other way around. -->
+    <None Include="..\ThirdPartyNative\SDL3-libusb\SDL3.dll" CopyToOutputDirectory="PreserveNewest" Link="SDL3.dll" />
+    <None Include="..\ThirdPartyNative\SDL3-libusb\libusb-1.0.dll" CopyToOutputDirectory="PreserveNewest" Link="libusb-1.0.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Community-maintained SDL_GameControllerDB mappings (zlib-licensed), widening gamepad
+         recognition beyond SDL's own built-in list. See GridShell.Core/Interop/PadReader.cs. -->
+    <None Include="..\GridShell.Core\Interop\GameControllerDB\gamecontrollerdb.txt" CopyToOutputDirectory="PreserveNewest" Link="GameControllerDB\gamecontrollerdb.txt" />
+    <None Include="..\GridShell.Core\Interop\GameControllerDB\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" Link="GameControllerDB\LICENSE.txt" />
+  </ItemGroup>
+
+  <Target Name="OverrideSdl3WithLibusbBuild" AfterTargets="Build;Publish">
+    <Copy SourceFiles="..\ThirdPartyNative\SDL3-libusb\SDL3.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="false" />
+    <Copy SourceFiles="..\ThirdPartyNative\SDL3-libusb\libusb-1.0.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="false" />
+  </Target>
 
   <ItemGroup>
     <!-- Reuse the same physical font files as the GridShell (taskbar) project instead of

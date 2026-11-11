@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 using Windows.Gaming.Input;
 
@@ -190,6 +191,19 @@ public static class PadReader
             SDL_SetHint("SDL_JOYSTICK_HIDAPI_JOY_CONS", "1");
             SDL_SetHint("SDL_JOYSTICK_HIDAPI_COMBINE_JOY_CONS", "1");
             _sdlReady = SDL_Init(SdlInitGamepad);
+
+            // SDL's own built-in gamepad mappings only cover Nintendo's own Switch 2 hardware
+            // (confirmed: SDL_hidapi_switch2.c gates on USB_VENDOR_NINTENDO), so licensed
+            // third-party pads like PowerA's Switch 2 controllers enumerate as a plain joystick
+            // (SDL_IsGamepad false) with no button/axis mapping at all. The community-maintained
+            // SDL_GameControllerDB (bundled below, zlib-licensed) carries a mapping for exactly
+            // that device and many others; loading it widens real-world compatibility well
+            // beyond what SDL ships out of the box.
+            var mappingsPath = Path.Combine(AppContext.BaseDirectory, "GameControllerDB", "gamecontrollerdb.txt");
+            if (_sdlReady && File.Exists(mappingsPath))
+            {
+                SDL_AddGamepadMappingsFromFile(mappingsPath);
+            }
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
         {
@@ -273,4 +287,7 @@ public static class PadReader
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     private static extern void SDL_free(IntPtr mem);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int SDL_AddGamepadMappingsFromFile([MarshalAs(UnmanagedType.LPUTF8Str)] string file);
 }

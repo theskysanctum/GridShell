@@ -5,18 +5,14 @@
 #define MyAppExeName "GridShell.exe"
 
 ; GridShell's own process-launching code (SiblingExePath.Resolve) finds its sibling exes
-; (GridShell.Grid.exe, GridShell.Watchdog.exe) by assuming the exact dev-time
-; src/<Project>/bin/<Config>/<TFM>/ folder layout (3 levels under the project folder)
-; relative to whichever exe is currently running - so this installer deliberately
-; reproduces that same folder structure under the install directory instead of a flat
-; Program Files layout, to avoid touching that logic right before a release. This is also
-; why the build is published framework-dependent rather than self-contained - a
-; self-contained/RID-specific publish adds an extra "win-x64" folder level that breaks
-; SiblingExePath's fixed-depth assumption (confirmed by testing: GridShell.Grid.exe
-; couldn't be found at all with that extra folder in place). Framework-dependent means a
-; compatible .NET Desktop Runtime must already be on the target machine - Windows shows
-; its own download prompt automatically if GridShell.exe is launched without one.
-#define MyAppRelDir "src\GridShell\bin\Release\net10.0-windows10.0.19041.0"
+; (GridShell.Grid.exe, GridShell.Watchdog.exe) by walking up from its own exe folder to the
+; project folder and reapplying that same relative path against the sibling project - so this
+; installer reproduces the real dev-time src/<Project>/bin/<Config>/<TFM>/<RID>/ layout under
+; the install directory instead of a flat Program Files layout. The build is self-contained
+; (RuntimeIdentifier win-x64 on all four projects), so the target machine needs no .NET
+; Desktop Runtime pre-installed - this adds the "win-x64" folder level, which
+; SiblingExePath.Resolve now handles via a self-locating walk instead of a fixed depth.
+#define MyAppRelDir "src\GridShell\bin\Release\net10.0-windows10.0.19041.0\win-x64"
 
 [Setup]
 AppId={{B2E1F4A0-5C3D-4E8B-9F2A-1D6C7E8A9B0C}
@@ -43,9 +39,9 @@ UninstallDisplayIcon={app}\{#MyAppRelDir}\{#MyAppExeName}
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "..\publish\GridShell\*"; DestDir: "{app}\src\GridShell\bin\Release\net10.0-windows10.0.19041.0"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\publish\GridShell.Grid\*"; DestDir: "{app}\src\GridShell.Grid\bin\Release\net10.0-windows10.0.19041.0"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\publish\GridShell.Watchdog\*"; DestDir: "{app}\src\GridShell.Watchdog\bin\Release\net10.0-windows10.0.19041.0"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\publish\GridShell\*"; DestDir: "{app}\src\GridShell\bin\Release\net10.0-windows10.0.19041.0\win-x64"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\publish\GridShell.Grid\*"; DestDir: "{app}\src\GridShell.Grid\bin\Release\net10.0-windows10.0.19041.0\win-x64"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\publish\GridShell.Watchdog\*"; DestDir: "{app}\src\GridShell.Watchdog\bin\Release\net10.0-windows10.0.19041.0\win-x64"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 

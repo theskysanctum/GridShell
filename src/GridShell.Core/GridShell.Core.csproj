@@ -5,9 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
     <PackageReference Include="Vanara.PInvoke.CoreAudio" Version="5.0.8" />
     <PackageReference Include="Vanara.PInvoke.DwmApi" Version="5.0.8" />
     <PackageReference Include="Vanara.PInvoke.Gdi32" Version="5.0.8" />
