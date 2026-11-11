@@ -4,214 +4,131 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GridShell</title>
-<meta name="description" content="A custom Windows Start Menu and taskbar replacement built around a fullscreen, controller-first launcher grid.">
+<meta name="description" content="A Windows Start Menu and taskbar replacement built around a fullscreen, controller-first launcher grid.">
+<link rel="canonical" href="https://theskysanctum.com/gridshell/">
 <style>
-  :root {
-    --bg: #15161a;
-    --surface: #1e2026;
-    --border: #2b2e36;
-    --text: #e8e9ec;
-    --muted: #9aa0ab;
-    --accent: #4a90d9;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    line-height: 1.6;
-  }
-  .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
-
-  header.hero {
-    padding: 96px 0 72px;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-  }
-  header.hero h1 {
-    font-size: 3rem;
-    margin: 0 0 12px;
-    letter-spacing: -0.02em;
-  }
-  header.hero p.tagline {
-    font-size: 1.25rem;
-    color: var(--muted);
-    max-width: 640px;
-    margin: 0 auto 32px;
-  }
-  .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .btn {
-    display: inline-block;
-    padding: 12px 24px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-
-  section { padding: 64px 0; border-bottom: 1px solid var(--border); }
-  section:last-of-type { border-bottom: none; }
-  section h2 { font-size: 1.75rem; margin: 0 0 32px; }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-  }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-  }
-  .card h3 { margin: 0 0 8px; font-size: 1.05rem; }
-  .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
-
-  .run-modes { display: grid; gap: 16px; }
-  .run-mode {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px 24px;
-  }
-  .run-mode h3 { margin: 0 0 6px; }
-  .run-mode p { margin: 0; color: var(--muted); }
-  .run-mode .badge {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 999px;
-    margin-left: 8px;
-    vertical-align: middle;
-  }
-  .badge-safe { background: #1f3b2a; color: #6fd198; }
-  .badge-risk { background: #3b241f; color: #e2876d; }
-
-  pre {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    overflow-x: auto;
-    font-size: 0.88rem;
-  }
-  code { font-family: Consolas, "Courier New", monospace; }
-
-  footer {
-    padding: 40px 0 64px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.88rem;
-  }
-  footer a { color: var(--accent); }
+:root{--bg:#0F1115;--panel:#171A21;--line:#2A2F3A;--text:#EEF1F6;--mute:#A3ABBA;--accent:#FFC53D;--link:#7DB7FF}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font:400 1.0625rem/1.65 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif}
+a{color:var(--link)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.wrap{width:min(100% - 2.5rem,62rem);margin-inline:auto}
+.bar{border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;gap:.3rem 1.5rem;flex-wrap:wrap;align-items:center;padding:.8rem 0}
+.bar .back{margin-right:auto;color:var(--mute);text-decoration:none;font-weight:600}
+.bar .back:hover{color:var(--text)}
+.bar nav{display:flex;gap:.2rem 1.3rem;flex-wrap:wrap}
+.bar nav a{color:var(--text);font-weight:600;text-decoration:none;padding:.3rem 0;border-bottom:3px solid transparent}
+.bar nav a:hover{border-color:var(--accent)}
+.hero .wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:2.5rem 4rem;align-items:center;padding:4.5rem 0 4rem}
+h1{margin:0;font:600 clamp(3rem,9vw,5.6rem)/.95 "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.04em}
+.hero p{margin:1.3rem 0 0;font-size:1.2rem;color:var(--mute);max-width:30rem}
+.acts{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.8rem}
+.btn{display:inline-block;padding:.85rem 1.4rem;font-weight:700;text-decoration:none;border:2px solid var(--text);color:var(--text)}
+.btn.main{background:var(--accent);border-color:var(--accent);color:#14161B}
+.btn:hover{filter:brightness(1.1)}
+.mosaic{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:5.2rem;gap:.5rem}
+.t{position:relative;padding:.6rem .7rem;display:flex;align-items:flex-end;font-weight:600;font-size:.95rem;color:#fff;outline:3px solid transparent;outline-offset:3px;transition:outline-color .15s}
+.t.on{outline-color:var(--accent)}
+.t.w2{grid-column:span 2}.t.h2{grid-row:span 2}
+.c1{background:#1E6FD9}.c2{background:#0E9594}.c3{background:#3C9A4B}.c4{background:#D9731A}.c5{background:#7B52C9}.c6{background:#C8453B}.c7{background:#3F5266}
+section{padding:3.6rem 0;border-top:1px solid var(--line)}
+h2{margin:0 0 1.6rem;font:600 1.9rem/1.15 "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.02em}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem 3rem;margin:0;padding:0;list-style:none}
+.feat b{display:block;font-size:1.1rem}
+.feat span{color:var(--mute)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.mode{border:1px solid var(--line);background:var(--panel);padding:1.4rem 1.5rem}
+.mode h3{margin:0 0 .4rem;font-size:1.15rem}
+.mode p{margin:0;color:var(--mute)}
+.tag{display:inline-block;margin-left:.5rem;font-size:.75rem;font-weight:700;padding:.1rem .5rem;vertical-align:middle;background:#1F3B2A;color:#7BDBA1}
+.tag.warn{background:#3F2620;color:#F0997F}
+pre{margin:1rem 0 0;padding:1rem 1.2rem;background:var(--panel);border:1px solid var(--line);overflow-x:auto;font:.92rem/1.5 Consolas,"Courier New",monospace}
+p{margin:0 0 1rem;max-width:40rem}
+footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--mute);font-size:.95rem}
+footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
+@media (max-width:52rem){.hero .wrap{grid-template-columns:1fr;padding:3rem 0}.feat,.modes{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.t{transition:none}}
 </style>
 </head>
 <body>
+<div class="bar"><div class="wrap">
+<a class="back" href="../">The Sky Sanctum</a>
+<nav aria-label="Main">
+<a href="#features">Features</a>
+<a href="#run">Run it</a>
+<a href="#build">Build</a>
+<a href="https://github.com/theskysanctum/GridShell">GitHub</a>
+</nav>
+</div></div>
 
-<header class="hero">
-  <div class="wrap">
-    <h1>GridShell</h1>
-    <p class="tagline">A custom Windows Start Menu and taskbar replacement, built around a
-      fullscreen, controller-first launcher grid — with a dual-pane file explorer, a download
-      manager, and deep emulation tooling built in.</p>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="https://github.com/theskysanctum/GridShell/releases/latest">Download</a>
-      <a class="btn btn-secondary" href="https://github.com/theskysanctum/GridShell">View on GitHub</a>
-    </div>
-  </div>
-</header>
+<header class="hero"><div class="wrap">
+<div>
+<h1>GridShell</h1>
+<p>A Windows Start Menu and taskbar replacement built around a fullscreen launcher grid you can drive with a controller.</p>
+<div class="acts">
+<a class="btn main" href="https://github.com/theskysanctum/GridShell/releases/latest">Download</a>
+<a class="btn" href="https://github.com/theskysanctum/GridShell">Source on GitHub</a>
+</div>
+</div>
+<div class="mosaic" aria-hidden="true" id="mosaic">
+<div class="t c1 w2 h2">Apps</div>
+<div class="t c2">Web</div>
+<div class="t c3">Games</div>
+<div class="t c4 w2">Files</div>
+<div class="t c5">Downloads</div>
+<div class="t c6">RetroArch</div>
+<div class="t c7 w2">Settings</div>
+<div class="t c3">Steam</div>
+<div class="t c2">GOG</div>
+<div class="t c4 w2">Emulation</div>
+</div>
+</div></header>
 
-<section>
-  <div class="wrap">
-    <h2>Features</h2>
-    <div class="grid">
-      <div class="card">
-        <h3>Launcher grid</h3>
-        <p>A fullscreen, Windows-8-Start-Screen-style grid of Apps, Web, and Games tiles —
-          fully navigable by keyboard, mouse, or game controller.</p>
-      </div>
-      <div class="card">
-        <h3>Taskbar sidebar</h3>
-        <p>Window list, clock, and battery (with per-device Bluetooth battery levels),
-          reserving real desktop space like a normal taskbar.</p>
-      </div>
-      <div class="card">
-        <h3>File Explorer</h3>
-        <p>Dual-pane, controller-navigable file management with archive extract/compress and
-          disc-image tooling (CHD, Xbox ISO) built in.</p>
-      </div>
-      <div class="card">
-        <h3>Download Manager</h3>
-        <p>Paste a link or magnet, resolved through Real-Debrid when configured, downloaded via
-          a bundled multi-connection aria2 daemon.</p>
-      </div>
-      <div class="card">
-        <h3>Emulation</h3>
-        <p>190+ platforms mapped to RetroArch or the best standalone emulator for that system,
-          each verified to launch in fullscreen, with one-click RetroAchievements login.</p>
-      </div>
-      <div class="card">
-        <h3>Installed-game detection</h3>
-        <p>Scans Steam, Epic Games, and GOG Galaxy for already-installed games and adds tiles
-          for them automatically.</p>
-      </div>
-      <div class="card">
-        <h3>Desktop widgets</h3>
-        <p>Floating, click-through Clock, System Stats, Desktop Icons, and media (video/image)
-          widgets you add from Settings — only available once your wallpaper is set to a video
-          or image file.</p>
-      </div>
-      <div class="card">
-        <h3>Kiosk Mode</h3>
-        <p>PIN-locks tiles, widgets, and wallpaper/appearance editing, and blocks the power menu
-          and exiting GridShell — hand the PC to a kid without worrying about things getting
-          changed.</p>
-      </div>
-    </div>
-  </div>
-</section>
+<section id="features"><div class="wrap">
+<h2>What it does</h2>
+<ul class="feat">
+<li><b>Launcher grid</b><span>A fullscreen grid of Apps, Web and Games tiles. Move around with the keyboard, the mouse, or a controller's D-pad and stick.</span></li>
+<li><b>Taskbar sidebar</b><span>Window list, clock and battery, with Bluetooth device battery levels. It reserves real desktop space like a normal taskbar.</span></li>
+<li><b>On-screen keyboard</b><span>A keyboard you can use with a controller to type anywhere in Windows.</span></li>
+<li><b>File Explorer</b><span>Two panes. Copy, cut, paste, rename and delete, extract and compress archives, and work with disc images (CHD and Xbox ISO).</span></li>
+<li><b>Download Manager</b><span>Paste a link or magnet. Real-Debrid resolves it when set up, and a built-in aria2 downloads it fast. A small Chrome extension sends browser downloads straight in.</span></li>
+<li><b>Emulation</b><span>190+ platforms, each mapped to RetroArch or the best standalone emulator and set to open fullscreen. One login sets up RetroAchievements across RetroArch, Dolphin and PCSX2.</span></li>
+<li><b>Installed games</b><span>Finds games from Steam, Epic and GOG Galaxy and adds tiles for them.</span></li>
+<li><b>Appearance</b><span>Theme, accent color, tile size, and a system-wide font picker that takes your own font file.</span></li>
+</ul>
+</div></section>
 
-<section>
-  <div class="wrap">
-    <h2>Two ways to run it</h2>
-    <div class="run-modes">
-      <div class="run-mode">
-        <h3>Alongside your desktop <span class="badge badge-safe">Safe, reversible</span></h3>
-        <p>Just run GridShell.exe. It hides the real taskbar and takes over the Win key/Start
-          button while running — closing it instantly restores normal Windows behavior.</p>
-      </div>
-      <div class="run-mode">
-        <h3>As your actual Windows shell <span class="badge badge-risk">Advanced, VM-first</span></h3>
-        <p>Registers GridShell in place of explorer.exe at login, with a watchdog that
-          relaunches it on crash and falls back to explorer.exe after repeated failures. Try
-          this in a VM or secondary account before your main one.</p>
-      </div>
-    </div>
-  </div>
-</section>
+<section id="run"><div class="wrap">
+<h2>Two ways to run it</h2>
+<div class="modes">
+<div class="mode"><h3>Next to Windows <span class="tag">Safe</span></h3><p>Run <code>GridShell.exe</code>. It hides the real taskbar while it runs. Close it, or pick "Restore Explorer", and Windows is back right away.</p></div>
+<div class="mode"><h3>As your Windows shell <span class="tag warn">Careful</span></h3><p>Replaces <code>explorer.exe</code> at login. A watchdog restarts GridShell if it crashes and falls back to Explorer after repeated failures. Try it in a virtual machine or a spare account first, because it changes how your whole session starts.</p></div>
+</div>
+</div></section>
 
-<section>
-  <div class="wrap">
-    <h2>Building from source</h2>
-    <p style="color: var(--muted)">Requires the .NET 10 SDK and Windows 10 (19041+) or Windows 11.</p>
-    <pre><code>git clone https://github.com/theskysanctum/GridShell.git
-cd GridShell
-dotnet build GridShell.slnx</code></pre>
-  </div>
-</section>
+<section id="build"><div class="wrap">
+<h2>Build it</h2>
+<p>You need the .NET 10 SDK and Windows 10 (version 19041 or newer) or Windows 11.</p>
+<pre><code>dotnet build GridShell.slnx</code></pre>
+<p style="margin-top:1rem">Each project's <code>bin</code> folder then holds its executable. <code>GridShell.exe</code> is the taskbar process, and it starts <code>GridShell.Grid.exe</code> for you.</p>
+</div></section>
 
-<footer>
-  <div class="wrap">
-    MIT licensed. See <a href="https://github.com/theskysanctum/GridShell/blob/master/LICENSE">LICENSE</a>
-    for bundled third-party tool/font licenses.
-  </div>
-</footer>
+<footer><div class="wrap">
+<span>MIT licensed. Bundled tools keep their own licenses.</span>
+<a href="https://github.com/theskysanctum/GridShell">GitHub</a>
+<a href="../">The Sky Sanctum</a>
+</div></footer>
 
+<script>
+(function(){
+var el=document.getElementById('mosaic');if(!el)return;
+var t=[].slice.call(el.children),i=0;t[0].classList.add('on');
+if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+var order=[0,1,2,5,6,3,4,7,8];
+setInterval(function(){t[order[i%order.length]].classList.remove('on');i++;t[order[i%order.length]].classList.add('on')},1400);
+})();
+</script>
 </body>
 </html>
