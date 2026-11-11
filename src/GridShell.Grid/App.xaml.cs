@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using GridShell.Core.Controllers;
 using GridShell.Core.Interop;
 using GridShell.Core.RealDebrid;
 using GridShell.Core.Settings;
@@ -63,6 +64,8 @@ public partial class App : System.Windows.Application
             Shutdown();
             return;
         }
+
+        ControllerAutoApply.Start();
 
         // Applied before the first window is created so it never renders with the wrong
         // theme even briefly. ThemeMode (WPF's own Fluent light/dark) and ThemePalette (our

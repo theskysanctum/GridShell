@@ -18,6 +18,11 @@ public static class SyntheticMouse
 
     public static void RightUp() => Send(new MOUSEINPUT { dwFlags = MOUSEEVENTF.MOUSEEVENTF_RIGHTUP });
 
+    /// <summary>amount is in the same units as a real wheel click (120 = one notch); positive
+    /// scrolls up/away from the user, negative scrolls down, matching Windows' own convention.</summary>
+    public static void Scroll(int amount) =>
+        Send(new MOUSEINPUT { mouseData = amount, dwFlags = MOUSEEVENTF.MOUSEEVENTF_WHEEL });
+
     private static void Send(MOUSEINPUT mi)
     {
         var input = new INPUT { type = INPUTTYPE.INPUT_MOUSE, mi = mi };

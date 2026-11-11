@@ -65,9 +65,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         ("e9b0", "Grid"),
         ("e871", "Dashboard"),
         ("e1bd", "Widgets"),
-        ("e30f", "Gamepad"),
-        ("ea28", "Esports"),
-        ("f135", "Controller"),
     };
 
     public ObservableCollection<StartIconOption> StartIconOptions { get; } = new();

@@ -450,6 +450,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e) => OpenSettings();
 
+    private void ControllerManagerButton_Click(object sender, RoutedEventArgs e) =>
+        new ControllerManagerWindow { Owner = this }.ShowDialog();
+
     private void ExplorerButton_Click(object sender, RoutedEventArgs e)
     {
         // Same spirit as launching a tile - a real app window is taking over, so the grid

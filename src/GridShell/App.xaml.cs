@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Interop;
+using GridShell.Core.Controllers;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
 using GridShell.Core.Widgets;
@@ -52,6 +53,8 @@ public partial class App : System.Windows.Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        ControllerAutoApply.Start();
 
         ApplyTheme();
 

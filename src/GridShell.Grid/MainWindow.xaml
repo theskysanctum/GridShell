@@ -341,6 +341,11 @@
                     <TextBlock Text="&#xf090;" FontFamily="{StaticResource IconFont}"
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
                 </Button>
+                <Button Padding="8" Margin="0,0,8,0" Click="ControllerManagerButton_Click" Style="{StaticResource ModernButtonStyle}"
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Controller Manager">
+                    <TextBlock Text="&#xf135;" FontFamily="{StaticResource IconFont}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
+                </Button>
                 <Button Padding="8" Click="SettingsButton_Click" Style="{StaticResource ModernButtonStyle}"
                         Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Settings">
                     <TextBlock Text="&#xe8b8;" FontFamily="{StaticResource IconFont}"

@@ -22,6 +22,11 @@ public enum PadButtons
     DPadDown = 1 << 11,
     DPadLeft = 1 << 12,
     DPadRight = 1 << 13,
+
+    /// <summary>The DualShock4/DualSense touchpad's physical click (a real button, distinct
+    /// from touch presence/position - SDL_GAMEPAD_BUTTON_TOUCHPAD, ordinal 20 in SDL's own
+    /// SDL_GamepadButton enum).</summary>
+    TouchpadClick = 1 << 14,
 }
 
 public readonly record struct PadReading(
@@ -32,6 +37,24 @@ public readonly record struct PadReading(
     double RightY,
     double LeftTrigger,
     double RightTrigger);
+
+/// <summary>One currently-connected gamepad, for callers (Controller Manager) that need to
+/// address a specific device rather than PadReader's own merged-across-all-pads Read().</summary>
+public readonly record struct PadDevice(uint Id, string Name, ushort VendorId, ushort ProductId);
+
+/// <summary>Mirrors SDL3's SDL_SensorType ordinals exactly (SDL_sensor.h) - only the two
+/// Controller Manager actually exposes (gyro/accel); the Joy-Con-half-specific values aren't
+/// surfaced since GridShell always reads combined Joy-Cons as one pad (SDL_JOYSTICK_HIDAPI_
+/// COMBINE_JOY_CONS, already set in EnsureSdl).</summary>
+public enum PadSensorType
+{
+    Accel = 1,
+    Gyro = 2,
+}
+
+public readonly record struct PadSensorSample(float X, float Y, float Z);
+
+public readonly record struct PadTouchpadFinger(bool Down, float X, float Y, float Pressure);
 
 public static class PadReader
 {
@@ -45,6 +68,13 @@ public static class PadReader
     private static DateTime _lastRead = DateTime.MinValue;
     private static DateTime _lastScan = DateTime.MinValue;
     private static PadReading? _cached;
+
+    /// <summary>Raised on this process's own SDL instance the moment a gamepad is newly opened
+    /// (first seen, or replugged) - each process (GridShell, GridShell.Grid) has its own
+    /// independent PadReader/SDL state, so anything that needs to react in both (e.g.
+    /// re-applying a saved LED color/trigger mode) must subscribe from each process's own
+    /// startup, not just one.</summary>
+    public static event Action<PadDevice>? DeviceConnected;
 
     public static PadReading? Read()
     {
@@ -142,6 +172,7 @@ public static class PadReader
                 if (Btn(pad, 12)) buttons |= PadButtons.DPadDown;
                 if (Btn(pad, 13)) buttons |= PadButtons.DPadLeft;
                 if (Btn(pad, 14)) buttons |= PadButtons.DPadRight;
+                if (Btn(pad, 20)) buttons |= PadButtons.TouchpadClick;
 
                 Strongest(ref lx, Axis(pad, 0));
                 Strongest(ref ly, -Axis(pad, 1));
@@ -157,6 +188,162 @@ public static class PadReader
         {
             _sdlReady = false;
             return null;
+        }
+    }
+
+    /// <summary>Lists every currently-open SDL gamepad by its own identity, for callers that need
+    /// to address one specific device (Controller Manager) rather than the merged-across-all-pads
+    /// Read() navigation uses.</summary>
+    public static IReadOnlyList<PadDevice> ListDevices()
+    {
+        lock (Gate)
+        {
+            if (!EnsureSdl())
+            {
+                return Array.Empty<PadDevice>();
+            }
+
+            var now = DateTime.UtcNow;
+            if (now - _lastScan >= RescanInterval)
+            {
+                _lastScan = now;
+                Rescan();
+            }
+
+            return Open.Select(kv => new PadDevice(
+                kv.Key,
+                Marshal.PtrToStringUTF8(SDL_GetGamepadName(kv.Value)) ?? "Unknown Controller",
+                SDL_GetGamepadVendor(kv.Value),
+                SDL_GetGamepadProduct(kv.Value))).ToList();
+        }
+    }
+
+    /// <summary>Reads one specific device by the id ListDevices() returned, rather than the
+    /// merged reading across all open pads that Read() returns.</summary>
+    public static PadReading? ReadDevice(uint id)
+    {
+        lock (Gate)
+        {
+            if (!Open.TryGetValue(id, out var pad))
+            {
+                return null;
+            }
+
+            SDL_UpdateGamepads();
+
+            var buttons = PadButtons.None;
+            if (Btn(pad, 0)) buttons |= PadButtons.A;
+            if (Btn(pad, 1)) buttons |= PadButtons.B;
+            if (Btn(pad, 2)) buttons |= PadButtons.X;
+            if (Btn(pad, 3)) buttons |= PadButtons.Y;
+            if (Btn(pad, 4)) buttons |= PadButtons.View;
+            if (Btn(pad, 6)) buttons |= PadButtons.Menu;
+            if (Btn(pad, 7)) buttons |= PadButtons.LeftThumbstick;
+            if (Btn(pad, 8)) buttons |= PadButtons.RightThumbstick;
+            if (Btn(pad, 9)) buttons |= PadButtons.LeftShoulder;
+            if (Btn(pad, 10)) buttons |= PadButtons.RightShoulder;
+            if (Btn(pad, 11)) buttons |= PadButtons.DPadUp;
+            if (Btn(pad, 12)) buttons |= PadButtons.DPadDown;
+            if (Btn(pad, 13)) buttons |= PadButtons.DPadLeft;
+            if (Btn(pad, 14)) buttons |= PadButtons.DPadRight;
+            if (Btn(pad, 20)) buttons |= PadButtons.TouchpadClick;
+
+            return new PadReading(
+                buttons,
+                Axis(pad, 0),
+                -Axis(pad, 1),
+                Axis(pad, 2),
+                -Axis(pad, 3),
+                Math.Max(0, Axis(pad, 4)),
+                Math.Max(0, Axis(pad, 5)));
+        }
+    }
+
+    public static bool SetLed(uint id, byte red, byte green, byte blue)
+    {
+        lock (Gate)
+        {
+            return Open.TryGetValue(id, out var pad) && SDL_SetGamepadLED(pad, red, green, blue);
+        }
+    }
+
+    public static bool Rumble(uint id, ushort lowFrequency, ushort highFrequency, uint durationMs)
+    {
+        lock (Gate)
+        {
+            return Open.TryGetValue(id, out var pad) && SDL_RumbleGamepad(pad, lowFrequency, highFrequency, durationMs);
+        }
+    }
+
+    public static bool RumbleTriggers(uint id, ushort left, ushort right, uint durationMs)
+    {
+        lock (Gate)
+        {
+            return Open.TryGetValue(id, out var pad) && SDL_RumbleGamepadTriggers(pad, left, right, durationMs);
+        }
+    }
+
+    public static bool HasSensor(uint id, PadSensorType type)
+    {
+        lock (Gate)
+        {
+            return Open.TryGetValue(id, out var pad) && SDL_GamepadHasSensor(pad, (int)type);
+        }
+    }
+
+    public static bool SetSensorEnabled(uint id, PadSensorType type, bool enabled)
+    {
+        lock (Gate)
+        {
+            return Open.TryGetValue(id, out var pad) && SDL_SetGamepadSensorEnabled(pad, (int)type, enabled);
+        }
+    }
+
+    public static PadSensorSample? ReadSensor(uint id, PadSensorType type)
+    {
+        lock (Gate)
+        {
+            if (!Open.TryGetValue(id, out var pad))
+            {
+                return null;
+            }
+
+            var data = new float[3];
+            return SDL_GetGamepadSensorData(pad, (int)type, data, 3) ? new PadSensorSample(data[0], data[1], data[2]) : null;
+        }
+    }
+
+    public static int TouchpadCount(uint id)
+    {
+        lock (Gate)
+        {
+            return Open.TryGetValue(id, out var pad) ? SDL_GetNumGamepadTouchpads(pad) : 0;
+        }
+    }
+
+    public static PadTouchpadFinger? ReadTouchpadFinger(uint id, int touchpad, int finger)
+    {
+        lock (Gate)
+        {
+            if (!Open.TryGetValue(id, out var pad))
+            {
+                return null;
+            }
+
+            return SDL_GetGamepadTouchpadFinger(pad, touchpad, finger, out var down, out var x, out var y, out var pressure)
+                ? new PadTouchpadFinger(down, x, y, pressure)
+                : null;
+        }
+    }
+
+    /// <summary>Raw output-report passthrough (e.g. DualSense adaptive trigger effect bytes) -
+    /// SDL does not interpret or validate this data, it hands it straight to the device's own
+    /// HID write path, so the caller is responsible for building a correct report.</summary>
+    public static bool SendEffect(uint id, byte[] data)
+    {
+        lock (Gate)
+        {
+            return Open.TryGetValue(id, out var pad) && SDL_SendGamepadEffect(pad, data, data.Length);
         }
     }
 
@@ -235,6 +422,11 @@ public static class PadReader
                 if (pad != IntPtr.Zero)
                 {
                     Open[id] = pad;
+                    DeviceConnected?.Invoke(new PadDevice(
+                        id,
+                        Marshal.PtrToStringUTF8(SDL_GetGamepadName(pad)) ?? "Unknown Controller",
+                        SDL_GetGamepadVendor(pad),
+                        SDL_GetGamepadProduct(pad)));
                 }
             }
         }
@@ -290,4 +482,50 @@ public static class PadReader
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     private static extern int SDL_AddGamepadMappingsFromFile([MarshalAs(UnmanagedType.LPUTF8Str)] string file);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr SDL_GetGamepadName(IntPtr gamepad);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ushort SDL_GetGamepadVendor(IntPtr gamepad);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ushort SDL_GetGamepadProduct(IntPtr gamepad);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_SetGamepadLED(IntPtr gamepad, byte red, byte green, byte blue);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_RumbleGamepad(IntPtr gamepad, ushort lowFrequencyRumble, ushort highFrequencyRumble, uint durationMs);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_RumbleGamepadTriggers(IntPtr gamepad, ushort leftRumble, ushort rightRumble, uint durationMs);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_GamepadHasSensor(IntPtr gamepad, int sensorType);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_SetGamepadSensorEnabled(IntPtr gamepad, int sensorType, [MarshalAs(UnmanagedType.U1)] bool enabled);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_GetGamepadSensorData(IntPtr gamepad, int sensorType, [Out] float[] data, int numValues);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int SDL_GetNumGamepadTouchpads(IntPtr gamepad);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_GetGamepadTouchpadFinger(
+        IntPtr gamepad, int touchpad, int finger,
+        [MarshalAs(UnmanagedType.U1)] out bool down, out float x, out float y, out float pressure);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static extern bool SDL_SendGamepadEffect(IntPtr gamepad, [In] byte[] data, int size);
 }

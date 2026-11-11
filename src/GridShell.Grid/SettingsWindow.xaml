@@ -369,7 +369,7 @@
                                         </Style>
                                     </Button.Style>
                                     <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}" FontSize="18"
-                                               Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                               Foreground="Black"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Button>
                             </DataTemplate>
