@@ -1,6 +1,5 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Windows.Threading;
-using Windows.Gaming.Input;
 
 namespace GridShell.Core.Interop;
 
@@ -37,17 +36,15 @@ public sealed class ControllerMouseInput : IDisposable
 
     private void Poll()
     {
-        var gamepad = Gamepad.Gamepads.FirstOrDefault();
-        if (gamepad is null || _gameDetector.IsGameForeground())
+        var maybeReading = PadReader.Read();
+        if (maybeReading is not { } reading || _gameDetector.IsGameForeground())
         {
             ReleaseHeldButtons();
             return;
         }
 
-        var reading = gamepad.GetCurrentReading();
-
-        var x = ApplyDeadzone(reading.LeftThumbstickX);
-        var y = ApplyDeadzone(reading.LeftThumbstickY);
+        var x = ApplyDeadzone(reading.LeftX);
+        var y = ApplyDeadzone(reading.LeftY);
         if (x != 0 || y != 0)
         {
             // Screen Y grows downward; stick Y grows upward — invert to move the cursor the

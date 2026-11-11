@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,7 +8,6 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using GridShell.Core.Interop;
 using Vanara.PInvoke;
-using Windows.Gaming.Input;
 using static Vanara.PInvoke.DwmApi;
 using static Vanara.PInvoke.User32;
 
@@ -234,14 +233,12 @@ public partial class OnScreenKeyboardWindow : Window, INotifyPropertyChanged
 
     private void PollMove()
     {
-        var gamepad = Gamepad.Gamepads.FirstOrDefault();
-        if (gamepad is null)
+        if (PadReader.Read() is not { } reading)
         {
             return;
         }
 
-        var reading = gamepad.GetCurrentReading();
-        var (x, y) = ApplyRadialDeadzone(reading.RightThumbstickX, reading.RightThumbstickY);
+        var (x, y) = ApplyRadialDeadzone(reading.RightX, reading.RightY);
         if (x == 0 && y == 0)
         {
             // Nothing pushed this tick - drop any sub-pixel remainder rather than letting it

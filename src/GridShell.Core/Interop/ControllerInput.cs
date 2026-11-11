@@ -1,6 +1,5 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Windows.Threading;
-using Windows.Gaming.Input;
 
 namespace GridShell.Core.Interop;
 
@@ -50,10 +49,8 @@ public enum NavigationStick
     Right,
 }
 
-/// <summary>Polls Windows' Gamepad API (which transparently covers Xbox controllers and, per
-/// Windows' own built-in HID translation, PlayStation DualSense/DualShock too — verified: a
-/// connected DualSense shows up here as a standard named-button gamepad, not just as a raw HID
-/// device) and raises high-level navigation actions. Directional actions auto-repeat while
+/// <summary>Polls controllers through PadReader (SDL3: Xbox, PlayStation and Nintendo Switch
+/// controllers, all connected pads merged; Windows' Gamepad API as a fallback) and raises high-level navigation actions. Directional actions auto-repeat while
 /// held, like a keyboard; button actions fire once per press.</summary>
 public sealed class ControllerInput : IDisposable
 {
@@ -86,93 +83,92 @@ public sealed class ControllerInput : IDisposable
 
     private void Poll()
     {
-        var gamepad = Gamepad.Gamepads.FirstOrDefault();
-        if (gamepad is null)
+        var maybeReading = PadReader.Read();
+        if (maybeReading is not { } reading)
         {
             _pressedSince.Clear();
             _nextRepeatAt.Clear();
             return;
         }
 
-        var reading = gamepad.GetCurrentReading();
         var buttons = reading.Buttons;
 
         var (stickX, stickY) = _stick switch
         {
-            NavigationStick.Left => (reading.LeftThumbstickX, reading.LeftThumbstickY),
-            NavigationStick.Right => (reading.RightThumbstickX, reading.RightThumbstickY),
+            NavigationStick.Left => (reading.LeftX, reading.LeftY),
+            NavigationStick.Right => (reading.RightX, reading.RightY),
             _ => (0.0, 0.0),
         };
 
         var active = new HashSet<ControllerAction>();
-        if (buttons.HasFlag(GamepadButtons.DPadUp) || stickY > StickThreshold)
+        if (buttons.HasFlag(PadButtons.DPadUp) || stickY > StickThreshold)
         {
             active.Add(ControllerAction.Up);
         }
 
-        if (buttons.HasFlag(GamepadButtons.DPadDown) || stickY < -StickThreshold)
+        if (buttons.HasFlag(PadButtons.DPadDown) || stickY < -StickThreshold)
         {
             active.Add(ControllerAction.Down);
         }
 
-        if (buttons.HasFlag(GamepadButtons.DPadLeft) || stickX < -StickThreshold)
+        if (buttons.HasFlag(PadButtons.DPadLeft) || stickX < -StickThreshold)
         {
             active.Add(ControllerAction.Left);
         }
 
-        if (buttons.HasFlag(GamepadButtons.DPadRight) || stickX > StickThreshold)
+        if (buttons.HasFlag(PadButtons.DPadRight) || stickX > StickThreshold)
         {
             active.Add(ControllerAction.Right);
         }
 
-        if (buttons.HasFlag(GamepadButtons.A))
+        if (buttons.HasFlag(PadButtons.A))
         {
             active.Add(ControllerAction.Accept);
         }
 
         // Checked before plain B below, so holding both together fires only the screenshot
         // menu, not Back as well.
-        if (buttons.HasFlag(GamepadButtons.View) && buttons.HasFlag(GamepadButtons.B))
+        if (buttons.HasFlag(PadButtons.View) && buttons.HasFlag(PadButtons.B))
         {
             active.Add(ControllerAction.ScreenshotMenu);
         }
-        else if (buttons.HasFlag(GamepadButtons.B))
+        else if (buttons.HasFlag(PadButtons.B))
         {
             active.Add(ControllerAction.Back);
         }
 
-        if (buttons.HasFlag(GamepadButtons.Y))
+        if (buttons.HasFlag(PadButtons.Y))
         {
             active.Add(ControllerAction.OpenKeyboard);
         }
 
-        if (buttons.HasFlag(GamepadButtons.X))
+        if (buttons.HasFlag(PadButtons.X))
         {
             active.Add(ControllerAction.Backspace);
         }
 
-        if (buttons.HasFlag(GamepadButtons.RightThumbstick))
+        if (buttons.HasFlag(PadButtons.RightThumbstick))
         {
             active.Add(ControllerAction.Shift);
         }
 
-        if (buttons.HasFlag(GamepadButtons.LeftShoulder))
+        if (buttons.HasFlag(PadButtons.LeftShoulder))
         {
             active.Add(ControllerAction.TabPrevious);
         }
 
-        if (buttons.HasFlag(GamepadButtons.RightShoulder))
+        if (buttons.HasFlag(PadButtons.RightShoulder))
         {
             active.Add(ControllerAction.TabNext);
         }
 
         // Checked before plain Menu below, so holding both together fires only the kill
         // shortcut, not ToggleMenu as well.
-        if (buttons.HasFlag(GamepadButtons.View) && buttons.HasFlag(GamepadButtons.Menu))
+        if (buttons.HasFlag(PadButtons.View) && buttons.HasFlag(PadButtons.Menu))
         {
             active.Add(ControllerAction.KillEmulator);
         }
-        else if (buttons.HasFlag(GamepadButtons.Menu))
+        else if (buttons.HasFlag(PadButtons.Menu))
         {
             active.Add(ControllerAction.ToggleMenu);
         }

@@ -18,6 +18,7 @@
     <PackageReference Include="Vanara.PInvoke.Shell32" Version="5.0.8" />
     <PackageReference Include="Vanara.PInvoke.User32" Version="5.0.8" />
     <PackageReference Include="Vanara.Windows.Shell" Version="5.0.8" />
+    <PackageReference Include="ppy.SDL3-CS" Version="2026.1002.1" />
     <PackageReference Include="System.Management" Version="9.0.0" />
   </ItemGroup>
 
