@@ -19,9 +19,12 @@ public static class EmulationPlatforms
 {
     public const string RomsRootPath = @"C:\GridShell\Games\ROMs";
 
-    /// <summary>Where RetroArch (and, in future, every standalone emulator) looks for BIOS/
-    /// firmware files - see RetroArchCoreAutoWire, which points RetroArch's own
-    /// "System/BIOS Directory" setting here.</summary>
+    /// <summary>Where RetroArch, PCSX2, DuckStation, melonDS, and MAME look for BIOS/firmware
+    /// files - see RetroArchCoreAutoWire and EmulatorBiosAutoWire, which point each emulator's
+    /// own BIOS/firmware setting at a subfolder here. Dolphin and Xenia need no BIOS/firmware at
+    /// all; Cemu, Azahar, Vita3K, RPCS3, Supermodel, and xemu aren't wired here since each is
+    /// either file-presence/GUI-installer driven rather than a settable directory, or its exact
+    /// config key/location couldn't be confirmed against an authoritative source.</summary>
     public const string BiosRootPath = @"C:\GridShell\Games\Bios";
 
     public static readonly IReadOnlyList<EmulationPlatform> All = new[]

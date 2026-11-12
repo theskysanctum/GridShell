@@ -28,6 +28,8 @@ public static class EmulatorAutoWire
             return;
         }
 
+        EmulatorBiosAutoWire.TryWire(app.Id, exePath);
+
         var settings = AppSettingsStore.Load();
         var changed = false;
 
