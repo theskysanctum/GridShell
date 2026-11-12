@@ -13,8 +13,11 @@ namespace GridShell.Core.Store;
 /// with a downloadable Windows build (GithubRepo on its StoreApp entry) - downloads the latest
 /// release's best-matching Windows archive (.zip via .NET's own ZipFile, or .7z via the bundled
 /// 7za.exe - RPCS3's only real Windows build is a .7z, confirmed live) via the GitHub REST API
-/// and extracts it under %LocalAppData%\GridShell\StoreApps\{id}\, the same way a manual
-/// "download and unzip somewhere" install would go, just automated. There's no real installer
+/// and extracts it under WingetInstaller.InstallRoot\{id}\ (C:\GridShell\Applications\{id}\) -
+/// the same place winget-installed Store apps land too, where their own installer honors
+/// winget's --location flag, so everything GridShell manages stays under one root rather than
+/// scattered. The same way a manual "download and unzip somewhere" install would go, just
+/// automated. There's no real installer
 /// and nothing registers an Uninstall entry, so "installed" is just "that folder has an exe in
 /// it" (InstalledAppLocator.FindBestExeInDirectory), and `/releases/latest` itself already
 /// excludes prereleases/dev builds - confirmed against Visual Pinball X's own release history,
@@ -32,8 +35,7 @@ public static class GitHubReleaseInstaller
         return client;
     }
 
-    public static string InstallRoot(string appId) => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GridShell", "StoreApps", appId);
+    public static string InstallRoot(string appId) => Path.Combine(WingetInstaller.InstallRoot, appId);
 
     public static bool IsInstalled(string appId) =>
         InstalledAppLocator.FindBestExeInDirectory(InstallRoot(appId)) is not null;

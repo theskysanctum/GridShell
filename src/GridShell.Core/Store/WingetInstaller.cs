@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace GridShell.Core.Store;
@@ -22,6 +23,16 @@ public sealed record InstallResult(InstallOutcome Outcome, string Message);
 /// "No newer package versions are available", not 0).</summary>
 public static class WingetInstaller
 {
+    /// <summary>Every GridShell-managed app lives under here, so installs stay out of the usual
+    /// scattered Program Files/per-package locations - confirmed live against 3 real packages
+    /// spanning both installer technologies winget uses (7zip.7zip and Audacity.Audacity's .msi
+    /// installers, OBSProject.OBSStudio's .exe one), all 3 honoring winget's own `--location`
+    /// flag and landing exactly here instead of their normal default. Winget's own docs mark
+    /// --location as "if supported" per-package, so this isn't guaranteed for every catalog
+    /// entry - an install that doesn't support it just lands in that installer's own default
+    /// location instead, same as it always did, not a failure either way.</summary>
+    public const string InstallRoot = @"C:\GridShell\Applications";
+
     /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
     /// InstallAsync uses - lets the Store reflect real install state when it opens, not just
     /// whatever happened during the current app session.</summary>
@@ -31,8 +42,9 @@ public static class WingetInstaller
         return listResult is { ExitCode: 0 };
     }
 
-    public static async Task<InstallResult> InstallAsync(string wingetId)
+    public static async Task<InstallResult> InstallAsync(StoreApp app)
     {
+        var wingetId = app.WingetId;
         var listResult = await RunAsync("list", $"--id {wingetId} -e --accept-source-agreements");
         if (listResult is null)
         {
@@ -45,8 +57,10 @@ public static class WingetInstaller
             return new InstallResult(InstallOutcome.AlreadyInstalled, "Already installed.");
         }
 
+        var location = Path.Combine(InstallRoot, app.Id);
         var installResult = await RunAsync("install",
-            $"--id {wingetId} -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity --source winget");
+            $"--id {wingetId} -e --silent --accept-package-agreements --accept-source-agreements " +
+            $"--disable-interactivity --source winget --location \"{location}\"");
         if (installResult is null)
         {
             return new InstallResult(InstallOutcome.WingetNotFound,

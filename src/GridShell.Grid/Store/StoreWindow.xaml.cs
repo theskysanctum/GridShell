@@ -181,7 +181,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         app.State = StoreAppState.Installing;
         var result = app.App.InstallMethod == "github"
             ? await GitHubReleaseInstaller.InstallAsync(app.App)
-            : await WingetInstaller.InstallAsync(app.App.WingetId);
+            : await WingetInstaller.InstallAsync(app.App);
 
         app.State = result.Outcome switch
         {
