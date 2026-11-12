@@ -231,8 +231,26 @@ public partial class OnScreenKeyboardWindow : Window, INotifyPropertyChanged
         Hide();
     }
 
+    private bool _nintendoLayoutHints;
+
+    /// <summary>Nintendo's physical A/B/X/Y layout is rotated 180° from Xbox/PlayStation's (its
+    /// "A" sits where Xbox's "B" does, "X"/"Y" are swapped too) - swap the labels shown in the
+    /// hint bar to match whatever's actually printed on a connected Switch-layout pad, rather
+    /// than always showing Xbox/PlayStation labels. Nothing about which physical button performs
+    /// which action changes - purely the displayed text.</summary>
+    public string HintText => _nintendoLayoutHints
+        ? "D-pad: move   •   R-stick: move window   •   R3: shift   •   Cross/B: type   •   Square/Y: backspace   •   Triangle/X: space   •   Done: close"
+        : "D-pad: move   •   R-stick: move window   •   R3: shift   •   Cross/A: type   •   Square/X: backspace   •   Triangle/Y: space   •   Done: close";
+
     private void PollMove()
     {
+        var nintendoLayout = PadReader.IsAnyNintendoControllerConnected();
+        if (nintendoLayout != _nintendoLayoutHints)
+        {
+            _nintendoLayoutHints = nintendoLayout;
+            OnPropertyChanged(nameof(HintText));
+        }
+
         if (PadReader.Read() is not { } reading)
         {
             return;

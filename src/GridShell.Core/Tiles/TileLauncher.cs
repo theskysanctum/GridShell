@@ -62,6 +62,14 @@ public static class TileLauncher
                 WindowStyle = tile.Kind == TileKind.Game ? ProcessWindowStyle.Normal : ProcessWindowStyle.Maximized,
             });
 
+            // A game tile whose target IS one of the known PC game storefront launchers (Steam,
+            // Epic, GOG, itch) - e.g. Steam.exe with "-applaunch <id>" - actually starts that
+            // launcher, not the real game; it hands off to/spawns the game itself. Once the
+            // user's done, nothing closes the launcher on its own, so it's scoped exactly to
+            // this: only a tile explicitly configured to launch through one of them, never any
+            // launcher that merely happens to be running.
+            var launcherToCloseAfter = tile.Kind == TileKind.Game ? MatchKnownLauncher(targetPath) : null;
+
             // A freshly launched process doesn't reliably get Windows' foreground focus on its
             // own - confirmed by real testing (a game needed a manual click after starting) -
             // actively find its window once it appears and force focus onto it, same mechanism
@@ -76,6 +84,12 @@ public static class TileLauncher
                     {
                         WindowEnumerator.ForceForeground(newWindow);
                         LogFocusAttempt($"Found window after {attempt + 1} attempt(s), ForceForeground called for '{targetPath}'.");
+
+                        if (launcherToCloseAfter is { } launcher)
+                        {
+                            WatchAndCloseLauncherAfter(newWindow, launcher);
+                        }
+
                         return;
                     }
                 }
@@ -98,6 +112,72 @@ public static class TileLauncher
             }
 
             return false;
+        }
+    }
+
+    private static readonly (GameLauncher Launcher, string ExeName)[] KnownLaunchers =
+    {
+        (GameLauncher.Steam, "Steam.exe"),
+        (GameLauncher.Epic, "EpicGamesLauncher.exe"),
+        (GameLauncher.Gog, "GalaxyClient.exe"),
+        (GameLauncher.Itch, "itch.exe"),
+    };
+
+    private static GameLauncher? MatchKnownLauncher(string targetPath)
+    {
+        var fileName = Path.GetFileName(targetPath);
+        foreach (var (launcher, exeName) in KnownLaunchers)
+        {
+            if (string.Equals(fileName, exeName, StringComparison.OrdinalIgnoreCase))
+            {
+                return launcher;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Polls until gameWindow's owning process exits, then closes the launcher that
+    /// started it - a hard Process.Kill() on whichever of its processes match the known exe
+    /// name, not a graceful per-platform shutdown request (Steam has one via "steam://exit", the
+    /// others don't, and a uniform approach is simpler and matches "close" literally).</summary>
+    private static void WatchAndCloseLauncherAfter(HWND gameWindow, GameLauncher launcher)
+    {
+        GetWindowThreadProcessId(gameWindow, out var gamePid);
+        if (gamePid == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            using var gameProcess = Process.GetProcessById((int)gamePid);
+            gameProcess.WaitForExit();
+        }
+        catch (ArgumentException)
+        {
+            // Already exited before we could even grab it - fall through and close the
+            // launcher anyway, same as a normal exit.
+        }
+
+        var exePath = GameLauncherDetector.FindExe(launcher);
+        if (exePath is null)
+        {
+            return;
+        }
+
+        var processName = Path.GetFileNameWithoutExtension(exePath);
+        foreach (var process in Process.GetProcessesByName(processName))
+        {
+            try
+            {
+                process.Kill();
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
+            {
+                // Already exited, or access denied (e.g. a differently-elevated instance) -
+                // nothing more to do about it.
+            }
         }
     }
 

@@ -1,128 +1,114 @@
-using Windows.Devices.Bluetooth;
-using Windows.Devices.Enumeration;
-
 namespace GridShell.Core.Interop.Bluetooth;
 
 public sealed record PairedBluetoothDevice(string Id, string Name, bool IsConnected, bool IsLowEnergy);
 
 public sealed record DiscoveredBluetoothDevice(string Id, string Name);
 
-/// <summary>What the UI needs to show the user mid-pairing and how to respond. Mirrors
-/// DevicePairingKinds/DevicePairingRequestedEventArgs, kept separate so the UI layer never
-/// needs a direct WinRT dependency.</summary>
-public sealed class PairingRequest
-{
-    public required DevicePairingKinds Kind { get; init; }
-    public required string DisplayPin { get; init; }
-    public required Action<bool, string?> Respond { get; init; }
-}
-
+/// <summary>Classic (non-LE) Bluetooth device enumeration/discovery/pairing/unpairing via raw
+/// bthprops.cpl (BluetoothInterop) rather than the WinRT Windows.Devices.Bluetooth API it
+/// replaced - that API depends on COM activation infrastructure explorer.exe normally hosts and
+/// stopped working once GridShell itself runs as the shell. Bluetooth LE devices are no longer
+/// enumerated at all (bthprops.cpl's device-find functions are classic-only, confirmed on
+/// Microsoft's own docs) - a deliberate, accepted tradeoff, not an oversight.</summary>
 public static class BluetoothDeviceManager
 {
-    public static async Task<List<PairedBluetoothDevice>> EnumeratePairedDevicesAsync()
+    public static Task<List<PairedBluetoothDevice>> EnumeratePairedDevicesAsync()
     {
         var result = new List<PairedBluetoothDevice>();
+        var searchParams = BluetoothInterop.BLUETOOTH_DEVICE_SEARCH_PARAMS.Create();
+        searchParams.fReturnRemembered = true;
+        searchParams.fReturnConnected = true;
+        searchParams.fReturnAuthenticated = true;
 
-        foreach (var info in await DeviceInformation.FindAllAsync(BluetoothDevice.GetDeviceSelectorFromPairingState(true)))
+        var info = BluetoothInterop.BLUETOOTH_DEVICE_INFO.Create();
+        var findHandle = BluetoothInterop.BluetoothFindFirstDevice(ref searchParams, ref info);
+        if (findHandle == IntPtr.Zero)
         {
-            var device = await BluetoothDevice.FromIdAsync(info.Id);
-            result.Add(new PairedBluetoothDevice(
-                info.Id, info.Name, device?.ConnectionStatus == BluetoothConnectionStatus.Connected, IsLowEnergy: false));
+            return Task.FromResult(result);
         }
 
-        foreach (var info in await DeviceInformation.FindAllAsync(BluetoothLEDevice.GetDeviceSelectorFromPairingState(true)))
+        try
         {
-            var device = await BluetoothLEDevice.FromIdAsync(info.Id);
-            result.Add(new PairedBluetoothDevice(
-                info.Id, info.Name, device?.ConnectionStatus == BluetoothConnectionStatus.Connected, IsLowEnergy: true));
-        }
-
-        return result;
-    }
-
-    public static async Task UnpairAsync(string deviceId)
-    {
-        var info = await DeviceInformation.CreateFromIdAsync(deviceId);
-        if (info.Pairing.IsPaired)
-        {
-            await info.Pairing.UnpairAsync();
-        }
-    }
-
-    /// <summary>Watches for nearby unpaired/discoverable devices until <see cref="StopDiscovery"/>
-    /// is called. onFound may be raised multiple times for the same device as Windows learns
-    /// more about it (e.g. its name arrives after its address).</summary>
-    public static DeviceWatcher StartDiscovery(Action<DiscoveredBluetoothDevice> onFound)
-    {
-        var watcher = DeviceInformation.CreateWatcher(
-            BluetoothDevice.GetDeviceSelectorFromPairingState(false),
-            null,
-            DeviceInformationKind.AssociationEndpoint);
-
-        watcher.Added += (_, info) =>
-        {
-            if (!string.IsNullOrWhiteSpace(info.Name))
+            do
             {
-                onFound(new DiscoveredBluetoothDevice(info.Id, info.Name));
+                result.Add(new PairedBluetoothDevice(
+                    BluetoothInterop.AddressToId(info.Address), info.szName, info.fConnected, IsLowEnergy: false));
+                info = BluetoothInterop.BLUETOOTH_DEVICE_INFO.Create();
+            } while (BluetoothInterop.BluetoothFindNextDevice(findHandle, ref info));
+        }
+        finally
+        {
+            BluetoothInterop.BluetoothFindDeviceClose(findHandle);
+        }
+
+        return Task.FromResult(result);
+    }
+
+    public static Task UnpairAsync(string deviceId)
+    {
+        var address = BluetoothInterop.IdToAddress(deviceId);
+        BluetoothInterop.BluetoothRemoveDevice(ref address);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Polls for nearby unpaired/discoverable devices until <see cref="StopDiscovery"/>
+    /// is called - unlike WinRT's push-based DeviceWatcher, bthprops.cpl's inquiry is a blocking
+    /// call per poll, so this runs it on a background timer rather than registering a
+    /// callback.</summary>
+    public static System.Timers.Timer StartDiscovery(Action<DiscoveredBluetoothDevice> onFound)
+    {
+        var timer = new System.Timers.Timer(4000) { AutoReset = true };
+        timer.Elapsed += (_, _) =>
+        {
+            var searchParams = BluetoothInterop.BLUETOOTH_DEVICE_SEARCH_PARAMS.Create();
+            searchParams.fReturnUnknown = true;
+            searchParams.fIssueInquiry = true;
+            searchParams.cTimeoutMultiplier = 2; // ~2.56s inquiry window
+
+            var info = BluetoothInterop.BLUETOOTH_DEVICE_INFO.Create();
+            var findHandle = BluetoothInterop.BluetoothFindFirstDevice(ref searchParams, ref info);
+            if (findHandle == IntPtr.Zero)
+            {
+                return;
             }
-        };
-        watcher.Updated += (_, update) => { };
 
-        watcher.Start();
-        return watcher;
-    }
-
-    public static void StopDiscovery(DeviceWatcher watcher)
-    {
-        if (watcher.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted)
-        {
-            watcher.Stop();
-        }
-    }
-
-    /// <summary>Pairs a device discovered via <see cref="StartDiscovery"/>. onPairingRequested is
-    /// called whenever the device needs the user to confirm a PIN, enter one, or just confirm —
-    /// call Respond on the given request once the user answers (via whatever UI shows it).</summary>
-    public static async Task<bool> PairAsync(string deviceId, Func<PairingRequest, Task> onPairingRequested)
-    {
-        var info = await DeviceInformation.CreateFromIdAsync(deviceId);
-        var custom = info.Pairing.Custom;
-
-        custom.PairingRequested += async (_, args) =>
-        {
-            var tcs = new TaskCompletionSource();
-            var request = new PairingRequest
+            try
             {
-                Kind = args.PairingKind,
-                DisplayPin = args.Pin ?? "",
-                Respond = (accept, pin) =>
+                do
                 {
-                    // There's no explicit "reject" call on these args — declining just means
-                    // not calling Accept at all, which times out the pairing attempt.
-                    if (accept)
+                    if (!string.IsNullOrWhiteSpace(info.szName))
                     {
-                        if (!string.IsNullOrEmpty(pin))
-                        {
-                            args.Accept(pin);
-                        }
-                        else
-                        {
-                            args.Accept();
-                        }
+                        onFound(new DiscoveredBluetoothDevice(BluetoothInterop.AddressToId(info.Address), info.szName));
                     }
 
-                    tcs.TrySetResult();
-                },
-            };
-
-            await onPairingRequested(request);
-            await tcs.Task;
+                    info = BluetoothInterop.BLUETOOTH_DEVICE_INFO.Create();
+                } while (BluetoothInterop.BluetoothFindNextDevice(findHandle, ref info));
+            }
+            finally
+            {
+                BluetoothInterop.BluetoothFindDeviceClose(findHandle);
+            }
         };
 
-        var result = await custom.PairAsync(
-            DevicePairingKinds.ConfirmOnly | DevicePairingKinds.DisplayPin |
-            DevicePairingKinds.ConfirmPinMatch | DevicePairingKinds.ProvidePin);
-
-        return result.Status == DevicePairingResultStatus.Paired;
+        timer.Start();
+        return timer;
     }
+
+    public static void StopDiscovery(System.Timers.Timer timer) => timer.Stop();
+
+    /// <summary>Pairs a device discovered via <see cref="StartDiscovery"/>. Unlike the previous
+    /// WinRT implementation, this needs no custom pairing UI/callback - passing a null passkey
+    /// to BluetoothAuthenticateDevice shows Windows' own native pairing wizard dialog and blocks
+    /// until the user completes or cancels it there.</summary>
+    public static Task<bool> PairAsync(string deviceId) => Task.Run(() =>
+    {
+        var address = BluetoothInterop.IdToAddress(deviceId);
+        var info = BluetoothInterop.BLUETOOTH_DEVICE_INFO.Create();
+        info.Address = address;
+
+        // Blocking (Windows' own wizard dialog stays up until the user finishes/cancels it) -
+        // run off the calling thread so it doesn't freeze the UI while that's showing.
+        var result = BluetoothInterop.BluetoothAuthenticateDevice(IntPtr.Zero, IntPtr.Zero, ref info, null, 0);
+        return result == 0;
+    });
 }

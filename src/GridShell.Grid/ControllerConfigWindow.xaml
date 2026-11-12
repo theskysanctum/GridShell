@@ -8,6 +8,8 @@
         Title="Configure Controller"
         Width="640" Height="520"
         WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
         Background="{DynamicResource WindowBackgroundBrush}"
         Foreground="{DynamicResource PrimaryForegroundBrush}"
         FontFamily="{DynamicResource AppFontFamily}">

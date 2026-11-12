@@ -38,6 +38,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _searchText = "";
     private GridTab _activeTab = GridTab.Apps;
 
+    private string? _steamExePath;
+    private string? _epicExePath;
+    private string? _gogExePath;
+    private string? _itchExePath;
+
     // Same reasoning as TaskbarWindow's identical timer: GetSystemMetrics/the work area can
     // still be mid-transition for a brief moment right when WM_DISPLAYCHANGE/WM_DPICHANGED
     // first arrives — re-applying again shortly after (once the OS has actually settled) catches
@@ -330,6 +335,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ApplyFilter();
         TileList.Focus();
         ApplySettings();
+        DetectGameLaunchers();
+    }
+
+    private void DetectGameLaunchers()
+    {
+        _ = Task.Run(() =>
+        {
+            _steamExePath = GameLauncherDetector.FindExe(GameLauncher.Steam);
+            _epicExePath = GameLauncherDetector.FindExe(GameLauncher.Epic);
+            _gogExePath = GameLauncherDetector.FindExe(GameLauncher.Gog);
+            _itchExePath = GameLauncherDetector.FindExe(GameLauncher.Itch);
+        });
+    }
+
+    private void SteamButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_steamExePath);
+    private void EpicButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_epicExePath);
+    private void GogButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_gogExePath);
+    private void ItchButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_itchExePath);
+
+    private void LaunchGameLauncher(string? exePath)
+    {
+        if (exePath is null)
+        {
+            new ToastWindow("Not currently installed.", TimeSpan.FromSeconds(5)).Show();
+            return;
+        }
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exePath) { UseShellExecute = true });
+        HideGrid(restorePreviousFocus: false);
     }
 
     private void ApplySettings()
@@ -448,10 +482,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void GamesTab_Click(object sender, RoutedEventArgs e) => ActiveTab = GridTab.Games;
 
-    private void SettingsButton_Click(object sender, RoutedEventArgs e) => OpenSettings();
+    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideGrid(restorePreviousFocus: false);
+        OpenSettings();
+    }
 
-    private void ControllerManagerButton_Click(object sender, RoutedEventArgs e) =>
+    private void ControllerManagerButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideGrid(restorePreviousFocus: false);
         new ControllerManagerWindow { Owner = this }.ShowDialog();
+    }
 
     private void ExplorerButton_Click(object sender, RoutedEventArgs e)
     {

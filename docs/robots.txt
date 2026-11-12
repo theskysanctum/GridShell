@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://theskysanctum.com/gridshell/sitemap.xml

@@ -130,7 +130,7 @@
 
             <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontSize="11"
                        Foreground="{DynamicResource MutedForegroundBrush}"
-                       Text="D-pad: move   •   R-stick: move window   •   R3: shift   •   Cross/A: type   •   Square/X: backspace   •   Triangle/Y: space   •   Done: close" />
+                       Text="{Binding HintText}" />
             </StackPanel>
         </Grid>
     </Border>

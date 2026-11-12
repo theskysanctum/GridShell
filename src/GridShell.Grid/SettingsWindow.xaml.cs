@@ -199,7 +199,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
     private bool _bluetoothRadioOn;
     private bool _isScanningBluetooth;
-    private Windows.Devices.Enumeration.DeviceWatcher? _bluetoothWatcher;
+    private System.Timers.Timer? _bluetoothWatcher;
 
     public bool BluetoothRadioOn
     {
@@ -265,17 +265,9 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        var paired = await BluetoothDeviceManager.PairAsync(device.Id, request =>
-        {
-            var tcs = new TaskCompletionSource();
-            Dispatcher.Invoke(() =>
-            {
-                var dialog = new BluetoothPairingWindow(device.Name, request) { Owner = this };
-                dialog.ShowDialog();
-                tcs.TrySetResult();
-            });
-            return tcs.Task;
-        });
+        // Windows shows its own native pairing wizard dialog here (BluetoothAuthenticateDevice
+        // with a null passkey) - no GridShell-owned dialog needed.
+        var paired = await BluetoothDeviceManager.PairAsync(device.Id);
 
         if (paired)
         {
@@ -302,6 +294,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     }
 
     public ObservableCollection<WiFiNetworkInfo> WiFiNetworks { get; } = new();
+    public ObservableCollection<string> SavedWiFiNetworks { get; } = new();
 
     private bool _wifiRadioOn;
     private bool _isScanningWiFi;
@@ -329,7 +322,51 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(WiFiRadioOn));
     }
 
-    private async void ScanWiFiButton_Click(object sender, RoutedEventArgs e) => await RefreshWiFiNetworksAsync();
+    private async Task RefreshSavedWiFiNetworksAsync()
+    {
+        var profiles = await WiFiNetworkManager.ListSavedProfilesAsync();
+        SavedWiFiNetworks.Clear();
+        foreach (var profile in profiles)
+        {
+            SavedWiFiNetworks.Add(profile);
+        }
+    }
+
+    private async void ConnectSavedWiFiButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not string profileName)
+        {
+            return;
+        }
+
+        var result = await WiFiNetworkManager.ConnectToSavedAsync(profileName);
+        if (result != WiFiConnectResult.Success)
+        {
+            System.Windows.MessageBox.Show(
+                this, $"Couldn't connect to {profileName}.", "Connection failed",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        await RefreshWiFiNetworksAsync();
+    }
+
+    private async void ForgetWiFiButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not string profileName)
+        {
+            return;
+        }
+
+        await WiFiNetworkManager.ForgetProfileAsync(profileName);
+        await RefreshSavedWiFiNetworksAsync();
+    }
+
+    private async void ScanWiFiButton_Click(object sender, RoutedEventArgs e)
+    {
+        await RefreshWiFiNetworksAsync();
+        await RefreshSavedWiFiNetworksAsync();
+    }
 
     private async Task RefreshWiFiNetworksAsync()
     {
@@ -378,6 +415,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
 
         await RefreshWiFiNetworksAsync();
+        await RefreshSavedWiFiNetworksAsync();
     }
 
     public ObservableCollection<MonitorInfo> Monitors { get; } = new();
@@ -1210,6 +1248,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         RefreshAudioDevices();
         await RefreshBluetoothAsync();
         await RefreshWiFiRadioAsync();
+        await RefreshSavedWiFiNetworksAsync();
         RefreshMonitors();
         LoadEmulatorPlatforms();
 

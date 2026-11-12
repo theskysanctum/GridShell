@@ -37,6 +37,7 @@ public partial class TaskbarWindow : Window
 
         InitializeComponent();
         DataContext = this;
+        this.HideFromAltTab();
 
         // Placeholder sizing until SourceInitialized registers the real AppBar reservation
         // and positions the window to whatever rect the system actually grants it.

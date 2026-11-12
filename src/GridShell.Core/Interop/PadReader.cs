@@ -191,6 +191,43 @@ public static class PadReader
         }
     }
 
+    /// <summary>Whether any currently-connected pad is a Nintendo-layout controller (Switch Pro,
+    /// a Joy-Con, or a third-party pad SDL itself classifies the same way) - its physical
+    /// A/B/X/Y layout is rotated 180° from Xbox/PlayStation's (Nintendo's "A" sits where Xbox's
+    /// "B" does, etc.), so anywhere GridShell shows a button-label hint should swap to match
+    /// what's actually printed on the pad. Uses SDL_GetGamepadType's own best-effort
+    /// VID/PID+name classification rather than a hand-rolled VID check, since plenty of
+    /// Switch-compatible pads (e.g. PowerA's) aren't Nintendo's own VID.</summary>
+    public static bool IsAnyNintendoControllerConnected()
+    {
+        lock (Gate)
+        {
+            if (!EnsureSdl())
+            {
+                return false;
+            }
+
+            var now = DateTime.UtcNow;
+            if (now - _lastScan >= RescanInterval)
+            {
+                _lastScan = now;
+                Rescan();
+            }
+
+            return Open.Values.Any(pad =>
+            {
+                var type = SDL_GetGamepadType(pad);
+                return type is GamepadTypeNintendoSwitchPro or GamepadTypeNintendoSwitchJoyconLeft
+                    or GamepadTypeNintendoSwitchJoyconRight or GamepadTypeNintendoSwitchJoyconPair;
+            });
+        }
+    }
+
+    private const int GamepadTypeNintendoSwitchPro = 7;
+    private const int GamepadTypeNintendoSwitchJoyconLeft = 8;
+    private const int GamepadTypeNintendoSwitchJoyconRight = 9;
+    private const int GamepadTypeNintendoSwitchJoyconPair = 10;
+
     /// <summary>Lists every currently-open SDL gamepad by its own identity, for callers that need
     /// to address one specific device (Controller Manager) rather than the merged-across-all-pads
     /// Read() navigation uses.</summary>
@@ -488,6 +525,9 @@ public static class PadReader
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     private static extern ushort SDL_GetGamepadVendor(IntPtr gamepad);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int SDL_GetGamepadType(IntPtr gamepad);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     private static extern ushort SDL_GetGamepadProduct(IntPtr gamepad);

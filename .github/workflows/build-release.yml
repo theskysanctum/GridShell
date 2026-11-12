@@ -1,0 +1,73 @@
+name: Build and release installer
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - src/**
+      - installer/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install Inno Setup
+        run: winget install --id JRSoftware.InnoSetup --silent --accept-package-agreements --accept-source-agreements
+
+      - name: Publish self-contained win-x64 builds
+        run: |
+          dotnet publish src/GridShell/GridShell.csproj -c Release -o publish/GridShell
+          dotnet publish src/GridShell.Grid/GridShell.Grid.csproj -c Release -o publish/GridShell.Grid
+          dotnet publish src/GridShell.Watchdog/GridShell.Watchdog.csproj -c Release -o publish/GridShell.Watchdog
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          version=$(grep -oP '(?<=#define MyAppVersion ")[^"]+' installer/GridShell.iss)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          & $iscc installer\GridShell.iss
+
+      - name: Publish release
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          tag="v$VERSION"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Release $tag already exists"
+            exit 0
+          fi
+
+          installer_path="installer/Output/GridShell-Setup-$VERSION.exe"
+          sum=$(sha256sum "$installer_path" | cut -d' ' -f1)
+
+          gh release create "$tag" "$installer_path" \
+            --target "$GITHUB_SHA" \
+            --title "GridShell $VERSION" \
+            --notes "GridShell $VERSION.
+
+          SHA-256 of GridShell-Setup-$VERSION.exe: $sum"
