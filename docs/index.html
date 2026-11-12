@@ -106,8 +106,59 @@ pre{margin:1rem 0 0;padding:1rem 1.2rem;background:var(--panel);border:1px solid
 .build p{margin:0 0 1rem;max-width:40rem;color:var(--mute)}
 footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--mute);font-size:.95rem}
 footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:2.2rem 2.5rem}
+.shot figcaption{margin-top:.7rem;color:var(--mute);font-size:.85rem}
+.shot figcaption b{color:var(--text);font-weight:600}
+.frame{position:relative;aspect-ratio:16/9;border:1px solid var(--line);background:#0A0C10;box-shadow:0 20px 50px -24px rgba(0,0,0,.8);overflow:hidden;display:grid;grid-template-columns:3.3rem 1fr;font-size:.62rem}
+.frame .side{grid-column:1}
+.frame .main{grid-column:2;display:flex;flex-direction:column;min-height:0}
+.wtiles{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:4.2rem;gap:.45rem;padding:0 .7rem .7rem;overflow:hidden}
+.wt{border-radius:.3rem;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;font-weight:600;font-size:.6rem;color:#fff}
+.wt i{width:1.5rem;height:1.5rem;border-radius:50%;display:block}
+.gamehead{grid-column:1/-1;color:var(--mute);font-size:.6rem;font-weight:700;margin:.3rem 0 0;text-transform:uppercase;letter-spacing:.04em}
+.gtiles{display:grid;grid-template-columns:repeat(6,1fr);gap:.45rem;padding:0 .7rem .7rem;overflow:hidden;align-content:start}
+.gt{position:relative;border-radius:.3rem;aspect-ratio:140/196;overflow:hidden;display:flex;align-items:flex-end;outline:2px solid transparent}
+.gt.on{outline-color:var(--accent)}
+.gt span{position:relative;z-index:1;color:#fff;font-size:.56rem;font-weight:700;padding:.3rem;text-align:center;width:100%;background:linear-gradient(to top,rgba(0,0,0,.85),transparent)}
+.fmpanes{flex:1;display:grid;grid-template-columns:1fr 2px 1fr;min-height:0}
+.fmpane{display:flex;flex-direction:column;min-height:0;position:relative}
+.fmpane.active{box-shadow:inset 0 0 0 2px var(--accent)}
+.fmtool{display:flex;align-items:center;gap:.3rem;padding:.4rem;border-bottom:1px solid var(--line);color:var(--mute)}
+.fmtool b{color:var(--text);font-weight:400;font-size:.6rem;margin-left:.2rem}
+.fmhead{display:grid;grid-template-columns:1fr 3.5rem 4.5rem;padding:.3rem .5rem;color:var(--mute);border-bottom:1px solid var(--line);font-size:.58rem}
+.fmrow{display:grid;grid-template-columns:1fr 3.5rem 4.5rem;padding:.28rem .5rem;font-size:.6rem;align-items:center}
+.fmrow.on{background:var(--accent);color:#14161B}
+.fmrow i{display:inline-block;width:.7rem;height:.7rem;border-radius:.15rem;margin-right:.4rem;vertical-align:middle}
+.fmsplit{background:var(--line)}
+.fmstatus{border-top:1px solid var(--line);padding:.3rem .6rem;color:var(--mute);font-size:.56rem}
+.dlbar{display:flex;gap:.4rem;padding:.6rem}
+.dlinput{flex:1;background:var(--panel2);color:var(--mute);padding:.3rem .6rem;border-radius:.2rem}
+.dlbtn{background:var(--accent);color:#14161B;font-weight:700;padding:.3rem .8rem;border-radius:.2rem}
+.dlstatus{padding:0 .6rem .4rem;color:var(--mute);font-size:.58rem}
+.dlhead{display:grid;grid-template-columns:1fr 3.5rem 3rem 2.6rem 4rem;padding:.3rem .6rem;color:var(--mute);border-bottom:1px solid var(--line);font-size:.58rem}
+.dlrow{display:grid;grid-template-columns:1fr 3.5rem 3rem 2.6rem 4rem;padding:.4rem .6rem;align-items:center;border-bottom:1px solid var(--panel2);font-size:.6rem}
+.dlprog{height:.4rem;background:var(--panel2);border-radius:.2rem;overflow:hidden}
+.dlprog i{display:block;height:100%;background:var(--accent)}
+.dim{position:absolute;inset:0;background:rgba(10,12,16,.55)}
+.dialog{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;background:var(--panel);border:1px solid var(--line);box-shadow:0 20px 40px rgba(0,0,0,.6);padding:.8rem}
+.dialog h4{margin:0 0 .5rem;font-size:.72rem}
+.dialog .note{color:var(--mute);font-size:.56rem;margin:0 0 .6rem}
+.cmrow{display:flex;align-items:center;gap:.4rem;padding:.4rem;background:var(--bg);margin-bottom:.35rem}
+.cmrow .name{flex:1}
+.cmrow .name b{display:block;font-size:.62rem}
+.cmrow .name span{color:var(--mute);font-size:.54rem}
+.cmbtn{background:var(--panel2);padding:.2rem .5rem;font-size:.54rem;white-space:nowrap}
+.stabs{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;font-size:.54rem}
+.stab{padding:.2rem .5rem;background:var(--bg);color:var(--mute)}
+.stab.on{background:var(--accent);color:#14161B}
+.srow{margin-bottom:.55rem}
+.srow label{display:block;color:var(--mute);font-size:.56rem;margin-bottom:.25rem}
+.sselect{background:var(--bg);padding:.25rem .5rem;font-size:.6rem;display:inline-block;min-width:6rem}
+.swatches{display:flex;gap:.3rem}
+.swatch{width:1.1rem;height:1.1rem;border-radius:50%}
+.swatch.on{outline:2px solid #fff;outline-offset:1px}
 @media (max-width:60rem){.feat{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:52rem){.hero .wrap{grid-template-columns:1fr;padding:3rem 0}.feat,.modes,.steps,.req,.catgrid{grid-template-columns:1fr}.bar nav a:not(.dl){display:none}}
+@media (max-width:52rem){.hero .wrap{grid-template-columns:1fr;padding:3rem 0}.feat,.modes,.steps,.req,.catgrid,.shots{grid-template-columns:1fr}.bar nav a:not(.dl){display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.t{transition:none}}
 </style>
 </head>
@@ -116,6 +167,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <a class="brand" href="./"><img src="favicon.svg" alt="">GridShell</a>
 <nav aria-label="Main">
 <a href="#features">Features</a>
+<a href="#screens">Screenshots</a>
 <a href="#start">Get started</a>
 <a href="#faq">FAQ</a>
 <a href="https://github.com/theskysanctum/gridshell">GitHub</a>
@@ -260,6 +312,143 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <li><b>Power menu</b> - lock, sign out, sleep, restart, or shut down, right from the grid.</li>
 <li><b>Easy to undo</b> - close it, or turn the shell setting back off, and your normal desktop is back immediately.</li>
 </ul></div>
+
+</div>
+</div></section>
+
+<section id="screens" class="alt"><div class="wrap">
+<div class="head">
+<h2>See it in action</h2>
+<p>Illustrations built from GridShell's own layout code, at a 1920x1080 proportion.</p>
+</div>
+<div class="shots">
+
+<figure class="shot"><div class="frame" aria-hidden="true">
+<div class="side">
+<div class="launcher">▦</div>
+<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
+<div class="spacer"></div><div class="batt">82%<br>9:41</div>
+</div>
+<div class="main">
+<div class="panel-top">
+<div class="tabs"><div class="pill">Apps</div><div class="pill on">Web</div><div class="pill">Games</div><div class="pill add">+ New</div></div>
+<div class="search">Type to search</div>
+<div class="tools"><div class="tool-btn">📁</div><div class="tool-btn">⭳</div><div class="tool-btn">🎮</div><div class="tool-btn">⚙</div></div>
+</div>
+<div class="wtiles">
+<div class="wt"><i class="c6"></i>YouTube</div><div class="wt"><i class="c1"></i>Gmail</div><div class="wt"><i class="c4"></i>Reddit</div>
+<div class="wt"><i class="c7"></i>Twitch</div><div class="wt"><i class="c3"></i>Netflix</div><div class="wt"><i class="c2"></i>Spotify</div>
+</div>
+<div class="corner"><div class="corner-btn c5">◆</div><div class="corner-btn c7">◆</div><div class="corner-btn c4">◆</div><div class="corner-btn c6">◆</div><div class="corner-btn power">⏻</div></div>
+</div>
+</div>
+<figcaption><b>Web tab</b> - bookmarked sites alongside Apps and Games, same grid and tab bar.</figcaption></figure>
+
+<figure class="shot"><div class="frame" aria-hidden="true">
+<div class="side">
+<div class="launcher">▦</div>
+<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
+<div class="spacer"></div><div class="batt">82%<br>9:41</div>
+</div>
+<div class="main">
+<div class="panel-top">
+<div class="tabs"><div class="pill">Apps</div><div class="pill">Web</div><div class="pill on">Games</div><div class="pill add">+ New</div></div>
+<div class="search">Type to search</div>
+<div class="tools"><div class="tool-btn">📁</div><div class="tool-btn">⭳</div><div class="tool-btn">🎮</div><div class="tool-btn">⚙</div></div>
+</div>
+<div class="gtiles">
+<div class="gamehead">PC</div>
+<div class="gt on" style="background:#1E6FD9"><span>Half-Life 2</span></div>
+<div class="gt" style="background:#C8453B"><span>DOOM Eternal</span></div>
+<div class="gt" style="background:#3C9A4B"><span>Portal 2</span></div>
+<div class="gamehead">Nintendo Switch</div>
+<div class="gt" style="background:#D9731A"><span>Mario Odyssey</span></div>
+<div class="gt" style="background:#7B52C9"><span>Zelda: TOTK</span></div>
+<div class="gt" style="background:#0E9594"><span>Metroid Dread</span></div>
+</div>
+<div class="corner"><div class="corner-btn c5">◆</div><div class="corner-btn c7">◆</div><div class="corner-btn c4">◆</div><div class="corner-btn c6">◆</div><div class="corner-btn power">⏻</div></div>
+</div>
+</div>
+<figcaption><b>Games tab</b> - box-art tiles grouped by platform, detected installs and emulated systems side by side.</figcaption></figure>
+
+<figure class="shot"><div class="frame" aria-hidden="true">
+<div class="side">
+<div class="launcher" style="background:transparent">📁</div>
+<div class="spacer"></div><div class="batt">82%<br>9:41</div>
+</div>
+<div class="main">
+<div class="fmpanes">
+<div class="fmpane active">
+<div class="fmtool">◀ ▶ ▲ <b>This PC › Games</b></div>
+<div class="fmhead"><span>Name</span><span>Size</span><span>Modified</span></div>
+<div class="fmrow on"><span><i style="background:#D9731A"></i>ROMs</span><span>-</span><span>Today</span></div>
+<div class="fmrow"><span><i style="background:#1E6FD9"></i>Saves</span><span>-</span><span>Today</span></div>
+<div class="fmrow"><span><i style="background:#3C9A4B"></i>setup.exe</span><span>42.1 MB</span><span>Yesterday</span></div>
+</div>
+<div class="fmsplit"></div>
+<div class="fmpane">
+<div class="fmtool">◀ ▶ ▲ <b>D:\Backups</b></div>
+<div class="fmhead"><span>Name</span><span>Size</span><span>Modified</span></div>
+<div class="fmrow"><span><i style="background:#7B52C9"></i>2026-11</span><span>-</span><span>11/1/2026</span></div>
+<div class="fmrow"><span><i style="background:#C8453B"></i>archive.7z</span><span>1.2 GB</span><span>10/2/2026</span></div>
+</div>
+</div>
+<div class="fmstatus">D-pad: move • A: open • B: up/close • LB/RB: switch pane • X / right-click: actions</div>
+</div>
+</div>
+<figcaption><b>File Explorer</b> - dual independently-navigable panes, with copy/cut/paste, archives, and disc images from the actions menu.</figcaption></figure>
+
+<figure class="shot"><div class="frame" aria-hidden="true">
+<div class="side">
+<div class="launcher" style="background:transparent">⭳</div>
+<div class="spacer"></div><div class="batt">82%<br>9:41</div>
+</div>
+<div class="main">
+<div class="dlbar"><div class="dlinput">Paste a link or magnet...</div><div class="dlbtn">+ Add</div></div>
+<div class="dlstatus">Real-Debrid: connected</div>
+<div class="dlhead"><span>Name</span><span>Status</span><span>Size</span><span>Speed</span><span>Progress</span></div>
+<div class="dlrow"><span>Big_Game_Update.zip</span><span>Downloading</span><span>4.1 GB</span><span>18 MB/s</span><div class="dlprog"><i style="width:64%"></i></div></div>
+<div class="dlrow"><span>Soundtrack.flac</span><span>Queued</span><span>220 MB</span><span>-</span><div class="dlprog"><i style="width:0%"></i></div></div>
+<div class="dlrow"><span>Linux.iso</span><span>Complete</span><span>2.6 GB</span><span>-</span><div class="dlprog"><i style="width:100%"></i></div></div>
+</div>
+</div>
+<figcaption><b>Download Manager</b> - paste a link or magnet; Real-Debrid and a bundled aria2 daemon handle the rest.</figcaption></figure>
+
+<figure class="shot"><div class="frame" aria-hidden="true">
+<div class="side">
+<div class="launcher">▦</div>
+<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
+<div class="spacer"></div><div class="batt">82%<br>9:41</div>
+</div>
+<div class="main"><div class="dim"></div>
+<div class="dialog">
+<h4>Controller Manager</h4>
+<p class="note">Turns a controller GridShell can read via SDL but Windows' XInput can't into a virtual Xbox 360 controller - hiding the original needs ViGEmBus and HidHide.</p>
+<div class="cmrow"><div class="name"><b>DualSense Wireless Controller</b><span>XInput-native - no translation needed</span></div><div class="cmbtn">Configure...</div></div>
+<div class="cmrow"><div class="name"><b>Switch Pro Controller</b><span>SDL-only - not yet visible to XInput apps</span></div><div class="cmbtn">Configure...</div><div class="cmbtn">Create Virtual Pad</div><div class="cmbtn">Hide Device</div></div>
+</div>
+</div>
+</div>
+<figcaption><b>Controller Manager</b> - per-pad remap, LED color, rumble, gyro/accelerometer, touchpad, and adaptive triggers.</figcaption></figure>
+
+<figure class="shot"><div class="frame" aria-hidden="true">
+<div class="side">
+<div class="launcher">▦</div>
+<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
+<div class="spacer"></div><div class="batt">82%<br>9:41</div>
+</div>
+<div class="main"><div class="dim"></div>
+<div class="dialog">
+<h4>Settings</h4>
+<div class="stabs"><div class="stab">App Behavior</div><div class="stab">Tiles</div><div class="stab">Widgets</div><div class="stab on">Appearance</div><div class="stab">Downloads</div><div class="stab">Audio</div><div class="stab">Bluetooth</div><div class="stab">Wi-Fi</div><div class="stab">Display</div><div class="stab">Emulation</div></div>
+<div class="srow"><label>Theme</label><div class="sselect">Dark</div></div>
+<div class="srow"><label>Accent color</label><div class="swatches"><div class="swatch on" style="background:#2DBE8F"></div><div class="swatch" style="background:#1E6FD9"></div><div class="swatch" style="background:#C8453B"></div><div class="swatch" style="background:#7B52C9"></div><div class="swatch" style="background:#D9731A"></div></div></div>
+<div class="srow"><label>Font</label><div class="sselect">Roboto</div></div>
+<div class="srow"><label>Wallpaper</label><div class="sselect" style="min-width:12rem">C:\Wallpapers\sunset.mp4</div></div>
+</div>
+</div>
+</div>
+<figcaption><b>Settings</b> - theme, accent, tile size, fonts, wallpaper, plus Wi-Fi, Bluetooth, audio, display, and emulation setup.</figcaption></figure>
 
 </div>
 </div></section>
