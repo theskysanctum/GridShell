@@ -14,8 +14,9 @@ namespace GridShell;
 
 /// <summary>GridShell's app store - a curated catalog (synced from GridShell's own repo via
 /// StoreCatalogSync, so it can be updated without a GridShell release) installed through winget
-/// (WingetInstaller). Theme-aware throughout, same DynamicResource brushes as every other
-/// window.</summary>
+/// (WingetInstaller) for most apps, or GitHubReleaseInstaller for the few with no winget package
+/// but a real downloadable GitHub release (StoreApp.InstallMethod picks which). Theme-aware
+/// throughout, same DynamicResource brushes as every other window.</summary>
 public partial class StoreWindow : Window, INotifyPropertyChanged
 {
     private const string AllCategoriesLabel = "All Apps";
@@ -109,7 +110,9 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             try
             {
                 app.State = StoreAppState.Checking;
-                var installed = await WingetInstaller.IsInstalledAsync(app.App.WingetId);
+                var installed = app.App.InstallMethod == "github"
+                    ? GitHubReleaseInstaller.IsInstalled(app.App.Id)
+                    : await WingetInstaller.IsInstalledAsync(app.App.WingetId);
                 app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
             }
             finally
@@ -176,7 +179,9 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         }
 
         app.State = StoreAppState.Installing;
-        var result = await WingetInstaller.InstallAsync(app.App.WingetId);
+        var result = app.App.InstallMethod == "github"
+            ? await GitHubReleaseInstaller.InstallAsync(app.App)
+            : await WingetInstaller.InstallAsync(app.App.WingetId);
 
         app.State = result.Outcome switch
         {

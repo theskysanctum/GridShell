@@ -17,7 +17,12 @@ public static class EmulatorAutoWire
             return;
         }
 
-        var exePath = InstalledAppLocator.FindMainExe(app.Name);
+        // GitHub-release installs (GitHubReleaseInstaller) extract straight into a fixed folder
+        // of GridShell's own choosing and never touch the Uninstall registry - look there
+        // directly instead of the registry scan winget-installed apps need.
+        var exePath = app.InstallMethod == "github"
+            ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id))
+            : InstalledAppLocator.FindMainExe(app.Name);
         if (exePath is null)
         {
             return;

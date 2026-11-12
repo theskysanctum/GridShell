@@ -195,6 +195,24 @@
       "category": "Emulation",
       "description": "Nintendo DS emulator.",
       "platformSlugs": ["nds"]
+    },
+    {
+      "id": "vpinball.vpinball",
+      "name": "Visual Pinball X",
+      "installMethod": "github",
+      "githubRepo": "vpinball/vpinball",
+      "category": "Emulation",
+      "description": "Pinball table simulator. Installed from the latest stable GitHub release, not winget - no winget package exists.",
+      "platformSlugs": ["vpinball"]
+    },
+    {
+      "id": "trzy.supermodel",
+      "name": "Supermodel",
+      "installMethod": "github",
+      "githubRepo": "trzy/Supermodel",
+      "category": "Emulation",
+      "description": "Sega Model 3 arcade emulator. Installed from the latest GitHub release, not winget - no winget package exists.",
+      "platformSlugs": ["model3"]
     }
   ]
 }

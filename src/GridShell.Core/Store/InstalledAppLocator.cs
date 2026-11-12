@@ -61,6 +61,15 @@ public static class InstalledAppLocator
         return null;
     }
 
+    /// <summary>Same largest-non-skip-pattern heuristic as the registry-driven lookup above, but
+    /// against a folder GridShell itself extracted an app into (GitHubReleaseInstaller) rather
+    /// than one found via the Uninstall registry - those installs never register there, since
+    /// there's no real installer involved, just a zip extraction.</summary>
+    public static string? FindBestExeInDirectory(string directory)
+    {
+        return Directory.Exists(directory) ? BestExeIn(directory) : null;
+    }
+
     private static string? BestExeIn(string installLocation)
     {
         try
