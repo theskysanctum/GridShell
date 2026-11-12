@@ -44,15 +44,24 @@ public static class InstalledAppLocator
                     }
 
                     var installLocation = subKey?.GetValue("InstallLocation") as string;
-                    if (string.IsNullOrEmpty(installLocation) || !Directory.Exists(installLocation))
+                    if (!string.IsNullOrEmpty(installLocation) && Directory.Exists(installLocation))
                     {
-                        continue;
+                        var best = BestExeIn(installLocation);
+                        if (best is not null)
+                        {
+                            return best;
+                        }
                     }
 
-                    var best = BestExeIn(installLocation);
-                    if (best is not null)
+                    // Some installs (confirmed live: RetroArch's winget package) leave
+                    // InstallLocation blank but still point DisplayIcon straight at the main
+                    // exe - a real, common enough convention to fall back to rather than
+                    // missing the app entirely.
+                    if (subKey?.GetValue("DisplayIcon") as string is { } displayIcon
+                        && displayIcon.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                        && File.Exists(displayIcon))
                     {
-                        return best;
+                        return displayIcon;
                     }
                 }
             }

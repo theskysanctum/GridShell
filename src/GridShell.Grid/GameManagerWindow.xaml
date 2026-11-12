@@ -292,23 +292,15 @@
                                                        Margin="12,0,0,0" />
                                         </Grid>
 
-                                        <Grid Margin="0,0,0,4">
+                                        <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" Text="{Binding EmulatorPath, UpdateSourceTrigger=PropertyChanged}"
-                                                     Padding="4" Margin="0,0,8,0"
-                                                     Foreground="{DynamicResource PrimaryForegroundBrush}"
-                                                     Background="{DynamicResource SurfaceBackgroundBrush}" />
-                                            <Button Grid.Column="1" Padding="8,4" Margin="0,0,8,0" Click="BrowseEmulatorPath_Click" CommandParameter="{Binding}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}" FontSize="14" Margin="0,0,4,0" />
-                                                    <TextBlock Text="Browse..." />
-                                                </StackPanel>
-                                            </Button>
-                                            <Button Grid.Column="2" Padding="8,4" Click="OpenEmulatorButton_Click" CommandParameter="{Binding}"
+                                            <TextBlock Grid.Column="0" Text="{Binding StatusSummary}" FontSize="11" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource MutedForegroundBrush}" />
+                                            <Button Grid.Column="1" Padding="8,4" Click="OpenEmulatorButton_Click" CommandParameter="{Binding}"
                                                     Visibility="{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}"
                                                     ToolTip="Open this emulator on its own, to configure it">
                                                 <StackPanel Orientation="Horizontal">
@@ -317,31 +309,6 @@
                                                 </StackPanel>
                                             </Button>
                                         </Grid>
-
-                                        <StackPanel Visibility="{Binding IsRetroArch, Converter={StaticResource BoolToVisibility}}"
-                                                    Margin="0,0,0,4">
-                                            <StackPanel Orientation="Horizontal"
-                                                        Visibility="{Binding AvailableCores.Count, Converter={StaticResource CountToVisibility}}">
-                                                <TextBlock Text="Core:" VerticalAlignment="Center" Margin="0,0,8,0"
-                                                           Foreground="{DynamicResource PrimaryForegroundBrush}" />
-                                                <ComboBox Width="260" ItemsSource="{Binding AvailableCores}" SelectedItem="{Binding SelectedCore}"
-                                                          Foreground="{DynamicResource PrimaryForegroundBrush}"
-                                                          Background="{DynamicResource SurfaceBackgroundBrush}" />
-                                                <Button Padding="6,4" Margin="8,0,0,0" Click="RefreshCoresButton_Click" CommandParameter="{Binding}"
-                                                        ToolTip="Rescan the cores folder">
-                                                    <TextBlock Text="&#xe5d5;" FontFamily="{StaticResource IconFont}" FontSize="14" />
-                                                </Button>
-                                            </StackPanel>
-                                            <StackPanel Orientation="Horizontal"
-                                                        Visibility="{Binding AvailableCores.Count, Converter={StaticResource CountToVisibilityInverse}}">
-                                                <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}" TextWrapping="Wrap"
-                                                           Text="No cores found in a &quot;cores&quot; folder next to RetroArch." VerticalAlignment="Center" />
-                                                <Button Padding="6,4" Margin="8,0,0,0" Click="RefreshCoresButton_Click" CommandParameter="{Binding}"
-                                                        ToolTip="Rescan the cores folder">
-                                                    <TextBlock Text="&#xe5d5;" FontFamily="{StaticResource IconFont}" FontSize="14" />
-                                                </Button>
-                                            </StackPanel>
-                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>

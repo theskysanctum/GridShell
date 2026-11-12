@@ -196,6 +196,14 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         else
         {
             EmulatorAutoWire.TryWire(app.App);
+
+            // RetroArch itself has no fixed platformSlugs (EmulatorAutoWire's one-exe-one-
+            // template model doesn't fit it - each platform needs its own "-L <core>" flag) -
+            // RetroArchCoreAutoWire handles that separately once it's actually installed.
+            if (app.App.Id == "libretro.retroarch")
+            {
+                await RetroArchCoreAutoWire.TryWireAllAsync();
+            }
         }
     }
 

@@ -15,9 +15,10 @@ public sealed class StoreApp
 
     /// <summary>"winget" (default) or "github" - github entries have no WingetId, and are
     /// installed instead by GitHubReleaseInstaller downloading and extracting the latest
-    /// release's Windows zip from GithubRepo. Used for emulators with no winget package but a
-    /// real downloadable GitHub release (RPCS3 has neither, so it stays a manual download link
-    /// in EmulatorDownloadCatalog instead - see its remarks).</summary>
+    /// release's Windows archive (.zip or .7z) from GithubRepo. Used for emulators with no
+    /// winget package but a real downloadable GitHub release (RPCS3's own repo has neither, but
+    /// its companion RPCS3/rpcs3-binaries-win repo does - see GitHubReleaseInstaller's
+    /// remarks).</summary>
     [JsonPropertyName("installMethod")]
     public string InstallMethod { get; set; } = "winget";
 

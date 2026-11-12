@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -8,11 +7,10 @@ using GridShell.Core.Tiles;
 
 namespace GridShell;
 
-/// <summary>One row in Settings' Emulation tab — a platform, the emulator configured to run it
-/// (if any), and how many ROMs were found for it under C:\Games\ROMs\&lt;slug&gt;. RetroArch gets
-/// special handling: rather than hand-typing a "-L &lt;core&gt;" argument, its cores folder (a
-/// "cores" directory next to the exe, RetroArch's own convention) is scanned so one can just be
-/// picked from a dropdown.</summary>
+/// <summary>One row in Game Manager's platform list - a platform, the emulator configured to run
+/// it (if any, read-only here - EmulatorAutoWire/RetroArchCoreAutoWire set it once a matching
+/// Store app is installed, there's no manual picker), and how many ROMs were found for it under
+/// C:\Games\ROMs\&lt;slug&gt;.</summary>
 public class EmulatorPlatformRow : INotifyPropertyChanged
 {
     public required EmulationPlatform Platform { get; init; }
@@ -21,8 +19,6 @@ public class EmulatorPlatformRow : INotifyPropertyChanged
     public string DisplayName => Platform.DisplayName;
 
     public string Category => Platform.Category;
-
-    public IReadOnlyList<EmulatorDownloadLink> DownloadLinks => EmulatorDownloadCatalog.GetLinksFor(Platform.Slug);
 
     public int RomCount { get; set; }
 
@@ -62,8 +58,7 @@ public class EmulatorPlatformRow : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsConfigured));
             OnPropertyChanged(nameof(IsRetroArch));
-            RefreshCoreList();
-            TrySelectCoreFromArgumentTemplate();
+            OnPropertyChanged(nameof(StatusSummary));
             ApplyKnownEmulatorDefaultsIfUnmodified();
             RaiseChanged();
         }
@@ -77,9 +72,9 @@ public class EmulatorPlatformRow : INotifyPropertyChanged
     /// release builds vary (e.g. "PPSSPPWindows64.exe", "Cemu_1.2.3.exe") - first match wins.</summary>
     private static readonly (string ExeNameContains, string ArgumentTemplate)[] KnownEmulatorDefaults =
     {
-        // Verified against each emulator's own docs/README/source. Most of these install through
-        // the Store (store-catalog/catalog.json) now rather than EmulatorDownloadCatalog, which
-        // only still covers the handful with no winget package (see its own remarks).
+        // Verified against each emulator's own docs/README/source. All of these install through
+        // the Store (store-catalog/catalog.json) now - EmulatorAutoWire (and
+        // RetroArchCoreAutoWire for RetroArch) sets EmulatorPath automatically on install.
         ("dolphin", "-b -e \"{rom}\" -C Dolphin.Display.Fullscreen=True"),
         ("pcsx2", "-fullscreen \"{rom}\""),
         ("rpcs3", "--no-gui --fullscreen \"{rom}\""),
@@ -131,7 +126,7 @@ public class EmulatorPlatformRow : INotifyPropertyChanged
             if (_argumentTemplate == value) return;
             _argumentTemplate = value;
             OnPropertyChanged();
-            TrySelectCoreFromArgumentTemplate();
+            OnPropertyChanged(nameof(StatusSummary));
             RaiseChanged();
         }
     }
@@ -141,86 +136,33 @@ public class EmulatorPlatformRow : INotifyPropertyChanged
     public bool IsRetroArch => !string.IsNullOrWhiteSpace(EmulatorPath)
         && string.Equals(Path.GetFileNameWithoutExtension(EmulatorPath), "retroarch", StringComparison.OrdinalIgnoreCase);
 
-    public ObservableCollection<string> AvailableCores { get; } = new();
-
-    private string? _selectedCore;
-    public string? SelectedCore
+    /// <summary>Read-only summary for Game Manager's list - there's no manual picker anymore
+    /// (everything here is set by EmulatorAutoWire/RetroArchCoreAutoWire once the matching Store
+    /// app is installed), so this is the only thing shown per row besides the ROM count.</summary>
+    public string StatusSummary
     {
-        get => _selectedCore;
-        set
+        get
         {
-            if (_selectedCore == value) return;
-            _selectedCore = value;
-            OnPropertyChanged();
-
-            if (value is not null)
+            if (!IsConfigured)
             {
-                var coresDir = Path.Combine(Path.GetDirectoryName(EmulatorPath) ?? "", "cores");
-                var corePath = Path.Combine(coresDir, value);
-                ArgumentTemplate = $"-f -L \"{corePath}\" \"{{rom}}\"";
+                return "Not configured - install a matching emulator from the Store.";
             }
-        }
-    }
 
-    /// <summary>Rescans the cores folder (also called whenever EmulatorPath changes) — exposed
-    /// publicly so the Settings UI can offer a manual rescan after installing new cores without
-    /// having to re-browse to the exe.</summary>
-    public void RefreshCoreList()
-    {
-        AvailableCores.Clear();
-        if (!IsRetroArch)
-        {
-            return;
-        }
-
-        var dir = Path.GetDirectoryName(EmulatorPath);
-        if (string.IsNullOrEmpty(dir))
-        {
-            return;
-        }
-
-        var coresDir = Path.Combine(dir, "cores");
-        if (!Directory.Exists(coresDir))
-        {
-            return;
-        }
-
-        try
-        {
-            foreach (var file in Directory.EnumerateFiles(coresDir, "*_libretro.dll")
-                         .OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+            var exeName = Path.GetFileName(EmulatorPath);
+            if (!IsRetroArch)
             {
-                AvailableCores.Add(Path.GetFileName(file));
+                return exeName;
             }
-        }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
-        {
-        }
 
-        TrySelectCoreFromArgumentTemplate();
-    }
+            var match = Regex.Match(_argumentTemplate, "-L\\s+\"([^\"]+)\"");
+            if (!match.Success)
+            {
+                return exeName;
+            }
 
-    /// <summary>Pre-selects whichever core the current ArgumentTemplate already references
-    /// (e.g. on load) without rewriting it through SelectedCore's own setter, which would
-    /// otherwise needlessly re-save an unchanged value.</summary>
-    private void TrySelectCoreFromArgumentTemplate()
-    {
-        if (!IsRetroArch || AvailableCores.Count == 0)
-        {
-            return;
-        }
-
-        var match = Regex.Match(_argumentTemplate, "-L\\s+\"([^\"]+)\"");
-        if (!match.Success)
-        {
-            return;
-        }
-
-        var fileName = Path.GetFileName(match.Groups[1].Value);
-        if (_selectedCore != fileName && AvailableCores.Contains(fileName))
-        {
-            _selectedCore = fileName;
-            OnPropertyChanged(nameof(SelectedCore));
+            var coreName = Path.GetFileNameWithoutExtension(match.Groups[1].Value)
+                .Replace("_libretro", "", StringComparison.OrdinalIgnoreCase);
+            return $"{exeName} ({coreName})";
         }
     }
 

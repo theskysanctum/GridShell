@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using GridShell.Core;
 using GridShell.Core.GameLibraries;
 using GridShell.Core.Interop;
+using GridShell.Core.Store;
 using GridShell.Core.Tiles;
 using AppSettings = GridShell.Core.Settings.AppSettings;
 
@@ -45,13 +46,22 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         Loaded += GameManagerWindow_Loaded;
     }
 
-    private void GameManagerWindow_Loaded(object sender, RoutedEventArgs e)
+    private async void GameManagerWindow_Loaded(object sender, RoutedEventArgs e)
     {
         _igdbClientId = _settings.IgdbClientId ?? "";
         OnPropertyChanged(nameof(IgdbClientId));
         IgdbClientSecretBox.Password = _settings.IgdbClientSecret ?? "";
 
         RefreshGameTiles();
+
+        // Mutates the same _settings instance this window already holds (rather than
+        // RetroArchCoreAutoWire's own load/save cycle) so a core it just wired in shows up
+        // immediately below, instead of only after this window is reopened.
+        if (await RetroArchCoreAutoWire.TryWireAllAsync(_settings))
+        {
+            _onSettingsChanged();
+        }
+
         LoadEmulatorPlatforms();
     }
 
@@ -342,34 +352,6 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         // Newly-pointed-at RetroArch/Dolphin/PCSX2 installs should pick up an already-logged-in
         // RetroAchievements account without the user having to re-trigger the login.
         RetroAchievementsConfigWriter.ApplyToAllConfiguredEmulators(_settings);
-    }
-
-    private void RefreshCoresButton_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as Button)?.CommandParameter is EmulatorPlatformRow row)
-        {
-            row.RefreshCoreList();
-        }
-    }
-
-    private void BrowseEmulatorPath_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as Button)?.CommandParameter is not EmulatorPlatformRow row)
-        {
-            return;
-        }
-
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = "Programs (*.exe)|*.exe|All files (*.*)|*.*",
-            Title = $"Choose the emulator for {row.DisplayName}",
-            InitialDirectory = System.IO.Directory.Exists(@"C:\Emulators") ? @"C:\Emulators" : "",
-        };
-
-        if (dialog.ShowDialog(this) == true)
-        {
-            row.EmulatorPath = dialog.FileName;
-        }
     }
 
     private void OpenEmulatorButton_Click(object sender, RoutedEventArgs e)
