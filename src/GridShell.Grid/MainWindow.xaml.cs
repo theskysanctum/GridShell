@@ -430,6 +430,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         dialog.ShowDialog();
     }
 
+    public void OpenGameManager()
+    {
+        var dialog = new GameManagerWindow(
+            _allTiles,
+            _settings,
+            onTilesChanged: () =>
+            {
+                TileStore.Save(_allTiles);
+                ApplyFilter();
+            },
+            onSettingsChanged: () =>
+            {
+                AppSettingsStore.Save(_settings);
+                ApplySettings();
+            })
+        {
+            Owner = this,
+        };
+
+        dialog.ShowDialog();
+    }
+
     private void MainWindow_Closed(object? sender, EventArgs e)
     {
         _displayChangeSettleTimer.Stop();
@@ -486,6 +508,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void WebTab_Click(object sender, RoutedEventArgs e) => ActiveTab = GridTab.Web;
 
     private void GamesTab_Click(object sender, RoutedEventArgs e) => ActiveTab = GridTab.Games;
+
+    private void GameManagerButton_Click(object sender, RoutedEventArgs e)
+    {
+        HideGrid(restorePreviousFocus: false);
+        OpenGameManager();
+    }
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {

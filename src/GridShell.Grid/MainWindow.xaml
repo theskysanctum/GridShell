@@ -24,6 +24,7 @@
         <sys:Double x:Key="GameTileWidth">140</sys:Double>
         <sys:Double x:Key="GameTileHeight">196</sys:Double>
         <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
         <!-- A soft ambient shadow under every tile/panel/button — the one thing that most makes
              a flat dark UI read as "bare": nothing is visually lifted off the background. -->
@@ -311,6 +312,12 @@
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
+                </Button>
+                <Button x:Name="GameManagerButton" Padding="8,6" Margin="8,0,0,0" Click="GameManagerButton_Click" Style="{StaticResource ModernButtonStyle}"
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Game Manager"
+                        Visibility="{Binding IsGamesTabActive, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="&#xea28;" FontFamily="{StaticResource IconFont}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="16" />
                 </Button>
                 <Button x:Name="AddTileButton" Padding="8,6" Margin="8,0,0,0" Click="AddTileButton_Click" Style="{StaticResource ModernButtonStyle}"
                         Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Add">
