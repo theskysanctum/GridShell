@@ -165,10 +165,10 @@ public partial class FileExplorerActionsMenu : Window
         }
 
         ChosenAction = (FileExplorerMenuAction)index;
-        CloseMenu(true);
+        CloseMenu();
     }
 
-    private void CloseMenu(bool? result = null)
+    private void CloseMenu()
     {
         if (_isClosing)
         {
@@ -176,14 +176,7 @@ public partial class FileExplorerActionsMenu : Window
         }
 
         _isClosing = true;
-        if (result.HasValue)
-        {
-            DialogResult = result;
-        }
-        else
-        {
-            Close();
-        }
+        Close();
     }
 
     private void CopyItem_Click(object sender, MouseButtonEventArgs e) => Confirm(0);

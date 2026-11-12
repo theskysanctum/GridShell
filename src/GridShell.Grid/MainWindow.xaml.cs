@@ -233,6 +233,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _osk.OpenIfClosed();
             handled = true;
         }
+        else if (msg == OpenExplorerMessage.Id)
+        {
+            new FileExplorerWindow(ExplorerHandoff.ReadAndClear()).Show();
+            handled = true;
+        }
         else if (AltF4Blocker.IsSysCommandClose(msg, wParam))
         {
             handled = true;
@@ -572,6 +577,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool ConfirmPowerAction(string title, string message) =>
         ConfirmationWindow.Confirm(this, title, message);
 
+    // WPF's default ContextMenu light-dismiss (StaysOpen=false) doesn't reliably close on an
+    // outside click for a Topmost + AllowsTransparency window like this one — confirmed by
+    // testing, a tile's right-click menu stayed open after clicking elsewhere on the grid.
+    // This handler fires for every mouse-down landing on the window itself (a click actually
+    // on the open popup is a separate HWND, so it never reaches this), closing whichever
+    // tile context menu is open without otherwise touching the click.
+    private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (FindResource("TileContextMenu") is ContextMenu { IsOpen: true } tileMenu)
+        {
+            tileMenu.IsOpen = false;
+        }
+
+        if (FindResource("GameTileContextMenu") is ContextMenu { IsOpen: true } gameTileMenu)
+        {
+            gameTileMenu.IsOpen = false;
+        }
+    }
+
     private void Window_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
         if (!string.IsNullOrEmpty(e.Text) && !char.IsControl(e.Text[0]))
@@ -623,16 +647,41 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void TileList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        ActivateSelected();
-    }
-
-    private void ActivateSelected()
-    {
-        if (TileList.SelectedItem is not Tile tile)
+        // Must resolve to the tile actually under the cursor, not whatever's currently
+        // selected — otherwise a double-click landing on empty grid space (past the last
+        // tile, in the gutter between tiles) would launch a stale selection instead of
+        // doing nothing.
+        if (FindAncestorTile((DependencyObject)e.OriginalSource) is not { } tile)
         {
             return;
         }
 
+        ActivateTile(tile);
+    }
+
+    private static Tile? FindAncestorTile(DependencyObject? source)
+    {
+        for (var node = source; node is not null; node = VisualTreeHelper.GetParent(node))
+        {
+            if (node is ListBoxItem { Content: Tile tile })
+            {
+                return tile;
+            }
+        }
+
+        return null;
+    }
+
+    private void ActivateSelected()
+    {
+        if (TileList.SelectedItem is Tile tile)
+        {
+            ActivateTile(tile);
+        }
+    }
+
+    private void ActivateTile(Tile tile)
+    {
         if (TileLauncher.Launch(tile))
         {
             // Same spirit as Escape — once something's actually launched, the grid's done its

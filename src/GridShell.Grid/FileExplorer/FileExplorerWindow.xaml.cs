@@ -38,7 +38,7 @@ public partial class FileExplorerWindow : Window, INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-    public FileExplorerWindow()
+    public FileExplorerWindow(string? startupPath = null)
     {
         InitializeComponent();
         DataContext = this;
@@ -48,7 +48,7 @@ public partial class FileExplorerWindow : Window, INotifyPropertyChanged
         Icon = GlyphIcon.Render('', new SolidColorBrush(Color.FromRgb(0x4A, 0x90, 0xD9)), Brushes.White);
 
         LeftPane.IsActive = true;
-        LeftPane.NavigateTo(FileExplorerPaneViewModel.ThisPc);
+        LeftPane.NavigateTo(string.IsNullOrEmpty(startupPath) ? FileExplorerPaneViewModel.ThisPc : startupPath);
         RightPane.NavigateTo(FileExplorerPaneViewModel.ThisPc);
 
         Loaded += (_, _) => _controller.Start();
@@ -94,14 +94,21 @@ public partial class FileExplorerWindow : Window, INotifyPropertyChanged
             isXisoCandidate: isXisoCandidate)
         { Owner = this };
 
+        // Shown non-modally (not ShowDialog) specifically so a click on the owning
+        // FileExplorerWindow actually reaches it instead of just beeping - that activates the
+        // owner, which deactivates this menu, which already closes itself via its own
+        // Window_Deactivated handler. A true modal blocks input to its owner entirely, so
+        // clicking "outside" the menu (but still on File Explorer) couldn't dismiss it before.
         _inputBlocked = true;
-        var confirmed = menu.ShowDialog();
-        _inputBlocked = false;
-
-        if (confirmed == true && menu.ChosenAction is { } action)
+        menu.Closed += (_, _) =>
         {
-            HandleMenuAction(action, pane);
-        }
+            _inputBlocked = false;
+            if (menu.ChosenAction is { } action)
+            {
+                HandleMenuAction(action, pane);
+            }
+        };
+        menu.Show();
     }
 
     private void HandleMenuAction(FileExplorerMenuAction action, FileExplorerPaneViewModel pane)

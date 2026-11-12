@@ -60,6 +60,10 @@ public partial class App : System.Windows.Application
             {
                 NotifyExistingInstanceToShow();
             }
+            else if (GetExplorerPathArg(e.Args) is { } explorerPath)
+            {
+                NotifyExistingInstanceToOpenExplorer(explorerPath);
+            }
 
             Shutdown();
             return;
@@ -96,6 +100,53 @@ public partial class App : System.Windows.Application
             // is actually visible on screen.
             window.Show();
             window.Hide();
+        }
+
+        // Rare path — only hit when GridShell.Grid wasn't already pre-warmed and running (the
+        // usual case, handled above via NotifyExistingInstanceToOpenExplorer instead), e.g. a
+        // manual/dev launch. Opens straight into the requested folder without also showing the
+        // grid behind it.
+        if (GetExplorerPathArg(e.Args) is { } coldStartExplorerPath)
+        {
+            new FileExplorerWindow(coldStartExplorerPath).Show();
+        }
+    }
+
+    /// <summary>"--explorer &lt;path&gt;" - the launch mode the default-file-manager registry
+    /// override (see DefaultFileManagerRegistration) uses, since that's what Windows invokes
+    /// whenever anything asks to open a folder once it's enabled.</summary>
+    private static string? GetExplorerPathArg(string[] args)
+    {
+        var index = Array.IndexOf(args, "--explorer");
+        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+    }
+
+    private static void NotifyExistingInstanceToOpenExplorer(string path)
+    {
+        var ownPid = Environment.ProcessId;
+        var otherPid = System.Diagnostics.Process.GetProcessesByName("GridShell.Grid")
+            .FirstOrDefault(p => p.Id != ownPid)?.Id;
+
+        if (otherPid is not { } pid)
+        {
+            return;
+        }
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            var hwnds = ProcessWindowCloser.FindWindowsOf(pid);
+            if (hwnds.Count > 0)
+            {
+                ExplorerHandoff.Write(path);
+                foreach (var hwnd in hwnds)
+                {
+                    PostMessage(hwnd, OpenExplorerMessage.Id, IntPtr.Zero, IntPtr.Zero);
+                }
+
+                return;
+            }
+
+            Thread.Sleep(50);
         }
     }
 

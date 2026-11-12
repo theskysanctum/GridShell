@@ -34,6 +34,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
 UninstallDisplayIcon={app}\{#MyAppRelDir}\{#MyAppExeName}
+SetupIconFile=..\src\icon.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

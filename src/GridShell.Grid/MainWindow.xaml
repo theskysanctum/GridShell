@@ -16,7 +16,8 @@
         Background="Transparent"
         FontFamily="{DynamicResource AppFontFamily}"
         KeyDown="Window_KeyDown"
-        PreviewTextInput="Window_PreviewTextInput">
+        PreviewTextInput="Window_PreviewTextInput"
+        PreviewMouseDown="Window_PreviewMouseDown">
     <Window.Resources>
         <sys:Double x:Key="TileWidth">140</sys:Double>
         <sys:Double x:Key="TileHeight">110</sys:Double>
@@ -76,9 +77,6 @@
             <Setter Property="BorderBrush" Value="Transparent" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                 </DataTrigger>
             </Style.Triggers>
