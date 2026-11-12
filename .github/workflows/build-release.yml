@@ -82,7 +82,14 @@ jobs:
           installer_path="installer/Output/GridShell-Setup-$VERSION.exe"
           sum=$(sha256sum "$installer_path" | cut -d' ' -f1)
 
-          gh release create "$tag" "$installer_path" \
+          # A second, version-less copy so the website's download button can link straight to
+          # https://github.com/.../releases/latest/download/GridShell-Setup.exe - GitHub's fixed
+          # "latest" alias only works for an asset whose filename never changes release to
+          # release, unlike the primary versioned one above.
+          stable_path="installer/Output/GridShell-Setup.exe"
+          cp "$installer_path" "$stable_path"
+
+          gh release create "$tag" "$installer_path" "$stable_path" \
             --target "$GITHUB_SHA" \
             --title "GridShell $VERSION" \
             --notes "GridShell $VERSION.

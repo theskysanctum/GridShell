@@ -40,18 +40,23 @@ h1{margin:0;font:600 clamp(2.3rem,5.2vw,3.5rem)/1 "Segoe UI Variable Display","S
 .btn:hover{filter:brightness(1.1)}
 .facts{margin:1.4rem 0 0;padding:0;list-style:none;display:flex;gap:.3rem 1.2rem;flex-wrap:wrap;color:var(--mute);font-size:.95rem}
 .facts li::before{content:"";display:inline-block;width:.5rem;height:.5rem;background:var(--accent);margin-right:.5rem}
-.screen{border:1px solid var(--line);background:#0A0C10;box-shadow:0 24px 60px -20px rgba(0,0,0,.8)}
-.screen .top{display:flex;gap:.4rem;padding:.5rem .7rem;border-bottom:1px solid var(--line);background:var(--panel)}
-.screen .top i{width:.6rem;height:.6rem;background:var(--line);display:block}
-.screen .body{display:grid;grid-template-columns:5.2rem 1fr;min-height:18.5rem}
-.side{border-right:1px solid var(--line);background:var(--panel);padding:.7rem .5rem;display:flex;flex-direction:column;gap:.45rem;font-size:.7rem;color:var(--mute)}
-.side b{color:var(--text);font-size:1.15rem;letter-spacing:-.02em}
-.side span{display:block;padding:.25rem .35rem;background:var(--panel2)}
-.mosaic{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:3.6rem;gap:.4rem;padding:.8rem}
-.t{padding:.45rem .55rem;display:flex;align-items:flex-end;font-weight:600;font-size:.8rem;color:#fff;outline:3px solid transparent;outline-offset:2px;transition:outline-color .15s}
+.screen{border:1px solid var(--line);background:#0A0C10;box-shadow:0 24px 60px -20px rgba(0,0,0,.8);overflow:hidden}
+.screen .body{display:grid;grid-template-columns:3.6rem 1fr;min-height:19.5rem}
+.side{border-right:1px solid var(--line);background:#14161b;padding:.6rem;display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.side .launcher{width:2rem;height:2rem;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.side .pin{width:2rem;height:2rem;border-radius:.4rem;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff}
+.side .spacer{flex:1}
+.side .batt{font-size:.62rem;color:var(--mute);text-align:center;line-height:1.3}
+.panel-top{display:flex;align-items:center;gap:.4rem;padding:.65rem .8rem;flex-wrap:wrap}
+.pill{padding:.3rem .8rem;font-size:.72rem;font-weight:700;background:var(--panel2);color:var(--mute)}
+.pill.on{background:var(--accent);color:#14161B}
+.pill.add{background:transparent;color:var(--mute);padding:.3rem .5rem}
+.search{margin-left:auto;padding:.3rem .9rem;background:var(--panel2);color:var(--mute);font-size:.72rem}
+.mosaic{display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:4.4rem;gap:.5rem;padding:0 .8rem .8rem}
+.t{border-radius:.3rem;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;font-weight:600;font-size:.68rem;color:#fff;outline:2px solid transparent;outline-offset:2px;transition:outline-color .15s}
 .t.on{outline-color:var(--accent)}
-.t.w2{grid-column:span 2}.t.h2{grid-row:span 2}
-.c1{background:#1E6FD9}.c2{background:#0E9594}.c3{background:#3C9A4B}.c4{background:#D9731A}.c5{background:#7B52C9}.c6{background:#C8453B}.c7{background:#3F5266}
+.t i{width:1.3rem;height:1.3rem;border-radius:.3rem;display:block}
+.c1{background:#1E6FD9}.c2{background:#0E9594}.c3{background:#3C9A4B}.c4{background:#D9731A}.c5{background:#7B52C9}.c6{background:#C8453B}.c7{background:#3F5266}.c8{background:#B0943A}
 .cap{margin:.6rem 0 0;color:var(--mute);font-size:.85rem}
 section{padding:4rem 0;border-top:1px solid var(--line)}
 section.alt{background:var(--panel)}
@@ -62,6 +67,12 @@ h2{margin:0 0 .6rem;font:600 2rem/1.15 "Segoe UI Variable Display","Segoe UI",sy
 .feat li{background:var(--bg);padding:1.4rem 1.4rem 1.5rem}
 .feat b{display:block;font-size:1.1rem;margin-bottom:.3rem}
 .feat span{color:var(--mute);font-size:1rem}
+.catgrid{display:grid;grid-template-columns:1fr 1fr;gap:2.2rem 3rem}
+.cat h3{margin:0 0 .8rem;font-size:1.05rem;color:var(--accent)}
+.cat ul{margin:0;padding:0;list-style:none;display:grid;gap:.55rem}
+.cat li{color:var(--mute);font-size:.95rem;line-height:1.5;padding-left:1rem;position:relative}
+.cat li::before{content:"";position:absolute;left:0;top:.6em;width:.4rem;height:.4rem;background:var(--accent)}
+.cat li b{color:var(--text);font-weight:600}
 .steps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;counter-reset:s}
 .steps li{counter-increment:s;border:1px solid var(--line);background:var(--bg);padding:1.4rem 1.5rem}
 .steps li::before{content:counter(s);display:block;width:2rem;height:2rem;background:var(--accent);color:#14161B;font-weight:800;text-align:center;line-height:2rem;margin-bottom:.8rem}
@@ -89,7 +100,7 @@ pre{margin:1rem 0 0;padding:1rem 1.2rem;background:var(--panel);border:1px solid
 footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--mute);font-size:.95rem}
 footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 @media (max-width:60rem){.feat{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:52rem){.hero .wrap{grid-template-columns:1fr;padding:3rem 0}.feat,.modes,.steps,.req{grid-template-columns:1fr}.bar nav a:not(.dl){display:none}}
+@media (max-width:52rem){.hero .wrap{grid-template-columns:1fr;padding:3rem 0}.feat,.modes,.steps,.req,.catgrid{grid-template-columns:1fr}.bar nav a:not(.dl){display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.t{transition:none}}
 </style>
 </head>
@@ -101,7 +112,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <a href="#start">Get started</a>
 <a href="#faq">FAQ</a>
 <a href="https://github.com/theskysanctum/gridshell">GitHub</a>
-<a class="dl" href="https://github.com/theskysanctum/gridshell/releases/latest">Download</a>
+<a class="dl" href="https://github.com/theskysanctum/gridshell/releases/latest/download/GridShell-Setup.exe">Download</a>
 </nav>
 </div></div>
 
@@ -110,31 +121,46 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <h1>Your Windows desktop, built for a controller.</h1>
 <p class="sub">GridShell replaces the Start Menu and taskbar with a fullscreen launcher grid. Open apps, games, files, and downloads from the couch, with a controller, a keyboard, or a mouse.</p>
 <div class="acts">
-<a class="btn main" href="https://github.com/theskysanctum/gridshell/releases/latest">Download for Windows</a>
+<a class="btn main" href="https://github.com/theskysanctum/gridshell/releases/latest/download/GridShell-Setup.exe">Download for Windows</a>
 <a class="btn" href="#features">See what it does</a>
 </div>
 <ul class="facts"><li>Free</li><li>Open source (MIT)</li><li>Easy to undo</li></ul>
 </div>
 <div>
 <div class="screen" aria-hidden="true">
-<div class="top"><i></i><i></i><i></i></div>
 <div class="body">
-<div class="side"><b>9:41</b><span>Window list</span><span>Battery 82%</span></div>
+<div class="side">
+<div class="launcher">▦</div>
+<div class="pin c5">◆</div>
+<div class="pin c4">●</div>
+<div class="pin c2">▲</div>
+<div class="spacer"></div>
+<div class="batt">82%<br>9:41</div>
+</div>
+<div>
+<div class="panel-top">
+<div class="pill on">Apps</div>
+<div class="pill">Web</div>
+<div class="pill">Games</div>
+<div class="pill add">+ New</div>
+<div class="search">Type to search</div>
+</div>
 <div class="mosaic" id="mosaic">
-<div class="t c1 w2 h2">Apps</div>
-<div class="t c2">Web</div>
-<div class="t c3">Games</div>
-<div class="t c4 w2">Files</div>
-<div class="t c5">Downloads</div>
-<div class="t c6">RetroArch</div>
-<div class="t c7 w2">Settings</div>
-<div class="t c3">Steam</div>
-<div class="t c2">GOG</div>
-<div class="t c4 w2">Emulation</div>
+<div class="t c1"><i></i>File Explorer</div>
+<div class="t c2"><i></i>Downloads</div>
+<div class="t c3"><i></i>Settings</div>
+<div class="t c4"><i></i>RetroArch</div>
+<div class="t c5"><i></i>Steam</div>
+<div class="t c6"><i></i>Discord</div>
+<div class="t c7"><i></i>Epic Games</div>
+<div class="t c2"><i></i>Dolphin</div>
+<div class="t c8"><i></i>GOG Galaxy</div>
+<div class="t c3"><i></i>PCSX2</div>
 </div>
 </div>
 </div>
-<p class="cap">An illustration of the launcher layout.</p>
+</div>
+<p class="cap">An illustration of the launcher layout - tiles, tabs, and sidebar match the real app.</p>
 </div>
 </div></header>
 
@@ -143,17 +169,75 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <h2>Everything you reach for, in one place</h2>
 <p>Every screen works with a controller first, and still works fine with a keyboard and mouse.</p>
 </div>
-<ul class="feat">
-<li><b>Launcher grid</b><span>A fullscreen grid of Apps, Web, and Games tiles. Move with the D-pad or stick, the keyboard, or the mouse.</span></li>
-<li><b>Taskbar sidebar</b><span>Window list, clock, and battery, with Bluetooth device battery levels. It reserves real desktop space like a normal taskbar.</span></li>
-<li><b>On-screen keyboard</b><span>Type anywhere in Windows with a controller.</span></li>
-<li><b>File Explorer</b><span>Two panes. Copy, cut, paste, rename, delete, extract and compress archives, and work with disc images (CHD and Xbox ISO).</span></li>
-<li><b>Download Manager</b><span>Paste a link or magnet. Real-Debrid resolves it when set up, and a built-in aria2 downloads it fast. A small Chrome extension sends browser downloads straight in.</span></li>
-<li><b>Emulation</b><span>190+ platforms, each mapped to RetroArch or the best standalone emulator and set to open fullscreen. One login sets up RetroAchievements in RetroArch, Dolphin, and PCSX2.</span></li>
-<li><b>Installed games</b><span>Finds games from Steam, Epic, and GOG Galaxy and adds a tile for each one.</span></li>
-<li><b>Appearance</b><span>Theme, accent color, tile size, and a system-wide font picker that takes your own font file.</span></li>
-<li><b>Safe to try</b><span>Run it next to Windows, close it, and your normal desktop is back right away.</span></li>
-</ul>
+<div class="catgrid">
+
+<div class="cat"><h3>Launcher grid</h3><ul>
+<li><b>Apps, Web, and Games tabs</b> - a fullscreen tile grid you move through with the D-pad or stick, the keyboard, or the mouse.</li>
+<li><b>Search</b> - just start typing to filter tiles, no button to find first.</li>
+<li><b>Tile management</b> - add, rename, change the icon, or remove a tile; Games tiles can fetch IGDB cover art.</li>
+<li><b>Installed games</b> - Steam, Epic, and GOG Galaxy libraries are detected automatically and get a tile each.</li>
+<li><b>Quick-launch storefronts</b> - Steam, Epic, GOG, and itch sit next to the power button on every tab, and close themselves once the game you launched from them exits.</li>
+<li><b>Anything you open slides the grid away</b> - tiles, storefronts, File Explorer, Downloads, Settings, all of it.</li>
+</ul></div>
+
+<div class="cat"><h3>Controller support</h3><ul>
+<li><b>Broad controller recognition</b> - Xbox, PlayStation (DualShock 4 / DualSense), and Nintendo Switch Pro / Joy-Con pads, via SDL3.</li>
+<li><b>Nintendo-aware on-screen keyboard</b> - hint labels swap to match A/B/X/Y on a Switch-layout pad automatically.</li>
+<li><b>Controller Manager</b> - turns a pad GridShell can read but Windows' XInput can't into a virtual Xbox 360 controller (ViGEm), and can hide the original device (HidHide) so apps only see one.</li>
+<li><b>Per-controller tuning</b> - button remap, LED color (DualShock 4 / DualSense), rumble, gyro/accelerometer, touchpad click mode and sensitivity, and experimental adaptive triggers (DualSense).</li>
+<li><b>On-screen keyboard</b> - type anywhere in Windows with a controller alone.</li>
+</ul></div>
+
+<div class="cat"><h3>File Explorer</h3><ul>
+<li><b>Dual-pane browsing</b> - two independently navigable panes, full controller support alongside mouse and keyboard.</li>
+<li><b>File operations</b> - copy, cut, paste, rename, delete, and new folder, from a popup menu reachable by right-click, a controller button, or the keyboard.</li>
+<li><b>Archives</b> - extract or compress to Zip and 7z, via whichever of 7-Zip or PeaZip is installed.</li>
+<li><b>Disc images</b> - compress to CHD and extract Xbox ISOs for emulation, right from the file list.</li>
+</ul></div>
+
+<div class="cat"><h3>Download Manager</h3><ul>
+<li><b>Paste and go</b> - drop in a direct link or a magnet link.</li>
+<li><b>Real-Debrid</b> - optional; unrestricts hoster links and resolves magnets/torrents when you add an API token.</li>
+<li><b>Fast transfers</b> - a bundled aria2 daemon handles the actual downloading.</li>
+<li><b>Browser capture</b> - a small Chrome extension sends your browser's downloads straight into the Download Manager.</li>
+</ul></div>
+
+<div class="cat"><h3>Emulation</h3><ul>
+<li><b>190+ platforms</b> - each mapped to RetroArch or the best standalone emulator, and set to open fullscreen.</li>
+<li><b>RetroAchievements</b> - log in once, and it's applied automatically across every RetroArch, Dolphin, and PCSX2 you've set up.</li>
+<li><b>ROM organization</b> - scans a default ROMs folder plus as many extra folders as you add, each with its own per-platform subfolder.</li>
+</ul></div>
+
+<div class="cat"><h3>Appearance</h3><ul>
+<li><b>Theme and color</b> - dark or light theme, a curated accent-color palette, or your own custom color.</li>
+<li><b>Tile size</b> - small, medium, or large.</li>
+<li><b>Fonts</b> - four bundled fonts, or point it at your own font file for the whole UI.</li>
+<li><b>Start button icon</b> - a curated icon gallery, or your own image.</li>
+<li><b>Wallpaper</b> - a local image, video, or .html file, or a live URL; defaults to your current Windows wallpaper if you leave it blank.</li>
+<li><b>Widgets</b> - overlay widgets on top of an image or video wallpaper.</li>
+</ul></div>
+
+<div class="cat"><h3>Taskbar sidebar</h3><ul>
+<li><b>Window list</b> - see and switch between every open window, with a click bringing the grid down out of the way automatically.</li>
+<li><b>Clock and battery</b> - including battery levels for connected Bluetooth devices, not just the PC itself.</li>
+<li><b>Behaves like a real taskbar</b> - reserves its own strip of desktop space, and stays out of Alt+Tab itself.</li>
+</ul></div>
+
+<div class="cat"><h3>Networking and devices</h3><ul>
+<li><b>Wi-Fi</b> - scan, connect, and manage saved networks, without relying on Windows' own networking UI.</li>
+<li><b>Bluetooth</b> - scan, pair, and unpair devices, including simple legacy PIN pairing.</li>
+<li><b>Audio</b> - pick the output/input device and set volume for each, independent of Windows' own mixer.</li>
+<li><b>Display</b> - switch the primary monitor, change resolution, and adjust brightness where supported.</li>
+</ul></div>
+
+<div class="cat"><h3>Safety and flexibility</h3><ul>
+<li><b>Two ways to run it</b> - next to Windows with zero side effects, or as the full Windows shell (replacing <code>explorer.exe</code>) with a watchdog that falls back to Explorer if GridShell keeps failing.</li>
+<li><b>Kiosk Mode</b> - a PIN lock that blocks editing tiles/widgets/wallpaper and exiting GridShell, for handing the PC to a kid.</li>
+<li><b>Power menu</b> - lock, sign out, sleep, restart, or shut down, right from the grid.</li>
+<li><b>Easy to undo</b> - close it, or turn the shell setting back off, and your normal desktop is back immediately.</li>
+</ul></div>
+
+</div>
 </div></section>
 
 <section id="start"><div class="wrap">
@@ -191,7 +275,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <details><summary>Is GridShell free?</summary><p>Yes. GridShell's own code is MIT licensed, and the source is on GitHub. It bundles a few other tools, like aria2 and chdman, under their own licenses.</p></details>
 <details><summary>Will it break my Windows install?</summary><p>Not in the default mode. GridShell runs next to Windows, hides the taskbar while it is open, and puts everything back when you close it. Only the optional "use as my Windows shell" setting changes how Windows starts.</p></details>
 <details><summary>How do I get back to normal Windows?</summary><p>Close GridShell, or choose "Restore Explorer". If you turned on the shell setting, turn it off in Settings. The watchdog also falls back to Explorer by itself if GridShell keeps failing.</p></details>
-<details><summary>Which controllers work?</summary><p>DualSense controllers work today. Support for Xbox, PlayStation, and Switch controllers through SDL3 is in the source and comes with the next release.</p></details>
+<details><summary>Which controllers work?</summary><p>Xbox, PlayStation (DualShock 4 and DualSense), and Nintendo Switch Pro / Joy-Con controllers all work, through SDL3.</p></details>
 <details><summary>Do I need a controller?</summary><p>No. Everything works with a keyboard and mouse too.</p></details>
 <details><summary>Do I need Real-Debrid?</summary><p>No. It is optional. Without it, the Download Manager still downloads regular links with aria2. Real-Debrid adds support for magnets and hoster links.</p></details>
 <details><summary>Does it come with games or emulators?</summary><p>No games. GridShell maps each platform to RetroArch or a standalone emulator and sets it up to open fullscreen, and it adds tiles for games you already have in Steam, Epic, and GOG Galaxy.</p></details>
