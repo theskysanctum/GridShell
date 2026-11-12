@@ -3,9 +3,10 @@ using System.Linq;
 
 namespace GridShell.Core.Tiles;
 
-/// <summary>Scans &lt;root&gt;\&lt;platform-slug&gt; for ROM files matching that platform's known
-/// extensions, across the default root (<see cref="EmulationPlatforms.RomsRootPath"/>) plus any
-/// extra root folders configured in Settings.</summary>
+/// <summary>Scans &lt;root&gt;\&lt;platform-slug&gt; recursively for ROM files matching that
+/// platform's known extensions, across the default root
+/// (<see cref="EmulationPlatforms.RomsRootPath"/>) plus any extra root folders configured in
+/// Settings.</summary>
 public static class RomScanner
 {
     public static List<string> GetRoms(EmulationPlatform platform, IEnumerable<string>? extraRoots = null)
@@ -28,7 +29,7 @@ public static class RomScanner
 
             try
             {
-                var allFiles = Directory.EnumerateFiles(dir).ToList();
+                var allFiles = Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).ToList();
 
                 // A multi-disc game ships one .m3u playlist (RetroArch's own convention,
                 // listing each disc's real image filename) alongside the per-disc image files

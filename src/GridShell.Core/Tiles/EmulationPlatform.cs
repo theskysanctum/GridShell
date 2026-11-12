@@ -17,7 +17,12 @@ public sealed record EmulationPlatform(string Slug, string DisplayName, string C
 /// used rather than guessing a specific one.</summary>
 public static class EmulationPlatforms
 {
-    public const string RomsRootPath = @"C:\Games\ROMs";
+    public const string RomsRootPath = @"C:\GridShell\Games\ROMs";
+
+    /// <summary>Where RetroArch (and, in future, every standalone emulator) looks for BIOS/
+    /// firmware files - see RetroArchCoreAutoWire, which points RetroArch's own
+    /// "System/BIOS Directory" setting here.</summary>
+    public const string BiosRootPath = @"C:\GridShell\Games\Bios";
 
     public static readonly IReadOnlyList<EmulationPlatform> All = new[]
     {

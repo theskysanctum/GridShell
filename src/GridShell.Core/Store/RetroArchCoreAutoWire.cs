@@ -53,8 +53,11 @@ public static class RetroArchCoreAutoWire
             return false;
         }
 
-        var coresDir = Path.Combine(Path.GetDirectoryName(retroArchExe) ?? "", "cores");
+        var retroArchDir = Path.GetDirectoryName(retroArchExe) ?? "";
+        var coresDir = Path.Combine(retroArchDir, "cores");
         Directory.CreateDirectory(coresDir);
+
+        SetSystemDirectory(retroArchDir);
 
         var changed = false;
 
@@ -86,6 +89,45 @@ public static class RetroArchCoreAutoWire
         }
 
         return changed;
+    }
+
+    /// <summary>Points RetroArch's own "System/BIOS Directory" setting (retroarch.cfg's
+    /// system_directory key, confirmed live by launching a fresh RetroArch install briefly to
+    /// let it generate its default config, then reading the key it wrote) at
+    /// EmulationPlatforms.BiosRootPath, so every core looks there. retroarch.cfg lives right
+    /// next to the exe on this portable-style install (confirmed the same way) - if it doesn't
+    /// exist yet (RetroArch has never actually been launched), writes a minimal one with just
+    /// this key; RetroArch fills in every other default itself on first real launch, the same
+    /// as it would for any config missing a key.</summary>
+    private static void SetSystemDirectory(string retroArchDir)
+    {
+        Directory.CreateDirectory(EmulationPlatforms.BiosRootPath);
+
+        var cfgPath = Path.Combine(retroArchDir, "retroarch.cfg");
+        var desiredLine = $"system_directory = \"{EmulationPlatforms.BiosRootPath}\"";
+
+        if (!File.Exists(cfgPath))
+        {
+            File.WriteAllText(cfgPath, desiredLine + Environment.NewLine);
+            return;
+        }
+
+        var lines = File.ReadAllLines(cfgPath);
+        var lineIndex = Array.FindIndex(lines, l => l.TrimStart().StartsWith("system_directory", StringComparison.Ordinal));
+
+        if (lineIndex < 0)
+        {
+            File.AppendAllText(cfgPath, Environment.NewLine + desiredLine + Environment.NewLine);
+            return;
+        }
+
+        if (lines[lineIndex] == desiredLine)
+        {
+            return;
+        }
+
+        lines[lineIndex] = desiredLine;
+        File.WriteAllLines(cfgPath, lines);
     }
 
     private static async Task<bool> TryDownloadCoreAsync(string coreFileName, string destinationPath)
