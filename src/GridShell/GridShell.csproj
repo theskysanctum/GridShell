@@ -48,7 +48,7 @@
     <!-- Kept in sync with installer/GridShell.iss's MyAppVersion by the release workflow's
          version-bump step - this is what UpdateChecker reads via Assembly.GetName().Version to
          compare against the latest GitHub release. -->
-    <Version>1.1.8</Version>
+    <Version>1.1.9</Version>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
