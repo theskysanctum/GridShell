@@ -83,6 +83,70 @@
       "wingetId": "qBittorrent.qBittorrent",
       "category": "Utilities",
       "description": "A free, open-source BitTorrent client."
+    },
+    {
+      "id": "libretro.retroarch",
+      "name": "RetroArch",
+      "wingetId": "Libretro.RetroArch",
+      "category": "Emulation",
+      "description": "Frontend for libretro cores, covering most retro systems. Download cores for the systems you want via its own Online Updater after installing.",
+      "platformSlugs": []
+    },
+    {
+      "id": "dolphinemulator.dolphin",
+      "name": "Dolphin",
+      "wingetId": "DolphinEmulator.Dolphin",
+      "category": "Emulation",
+      "description": "Nintendo GameCube and Wii emulator.",
+      "platformSlugs": ["gamecube", "wii"]
+    },
+    {
+      "id": "pcsx2team.pcsx2",
+      "name": "PCSX2",
+      "wingetId": "PCSX2Team.PCSX2",
+      "category": "Emulation",
+      "description": "Sony PlayStation 2 emulator.",
+      "platformSlugs": ["ps2"]
+    },
+    {
+      "id": "ppssppteam.ppsspp",
+      "name": "PPSSPP",
+      "wingetId": "PPSSPPTeam.PPSSPP",
+      "category": "Emulation",
+      "description": "Sony PSP emulator.",
+      "platformSlugs": ["psp"]
+    },
+    {
+      "id": "stenzek.duckstation",
+      "name": "DuckStation",
+      "wingetId": "Stenzek.DuckStation",
+      "category": "Emulation",
+      "description": "Sony PlayStation 1 emulator.",
+      "platformSlugs": ["psx"]
+    },
+    {
+      "id": "cemu.cemu",
+      "name": "Cemu",
+      "wingetId": "Cemu.Cemu",
+      "category": "Emulation",
+      "description": "Nintendo Wii U emulator.",
+      "platformSlugs": ["wiiu"]
+    },
+    {
+      "id": "xenia.xenia",
+      "name": "Xenia",
+      "wingetId": "Xenia.Xenia",
+      "category": "Emulation",
+      "description": "Microsoft Xbox 360 emulator.",
+      "platformSlugs": ["xbox360"]
+    },
+    {
+      "id": "xemu-project.xemu",
+      "name": "xemu",
+      "wingetId": "xemu-project.xemu",
+      "category": "Emulation",
+      "description": "Original Microsoft Xbox emulator.",
+      "platformSlugs": ["xbox"]
     }
   ]
 }

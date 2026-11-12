@@ -19,10 +19,17 @@ public static class StoreCatalogSync
     private static readonly string LocalPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GridShell", "StoreCatalogCache");
 
-    /// <summary>Clones (first run) or fetches+hard-resets (every run after) the cache, then reads
-    /// the catalog from it. Falls back to whatever's already on disk - stale is better than
-    /// empty - if syncing fails (no internet, etc.), and to a genuinely empty catalog only if
-    /// nothing has ever been synced successfully.</summary>
+    /// <summary>Re-clones the cache fresh on every call, then reads the catalog from it. Falls
+    /// back to whatever's already on disk - stale is better than empty - if syncing fails (no
+    /// internet, etc.), and to a genuinely empty catalog only if nothing has ever been synced
+    /// successfully.
+    ///
+    /// Deliberately re-clones rather than fetch+reset on an existing checkout: tried that first,
+    /// and on this real repo it left HEAD stuck on the commit from the PREVIOUS clone even
+    /// though `git fetch` on the same checkout (plain git, not LibGit2Sharp) picked up the new
+    /// commit just fine - a real, reproduced staleness bug in that path, not a guess. The repo is
+    /// small (~14 MB .git), so a fresh clone each time the Store opens is cheap enough to just
+    /// sidestep the whole class of problem.</summary>
     public static async Task<StoreCatalogFile> SyncAndLoadAsync()
     {
         try
@@ -39,25 +46,13 @@ public static class StoreCatalogSync
 
     private static void Sync()
     {
-        if (!Directory.Exists(Path.Combine(LocalPath, ".git")))
+        if (Directory.Exists(LocalPath))
         {
-            if (Directory.Exists(LocalPath))
-            {
-                Directory.Delete(LocalPath, recursive: true);
-            }
-
-            Directory.CreateDirectory(Path.GetDirectoryName(LocalPath)!);
-            Repository.Clone(RepoUrl, LocalPath);
-            return;
+            Directory.Delete(LocalPath, recursive: true);
         }
 
-        using var repo = new Repository(LocalPath);
-        var remote = repo.Network.Remotes.First(r => r.Name == "origin");
-        var refspec = $"+refs/heads/{Branch}:refs/remotes/origin/{Branch}";
-        repo.Network.Fetch(remote.Url, new[] { refspec });
-
-        var tip = (Commit)repo.Lookup($"refs/remotes/origin/{Branch}");
-        repo.Reset(ResetMode.Hard, tip);
+        Directory.CreateDirectory(Path.GetDirectoryName(LocalPath)!);
+        Repository.Clone(RepoUrl, LocalPath);
     }
 
     private static StoreCatalogFile Load()

@@ -97,6 +97,10 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         {
             app.ErrorMessage = result.Message;
         }
+        else
+        {
+            EmulatorAutoWire.TryWire(app.App);
+        }
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
