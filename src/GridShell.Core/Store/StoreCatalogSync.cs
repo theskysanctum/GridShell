@@ -36,9 +36,14 @@ public static class StoreCatalogSync
         {
             await Task.Run(Sync);
         }
-        catch (Exception ex) when (ex is LibGit2SharpException or IOException)
+        catch (Exception ex) when (ex is LibGit2SharpException or IOException or UnauthorizedAccessException)
         {
-            // Network/git failure - fall through to whatever's already cached, if anything.
+            // Network/git failure, or the previous clone's files still being locked (observed
+            // live: deleting the old clone before re-cloning threw UnauthorizedAccessException -
+            // "Access to the path ... is denied" - with no read-only attribute and a normal ACL,
+            // consistent with something (antivirus real-time scan, most likely) transiently
+            // holding one of the just-written .git object files open) - fall through to
+            // whatever's already cached, if anything, rather than crashing the Store window.
         }
 
         return Load();
@@ -46,13 +51,37 @@ public static class StoreCatalogSync
 
     private static void Sync()
     {
+        Directory.CreateDirectory(Path.GetDirectoryName(LocalPath)!);
+
+        // Rename the old clone out of the way rather than deleting it in place first: deleting
+        // was observed live to throw UnauthorizedAccessException ("Access to the path ... is
+        // denied") on a freshly-written .git object file with a normal ACL and no read-only
+        // attribute - consistent with something (most likely antivirus real-time scanning)
+        // transiently holding it open - and a delete that fails partway through leaves a
+        // corrupted clone (confirmed live: catalog.json already gone) rather than either the old
+        // or new catalog intact. A rename isn't blocked by that same transient lock (confirmed
+        // live against the same locked file) since it only changes the directory entry.
         if (Directory.Exists(LocalPath))
         {
-            Directory.Delete(LocalPath, recursive: true);
+            var staleBackup = LocalPath + "-stale-" + Guid.NewGuid().ToString("N");
+            Directory.Move(LocalPath, staleBackup);
+            TryDeleteBestEffort(staleBackup);
         }
 
-        Directory.CreateDirectory(Path.GetDirectoryName(LocalPath)!);
         Repository.Clone(RepoUrl, LocalPath);
+    }
+
+    private static void TryDeleteBestEffort(string path)
+    {
+        try
+        {
+            Directory.Delete(path, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Harmless clutter left under LocalAppData if something still has a file open -
+            // not worth failing the sync over.
+        }
     }
 
     private static StoreCatalogFile Load()
