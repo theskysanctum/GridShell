@@ -3,9 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:GridShell"
         mc:Ignorable="d"
         Title="GridShell Store"
-        Width="900" Height="600" MinWidth="640" MinHeight="400"
+        Width="960" Height="640" MinWidth="680" MinHeight="440"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         Background="{DynamicResource WindowBackgroundBrush}"
@@ -15,107 +16,244 @@
     <Window.Resources>
         <FontFamily x:Key="IconFont">../Fonts/#Material Symbols Outlined</FontFamily>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <local:BoolToVisibilityInverseConverter x:Key="BoolToVisibilityInverse" />
 
-        <CollectionViewSource x:Key="GroupedApps" Source="{Binding Apps}">
-            <CollectionViewSource.GroupDescriptions>
-                <PropertyGroupDescription PropertyName="Category" />
-            </CollectionViewSource.GroupDescriptions>
-        </CollectionViewSource>
+        <!-- Shows the Tag text as a placeholder while the box is empty - the previous version
+             set Tag="Search apps..." but nothing ever rendered it, since a plain TextBox has no
+             built-in placeholder support. -->
+        <Style x:Key="PlaceholderTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <TextBlock Text="{TemplateBinding Tag}" IsHitTestVisible="False"
+                                       VerticalAlignment="Center" Foreground="{DynamicResource MutedForegroundBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}" Value="">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ScrollViewer x:Name="PART_ContentHost" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- One flat list, filtered by SelectedCategory/search text in code - the left-hand
+             category rail replaces the old inline group headers, matching this app's other
+             two-pane config windows (Settings, Controller Manager) instead of a single long
+             grouped list. -->
+        <Style x:Key="CategoryItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="8" SnapsToDevicePixels="True">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PanelBorderBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="White" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
         <Style x:Key="InstallButtonStyle" TargetType="Button">
-            <Setter Property="Padding" Value="12,6" />
-            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{DynamicResource AccentBrush}" CornerRadius="16"
+                                Padding="14,7" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Rounded capsule status badges - accent for Installed, the app's existing themed
+             error color for Failed, muted/transparent while checking or installing (that state
+             already has its own "..." text, a badge would be redundant noise). -->
+        <Style x:Key="StatusBadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="Background" Value="Transparent" />
         </Style>
     </Window.Resources>
 
-    <Grid>
+    <Grid Margin="16,16,16,0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="12,12,12,8">
+        <!-- Header: title + search, search icon prefixed inside the field itself. -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" x:Name="SearchBox" Padding="8,6" VerticalContentAlignment="Center"
-                     Background="{DynamicResource SurfaceBackgroundBrush}"
-                     Foreground="{DynamicResource PrimaryForegroundBrush}"
-                     BorderBrush="{DynamicResource PanelBorderBrush}"
-                     Tag="Search apps..."
-                     TextChanged="SearchBox_TextChanged" />
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="Store" FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                <TextBlock Text="{Binding CatalogStatusText}" FontSize="11" Margin="0,2,0,0"
+                           Foreground="{DynamicResource MutedForegroundBrush}" />
+            </StackPanel>
+
+            <Border Grid.Column="1" MaxWidth="360" HorizontalAlignment="Right" VerticalAlignment="Center"
+                    CornerRadius="18" Background="{DynamicResource SurfaceBackgroundBrush}"
+                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1" Padding="12,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="&#xef7a;" FontFamily="{StaticResource IconFont}" FontSize="16"
+                               VerticalAlignment="Center" Margin="0,0,8,0"
+                               Foreground="{DynamicResource MutedForegroundBrush}" />
+                    <TextBox Grid.Column="1" x:Name="SearchBox" Padding="0,9" VerticalContentAlignment="Center"
+                             Style="{StaticResource PlaceholderTextBoxStyle}"
+                             Background="Transparent" BorderThickness="0"
+                             Foreground="{DynamicResource PrimaryForegroundBrush}"
+                             CaretBrush="{DynamicResource PrimaryForegroundBrush}"
+                             Tag="Search apps..."
+                             TextChanged="SearchBox_TextChanged" />
+                </Grid>
+            </Border>
         </Grid>
 
-        <TextBlock Grid.Row="1" Margin="12,0,12,8" FontSize="11"
-                   Foreground="{DynamicResource MutedForegroundBrush}"
-                   Text="{Binding CatalogStatusText}" />
+        <!-- Two-pane body: category rail on the left, app cards on the right - same shape as
+             this app's other config windows (Settings, Controller Manager) rather than one long
+             grouped list. -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <ListBox Grid.Row="2" Margin="12,0,12,8"
-                 ItemsSource="{Binding Source={StaticResource GroupedApps}}"
-                 Background="Transparent" BorderThickness="0"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-            <ListBox.GroupStyle>
-                <GroupStyle>
-                    <GroupStyle.HeaderTemplate>
+            <ListBox Grid.Column="0" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
+                     ItemContainerStyle="{StaticResource CategoryItemStyle}"
+                     Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Apps}">
+                    <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"
-                                       Foreground="{DynamicResource PrimaryForegroundBrush}"
-                                       Margin="4,12,0,4" />
-                        </DataTemplate>
-                    </GroupStyle.HeaderTemplate>
-                </GroupStyle>
-            </ListBox.GroupStyle>
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem">
-                    <Setter Property="Background" Value="Transparent" />
-                    <Setter Property="BorderThickness" Value="0" />
-                    <Setter Property="Padding" Value="0" />
-                    <Setter Property="Focusable" Value="False" />
-                </Style>
-            </ListBox.ItemContainerStyle>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Border Background="{DynamicResource SurfaceBackgroundBrush}" CornerRadius="8"
-                            Padding="12" Margin="0,0,0,8">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                            <Border CornerRadius="12" Padding="14" Margin="0,0,0,10"
+                                    Background="{DynamicResource SurfaceBackgroundBrush}"
+                                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="8"
-                                    Background="{DynamicResource AccentBrush}" Margin="0,0,12,0">
-                                <TextBlock Text="{Binding InitialLetter}" FontSize="18" FontWeight="Bold"
-                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <!-- Real shell icon once installed; an accent-colored
+                                         initial-letter square until then (there's nothing to
+                                         extract an icon from before the app exists on disk). -->
+                                    <Grid Grid.Column="0" Width="44" Height="44" Margin="0,0,14,0">
+                                        <Border CornerRadius="10" Background="{DynamicResource AccentBrush}"
+                                                Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibilityInverse}}">
+                                            <TextBlock Text="{Binding InitialLetter}" FontSize="17" FontWeight="Bold"
+                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Border CornerRadius="10" Background="{DynamicResource WindowBackgroundBrush}"
+                                                Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}">
+                                            <Image Source="{Binding Icon}" Stretch="Uniform" Margin="7" />
+                                        </Border>
+                                    </Grid>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13"
+                                                   Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                                        <TextBlock Text="{Binding Description}" FontSize="11.5" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,3,12,0" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <!-- Busy / failed text status - Installed gets its own
+                                             pill below instead of plain text. -->
+                                        <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                   MaxWidth="160" TextWrapping="Wrap" TextAlignment="Right"
+                                                   Foreground="{DynamicResource ErrorForegroundBrush}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                   Foreground="{DynamicResource MutedForegroundBrush}"
+                                                   Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+
+                                        <Border Style="{StaticResource StatusBadgeStyle}" Margin="0,0,4,0"
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisibility}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           Margin="0,0,4,0" Foreground="{DynamicResource AccentBrush}" />
+                                                <TextBlock Text="Installed" FontSize="11.5"
+                                                           Foreground="{DynamicResource AccentBrush}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Button Style="{StaticResource InstallButtonStyle}"
+                                                Click="InstallButton_Click" CommandParameter="{Binding}"
+                                                Visibility="{Binding CanInstall, Converter={StaticResource BoolToVisibility}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xf090;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           Margin="0,0,4,0" Foreground="White" />
+                                                <TextBlock Text="Install" FontSize="12" Foreground="White" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
                             </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
 
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Name}" FontWeight="Bold"
-                                           Foreground="{DynamicResource PrimaryForegroundBrush}" />
-                                <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,2,0,0" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="0,0,8,0"
-                                           Foreground="{DynamicResource MutedForegroundBrush}" />
-                                <Button Content="Install" Style="{StaticResource InstallButtonStyle}"
-                                        Click="InstallButton_Click" CommandParameter="{Binding}"
-                                        Visibility="{Binding CanInstall, Converter={StaticResource BoolToVisibility}}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-
-        <Border Grid.Row="3" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
+        <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,10"
+                BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
             <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"
                        Text="Installs via winget (Windows Package Manager). The catalog updates itself from GridShell's own repo, independent of app releases.   •   Esc: close" />
         </Border>

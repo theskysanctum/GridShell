@@ -2,9 +2,12 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using GridShell.Core.Interop;
 using GridShell.Core.Store;
 
 namespace GridShell;
@@ -15,9 +18,24 @@ namespace GridShell;
 /// window.</summary>
 public partial class StoreWindow : Window, INotifyPropertyChanged
 {
+    private const string AllCategoriesLabel = "All Apps";
+
     private List<StoreAppViewModel> _allApps = new();
 
     public ObservableCollection<StoreAppViewModel> Apps { get; } = new();
+    public ObservableCollection<string> Categories { get; } = new();
+
+    private string _selectedCategory = AllCategoriesLabel;
+    public string SelectedCategory
+    {
+        get => _selectedCategory;
+        set
+        {
+            _selectedCategory = value;
+            OnPropertyChanged();
+            ApplyFilter();
+        }
+    }
 
     private string _catalogStatusText = "Loading catalog...";
     public string CatalogStatusText
@@ -56,17 +74,80 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             ? "Couldn't load the catalog - check your internet connection and reopen the Store."
             : $"{_allApps.Count} apps available";
 
-        ApplyFilter();
+        Categories.Clear();
+        Categories.Add(AllCategoriesLabel);
+        foreach (var category in _allApps.Select(a => a.Category).Distinct().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase))
+        {
+            Categories.Add(category);
+        }
+
+        // Re-push SelectedCategory now that Categories actually has entries - the ListBox's
+        // SelectedItem binding has nothing to match against until now, so it wouldn't otherwise
+        // show "All Apps" selected despite that already being the property's value.
+        SelectedCategory = AllCategoriesLabel;
+
+        _ = RefreshInstalledStateAsync();
+    }
+
+    /// <summary>Opening the Store previously always showed every app as not-installed, since
+    /// each StoreAppViewModel starts that way and nothing checked reality against it - fixed by
+    /// querying winget's own "already installed" check (WingetInstaller.IsInstalledAsync, same
+    /// `winget list --id X -e` check InstallAsync uses) for every catalog entry on load.
+    /// Throttled to a handful at a time rather than firing 20+ winget.exe processes at once.</summary>
+    private async Task RefreshInstalledStateAsync()
+    {
+        using var throttle = new SemaphoreSlim(4);
+
+        var checks = _allApps.Select(async app =>
+        {
+            await throttle.WaitAsync();
+            try
+            {
+                app.State = StoreAppState.Checking;
+                var installed = await WingetInstaller.IsInstalledAsync(app.App.WingetId);
+                app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
+                if (installed)
+                {
+                    SetIconIfFound(app);
+                }
+            }
+            finally
+            {
+                throttle.Release();
+            }
+        });
+
+        await Task.WhenAll(checks);
+    }
+
+    /// <summary>Only ever has something to show once an app is actually installed - there's no
+    /// icon to extract before then, so the UI keeps showing the InitialLetter fallback square
+    /// until this finds a real exe.</summary>
+    private static void SetIconIfFound(StoreAppViewModel app)
+    {
+        var exePath = InstalledAppLocator.FindMainExe(app.App.Name);
+        if (exePath is not null)
+        {
+            app.Icon = ShellIcons.GetIcon(exePath);
+        }
     }
 
     private void ApplyFilter()
     {
         var query = SearchBox.Text;
-        var matches = string.IsNullOrWhiteSpace(query)
-            ? _allApps
-            : _allApps.Where(a =>
+        IEnumerable<StoreAppViewModel> matches = _allApps;
+
+        if (SelectedCategory != AllCategoriesLabel)
+        {
+            matches = matches.Where(a => a.Category == SelectedCategory);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            matches = matches.Where(a =>
                 a.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 a.Category.Contains(query, StringComparison.OrdinalIgnoreCase));
+        }
 
         Apps.Clear();
         foreach (var app in matches)
@@ -100,6 +181,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         else
         {
             EmulatorAutoWire.TryWire(app.App);
+            SetIconIfFound(app);
         }
     }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 using GridShell.Core.Store;
 
 namespace GridShell;
@@ -25,6 +26,23 @@ public sealed class StoreAppViewModel : INotifyPropertyChanged
     public string Category => App.Category;
     public string InitialLetter => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
 
+    // Only known once the app is actually installed (extracted from its real exe via
+    // InstalledAppLocator) - null before that, so the UI falls back to the InitialLetter
+    // square until then.
+    private ImageSource? _icon;
+    public ImageSource? Icon
+    {
+        get => _icon;
+        set
+        {
+            _icon = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasIcon));
+        }
+    }
+
+    public bool HasIcon => _icon is not null;
+
     private StoreAppState _state = StoreAppState.NotInstalled;
     public StoreAppState State
     {
@@ -35,6 +53,9 @@ public sealed class StoreAppViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(CanInstall));
+            OnPropertyChanged(nameof(IsInstalled));
+            OnPropertyChanged(nameof(IsFailed));
+            OnPropertyChanged(nameof(IsBusy));
         }
     }
 
@@ -51,6 +72,9 @@ public sealed class StoreAppViewModel : INotifyPropertyChanged
     }
 
     public bool CanInstall => State is StoreAppState.NotInstalled or StoreAppState.Failed;
+    public bool IsInstalled => State == StoreAppState.Installed;
+    public bool IsFailed => State == StoreAppState.Failed;
+    public bool IsBusy => State is StoreAppState.Checking or StoreAppState.Installing;
 
     public string StatusText => State switch
     {

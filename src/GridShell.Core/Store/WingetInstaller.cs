@@ -22,6 +22,15 @@ public sealed record InstallResult(InstallOutcome Outcome, string Message);
 /// "No newer package versions are available", not 0).</summary>
 public static class WingetInstaller
 {
+    /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
+    /// InstallAsync uses - lets the Store reflect real install state when it opens, not just
+    /// whatever happened during the current app session.</summary>
+    public static async Task<bool> IsInstalledAsync(string wingetId)
+    {
+        var listResult = await RunAsync("list", $"--id {wingetId} -e --accept-source-agreements");
+        return listResult is { ExitCode: 0 };
+    }
+
     public static async Task<InstallResult> InstallAsync(string wingetId)
     {
         var listResult = await RunAsync("list", $"--id {wingetId} -e --accept-source-agreements");
