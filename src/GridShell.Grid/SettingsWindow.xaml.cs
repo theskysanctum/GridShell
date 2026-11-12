@@ -1181,8 +1181,8 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.HideWindowIcon();
-        this.ScaleToWorkArea(widthFraction: 0.6, heightFraction: 0.8,
-            minWidth: 520, minHeight: 560, maxWidth: 760, maxHeight: 820);
+        this.ScaleToWorkArea(widthFraction: 0.6, heightFraction: 0.92,
+            minWidth: 520, minHeight: 560, maxWidth: 760, maxHeight: 940);
 
         _allTiles = allTiles;
         _settings = settings;
