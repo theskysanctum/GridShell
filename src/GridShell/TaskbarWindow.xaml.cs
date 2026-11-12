@@ -29,6 +29,10 @@ public partial class TaskbarWindow : Window
     // was sometimes wrong, the same read moments later was always correct).
     private readonly DispatcherTimer _displayChangeSettleTimer = new() { Interval = TimeSpan.FromMilliseconds(600) };
 
+    // Set by PrepareForUpdateMessage, read by TaskbarWindow_Closed - lets the same Closed
+    // handler pick the right exit code without the message handler racing Shutdown() directly.
+    private bool _shuttingDownForUpdate;
+
     public System.Collections.ObjectModel.ObservableCollection<TaskbarWindowEntry> Windows => _tracker.Windows;
 
     public TaskbarWindow(GridLauncher launcher)
@@ -114,6 +118,11 @@ public partial class TaskbarWindow : Window
         else if (msg == (int)WindowMessage.WM_HOTKEY && (int)wParam == ScreenshotMenuHotkey.HotkeyId)
         {
             ((App)Application.Current).OpenScreenshotMenu();
+            handled = true;
+        }
+        else if (msg == PrepareForUpdateMessage.Id)
+        {
+            _shuttingDownForUpdate = true;
             handled = true;
         }
 
@@ -202,9 +211,9 @@ public partial class TaskbarWindow : Window
         // exit the app — but this IS GridShell's only real window, so make it do so. The exit
         // code only matters if GridShell.Watchdog is running (i.e. GridShell is registered as
         // the Windows shell) — it tells the watchdog this was a deliberate exit, so it should
-        // hand off to Explorer once instead of relaunching GridShell. Harmless when not running
-        // under the watchdog.
-        Application.Current.Shutdown(ShellExitCodes.RestoreExplorer);
+        // hand off to Explorer once instead of relaunching GridShell (or, mid-update, just stop
+        // watching instead of either). Harmless when not running under the watchdog.
+        Application.Current.Shutdown(_shuttingDownForUpdate ? ShellExitCodes.Updating : ShellExitCodes.RestoreExplorer);
     }
 
     private void LauncherButton_Click(object sender, RoutedEventArgs e)

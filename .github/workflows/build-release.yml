@@ -40,9 +40,15 @@ jobs:
 
           sed -i "s/#define MyAppVersion \"$current\"/#define MyAppVersion \"$next\"/" installer/GridShell.iss
 
+          # Keeps each exe project's <Version> (read at runtime by UpdateChecker via
+          # Assembly.GetName().Version) in lockstep with the installer version.
+          for csproj in src/GridShell/GridShell.csproj src/GridShell.Grid/GridShell.Grid.csproj src/GridShell.Watchdog/GridShell.Watchdog.csproj; do
+            sed -i "s#<Version>$current</Version>#<Version>$next</Version>#" "$csproj"
+          done
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add installer/GridShell.iss
+          git add installer/GridShell.iss src/GridShell/GridShell.csproj src/GridShell.Grid/GridShell.Grid.csproj src/GridShell.Watchdog/GridShell.Watchdog.csproj
           git commit -m "chore: bump version to $next [skip ci]"
           git push origin HEAD:${{ github.ref_name }}
 

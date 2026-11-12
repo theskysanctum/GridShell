@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +15,7 @@ using GridShell.Core.Interop.Bluetooth;
 using GridShell.Core.Interop.Display;
 using GridShell.Core.Interop.WiFi;
 using GridShell.Core.Tiles;
+using GridShell.Core.Updates;
 using GridShell.Core.Widgets;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
@@ -43,6 +46,13 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private string _igdbClientId = "";
     private string _wallpaperUrl = "";
     private bool _wallpaperMuted;
+
+    private bool _isCheckingForUpdate;
+    private bool _isUpdateAvailable;
+    private bool _isDownloadingUpdate;
+    private double _updateDownloadProgress;
+    private string _updateStatusText = $"Version {UpdateChecker.CurrentVersion}";
+    private string? _latestReleaseUrl;
 
     private static readonly string WatchdogExePath = SiblingExePath.Resolve("GridShell.Watchdog", "GridShell.Watchdog.exe");
 
@@ -721,6 +731,126 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
+    public string UpdateStatusText
+    {
+        get => _updateStatusText;
+        set { _updateStatusText = value; OnPropertyChanged(); }
+    }
+
+    public bool IsCheckingForUpdate
+    {
+        get => _isCheckingForUpdate;
+        set { _isCheckingForUpdate = value; OnPropertyChanged(); }
+    }
+
+    public bool IsUpdateAvailable
+    {
+        get => _isUpdateAvailable;
+        set { _isUpdateAvailable = value; OnPropertyChanged(); }
+    }
+
+    public bool IsDownloadingUpdate
+    {
+        get => _isDownloadingUpdate;
+        set { _isDownloadingUpdate = value; OnPropertyChanged(); }
+    }
+
+    public double UpdateDownloadProgress
+    {
+        get => _updateDownloadProgress;
+        set { _updateDownloadProgress = value; OnPropertyChanged(); }
+    }
+
+    private async void CheckForUpdatesButton_Click(object sender, RoutedEventArgs e)
+    {
+        IsCheckingForUpdate = true;
+        IsUpdateAvailable = false;
+        UpdateStatusText = "Checking for updates...";
+
+        try
+        {
+            var result = await UpdateChecker.CheckAsync();
+            _latestReleaseUrl = result.ReleaseUrl;
+
+            if (result.UpdateAvailable)
+            {
+                IsUpdateAvailable = true;
+                UpdateStatusText = $"Update available: {result.LatestVersion} (you have {result.CurrentVersion})";
+            }
+            else
+            {
+                UpdateStatusText = $"Version {result.CurrentVersion} - up to date";
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            UpdateStatusText = $"Version {UpdateChecker.CurrentVersion} - couldn't check for updates (no internet connection?)";
+        }
+        finally
+        {
+            IsCheckingForUpdate = false;
+        }
+    }
+
+    private void ViewReleaseNotesButton_Click(object sender, RoutedEventArgs e)
+    {
+        var url = _latestReleaseUrl ?? "https://github.com/theskysanctum/gridshell/releases/latest";
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+    }
+
+    private async void InstallUpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        IsDownloadingUpdate = true;
+        UpdateDownloadProgress = 0;
+        UpdateStatusText = "Downloading update...";
+
+        try
+        {
+            var installerPath = Path.Combine(Path.GetTempPath(), "GridShell-Setup.exe");
+            var progress = new Progress<double>(percent =>
+            {
+                UpdateDownloadProgress = percent;
+                UpdateStatusText = $"Downloading update... {percent:F0}%";
+            });
+
+            await UpdateChecker.DownloadInstallerAsync(installerPath, progress);
+
+            UpdateStatusText = "Starting the installer...";
+            LaunchInstallerAndExit(installerPath);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
+        {
+            UpdateStatusText = "Download failed - check your internet connection and try again.";
+            IsDownloadingUpdate = false;
+        }
+    }
+
+    /// <summary>Launches the just-downloaded installer, then tears down every GridShell process
+    /// so none of them still hold their own exe files open when Inno Setup tries to overwrite
+    /// them - the installer's own [Run] step relaunches GridShell once it's done.</summary>
+    private void LaunchInstallerAndExit(string installerPath)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(installerPath) { UseShellExecute = true });
+
+        // Tell the taskbar process to exit with ShellExitCodes.Updating (not the usual
+        // RestoreExplorer) before closing it, so GridShell.Watchdog - if this is running as the
+        // Windows shell - knows not to relaunch it mid-install.
+        foreach (var process in System.Diagnostics.Process.GetProcessesByName("GridShell"))
+        {
+            foreach (var hwnd in ProcessWindowCloser.FindWindowsOf(process.Id))
+            {
+                PostMessage(hwnd, PrepareForUpdateMessage.Id, IntPtr.Zero, IntPtr.Zero);
+            }
+
+            ProcessWindowCloser.CloseAnyWindowOf(process.Id);
+        }
+
+        // This process (GridShell.Grid, hosting this very Settings window) also needs to let go
+        // of its own exe/dll files - a normal clean exit, no special exit code needed since
+        // nothing watches this process the way Watchdog watches GridShell.exe.
+        Application.Current.Shutdown();
+    }
+
     public bool WinKeyHookEnabled
     {
         get => _winKeyHookEnabled;
@@ -1251,6 +1381,10 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         await RefreshSavedWiFiNetworksAsync();
         RefreshMonitors();
         LoadEmulatorPlatforms();
+
+        // Checked once automatically on open - not a silent background poller, just so opening
+        // Settings alone already surfaces an available update instead of needing an extra click.
+        CheckForUpdatesButton_Click(this, new RoutedEventArgs());
 
         RefreshTileList(TileKind.App);
         RefreshTileList(TileKind.Website);

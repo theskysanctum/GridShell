@@ -130,6 +130,30 @@
         <TabControl Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0">
             <TabItem Header="App Behavior">
                 <StackPanel Margin="0,12,0,0">
+                    <TextBlock Text="Updates" FontWeight="Bold" Margin="0,0,0,4" />
+                    <TextBlock Text="{Binding UpdateStatusText}" Margin="0,0,0,8" TextWrapping="Wrap"
+                               Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11" />
+
+                    <Button Content="Check for Updates" Padding="10,6" HorizontalAlignment="Left" Margin="0,0,0,8"
+                            Click="CheckForUpdatesButton_Click"
+                            Visibility="{Binding IsDownloadingUpdate, Converter={StaticResource BoolToVisibilityInverse}}" />
+
+                    <StackPanel Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
+                                    Visibility="{Binding IsDownloadingUpdate, Converter={StaticResource BoolToVisibilityInverse}}">
+                            <Button Content="Download &amp; Install Update" Padding="10,6" Margin="0,0,8,0"
+                                    Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"
+                                    Click="InstallUpdateButton_Click" />
+                            <Button Content="View Release Notes" Padding="10,6" Click="ViewReleaseNotesButton_Click" />
+                        </StackPanel>
+                        <ProgressBar Height="8" Margin="0,0,0,8" Minimum="0" Maximum="100"
+                                     Value="{Binding UpdateDownloadProgress}"
+                                     Foreground="{DynamicResource AccentBrush}"
+                                     Visibility="{Binding IsDownloadingUpdate, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+
+                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+
                     <CheckBox Content="Start with Windows"
                               IsChecked="{Binding AutostartEnabled}"
                               Margin="0,0,0,16" />

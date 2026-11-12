@@ -42,6 +42,14 @@ while (true)
         return;
     }
 
+    if (process.ExitCode == ShellExitCodes.Updating)
+    {
+        // An update installer was just launched and is about to overwrite these very files -
+        // stop watching entirely rather than relaunching (would race the installer) or falling
+        // back to Explorer (the installer's own [Run] step relaunches GridShell once it's done).
+        return;
+    }
+
     // Any other exit code (crash, killed, etc.) — loop around and relaunch, bounded by the
     // check above.
 }
