@@ -29,6 +29,23 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Bump patch version
+        shell: bash
+        run: |
+          current=$(grep -oP '(?<=#define MyAppVersion ")[^"]+' installer/GridShell.iss)
+          major=$(echo "$current" | cut -d. -f1)
+          minor=$(echo "$current" | cut -d. -f2)
+          patch=$(echo "$current" | cut -d. -f3)
+          next="$major.$minor.$((patch + 1))"
+
+          sed -i "s/#define MyAppVersion \"$current\"/#define MyAppVersion \"$next\"/" installer/GridShell.iss
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add installer/GridShell.iss
+          git commit -m "chore: bump version to $next [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+
       - name: Install Inno Setup
         run: winget install --id JRSoftware.InnoSetup --silent --accept-package-agreements --accept-source-agreements
 
