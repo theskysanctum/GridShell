@@ -130,16 +130,6 @@
         <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PanelBorderBrush}"
                 Margin="10,0" Padding="0,12,0,16">
             <StackPanel>
-                <!-- Mouse/keyboard entry point for the Window/Snippet/Fullscreen picker - the
-                     same menu the controller reaches via Select+B, and the keyboard via
-                     Shift+PrintScreen. -->
-                <Button Width="40" Height="40" Margin="0,0,0,8" HorizontalAlignment="Center"
-                        Click="ScreenshotButton_Click" Style="{StaticResource BaseTaskbarButtonStyle}"
-                        ToolTip="Screenshot (Shift+PrtScn)">
-                    <TextBlock Text="&#xe412;" FontFamily="{StaticResource IconFont}" FontSize="18"
-                               Foreground="{DynamicResource PrimaryForegroundBrush}" />
-                </Button>
-
                 <Button Width="40" Height="40" Margin="0,0,0,8" HorizontalAlignment="Center"
                         Click="ControllerHintButton_Click" Style="{StaticResource BaseTaskbarButtonStyle}"
                         ToolTip="Controller status and shortcuts">

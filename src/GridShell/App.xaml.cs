@@ -260,9 +260,9 @@ public partial class App : System.Windows.Application
         }
     }
 
-    /// <summary>Opens the Window/Snippet/Fullscreen screenshot picker - shared by the
-    /// controller's Select+B, the taskbar's camera button, and Shift+PrintScreen, so all three
-    /// entry points land on the exact same window instead of each tracking their own.</summary>
+    /// <summary>Opens the Window/Snippet/Fullscreen screenshot picker - reached via the
+    /// controller's Select+B (plain PrintScreen alone just takes an immediate snippet, see
+    /// PrintScreenHotkey/ScreenCaptureFlow.CaptureSnippet).</summary>
     public void OpenScreenshotMenu()
     {
         if (_screenshotMenu is not null)

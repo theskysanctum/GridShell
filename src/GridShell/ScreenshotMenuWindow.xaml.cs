@@ -9,9 +9,9 @@ namespace GridShell;
 
 /// <summary>The Window / Snippet / Fullscreen screenshot menu - navigable by D-pad/stick
 /// (Up/Down), Accept (A) to confirm, Back (B)/Escape to cancel. Also works with mouse/keyboard
-/// alone, for when there's no controller connected. Opened via Select+B, Shift+PrintScreen, or
-/// the taskbar's camera button - see App.OpenScreenshotMenu, the single shared entry point for
-/// all three.</summary>
+/// alone, for when there's no controller connected. Opened via the controller's Select+B - see
+/// App.OpenScreenshotMenu. Plain PrintScreen alone bypasses this entirely and just takes an
+/// immediate snippet.</summary>
 public partial class ScreenshotMenuWindow : Window
 {
     // Reads the live AccentBrush resource rather than hardcoding the default blue, so this

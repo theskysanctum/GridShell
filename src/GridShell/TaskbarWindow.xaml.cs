@@ -75,7 +75,6 @@ public partial class TaskbarWindow : Window
 
         RegisterAppBar();
         PrintScreenHotkey.Register(_hwnd);
-        ScreenshotMenuHotkey.Register(_hwnd);
 
         HwndSource.FromHwnd(_hwnd.DangerousGetHandle())?.AddHook(WndProc);
     }
@@ -113,11 +112,6 @@ public partial class TaskbarWindow : Window
         else if (msg == (int)WindowMessage.WM_HOTKEY && (int)wParam == PrintScreenHotkey.HotkeyId)
         {
             ScreenCaptureFlow.CaptureSnippet();
-            handled = true;
-        }
-        else if (msg == (int)WindowMessage.WM_HOTKEY && (int)wParam == ScreenshotMenuHotkey.HotkeyId)
-        {
-            ((App)Application.Current).OpenScreenshotMenu();
             handled = true;
         }
         else if (msg == PrepareForUpdateMessage.Id)
@@ -168,11 +162,6 @@ public partial class TaskbarWindow : Window
         new ControllerHintWindow(SidebarWidth + 8, bottom).Show();
     }
 
-    private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
-    {
-        ((App)Application.Current).OpenScreenshotMenu();
-    }
-
     private void UpdateBattery()
     {
         var status = BatteryStatus.Read();
@@ -214,7 +203,6 @@ public partial class TaskbarWindow : Window
         _tracker.Dispose();
         AppBarManager.Unregister(_hwnd, ABE.ABE_LEFT);
         PrintScreenHotkey.Unregister(_hwnd);
-        ScreenshotMenuHotkey.Unregister(_hwnd);
 
         // ShutdownMode is OnExplicitShutdown, so closing this window alone wouldn't otherwise
         // exit the app — but this IS GridShell's only real window, so make it do so. The exit
