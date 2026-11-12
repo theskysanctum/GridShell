@@ -509,6 +509,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HideGrid(restorePreviousFocus: false);
     }
 
+    private void StoreButton_Click(object sender, RoutedEventArgs e)
+    {
+        new StoreWindow().Show();
+        HideGrid(restorePreviousFocus: false);
+    }
+
     private void DownloadManagerButton_Click(object sender, RoutedEventArgs e)
     {
         ((App)Application.Current).ShowDownloadManager();

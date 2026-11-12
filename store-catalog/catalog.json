@@ -1,0 +1,88 @@
+{
+  "apps": [
+    {
+      "id": "7zip.7zip",
+      "name": "7-Zip",
+      "wingetId": "7zip.7zip",
+      "category": "Utilities",
+      "description": "Free, open-source file archiver with a high compression ratio."
+    },
+    {
+      "id": "notepadplusplus.notepadplusplus",
+      "name": "Notepad++",
+      "wingetId": "Notepad++.Notepad++",
+      "category": "Utilities",
+      "description": "A free source code editor and Notepad replacement with syntax highlighting."
+    },
+    {
+      "id": "mozilla.firefox",
+      "name": "Firefox",
+      "wingetId": "Mozilla.Firefox",
+      "category": "Browsers",
+      "description": "A free, open-source web browser from Mozilla."
+    },
+    {
+      "id": "google.chrome",
+      "name": "Google Chrome",
+      "wingetId": "Google.Chrome",
+      "category": "Browsers",
+      "description": "Google's web browser, built on Chromium."
+    },
+    {
+      "id": "discord.discord",
+      "name": "Discord",
+      "wingetId": "Discord.Discord",
+      "category": "Communication",
+      "description": "Voice, video, and text chat for communities and friends."
+    },
+    {
+      "id": "videolan.vlc",
+      "name": "VLC media player",
+      "wingetId": "VideoLAN.VLC",
+      "category": "Media",
+      "description": "A free, open-source media player that plays almost anything."
+    },
+    {
+      "id": "spotify.spotify",
+      "name": "Spotify",
+      "wingetId": "Spotify.Spotify",
+      "category": "Media",
+      "description": "Stream music and podcasts."
+    },
+    {
+      "id": "audacity.audacity",
+      "name": "Audacity",
+      "wingetId": "Audacity.Audacity",
+      "category": "Media",
+      "description": "Free, open-source audio editor and recorder."
+    },
+    {
+      "id": "valve.steam",
+      "name": "Steam",
+      "wingetId": "Valve.Steam",
+      "category": "Gaming",
+      "description": "Valve's PC gaming storefront and launcher."
+    },
+    {
+      "id": "microsoft.visualstudiocode",
+      "name": "Visual Studio Code",
+      "wingetId": "Microsoft.VisualStudioCode",
+      "category": "Development",
+      "description": "A free, lightweight source code editor from Microsoft."
+    },
+    {
+      "id": "obsproject.obsstudio",
+      "name": "OBS Studio",
+      "wingetId": "OBSProject.OBSStudio",
+      "category": "Streaming",
+      "description": "Free and open-source software for video recording and live streaming."
+    },
+    {
+      "id": "qbittorrent.qbittorrent",
+      "name": "qBittorrent",
+      "wingetId": "qBittorrent.qBittorrent",
+      "category": "Utilities",
+      "description": "A free, open-source BitTorrent client."
+    }
+  ]
+}

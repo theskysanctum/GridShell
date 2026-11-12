@@ -334,6 +334,11 @@
                     <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}"
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
                 </Button>
+                <Button Padding="8" Margin="0,0,8,0" Click="StoreButton_Click" Style="{StaticResource ModernButtonStyle}"
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Store">
+                    <TextBlock Text="&#xea12;" FontFamily="{StaticResource IconFont}"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
+                </Button>
                 <Button Padding="8" Margin="0,0,8,0" Click="DownloadManagerButton_Click" Style="{StaticResource ModernButtonStyle}"
                         Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Downloads">
                     <TextBlock Text="&#xf090;" FontFamily="{StaticResource IconFont}"
