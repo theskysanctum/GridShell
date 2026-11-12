@@ -94,14 +94,22 @@ public static class RetroArchCoreAutoWire
     /// <summary>Points RetroArch's own "System/BIOS Directory" setting (retroarch.cfg's
     /// system_directory key, confirmed live by launching a fresh RetroArch install briefly to
     /// let it generate its default config, then reading the key it wrote) at
-    /// EmulationPlatforms.BiosRootPath, so every core looks there. retroarch.cfg lives right
-    /// next to the exe on this portable-style install (confirmed the same way) - if it doesn't
-    /// exist yet (RetroArch has never actually been launched), writes a minimal one with just
-    /// this key; RetroArch fills in every other default itself on first real launch, the same
-    /// as it would for any config missing a key.</summary>
+    /// EmulationPlatforms.BiosRootPath itself (not the RetroArch subfolder below) - the user's
+    /// own confirmed knowledge is that RetroArch's BIOS lookup is recursive, so pointing at the
+    /// shared root already covers a RetroArch subfolder (or any other emulator's own) without
+    /// needing a RetroArch-specific path. retroarch.cfg lives right next to the exe on this
+    /// portable-style install (confirmed the same way) - if it doesn't exist yet (RetroArch has
+    /// never actually been launched), writes a minimal one with just this key; RetroArch fills
+    /// in every other default itself on first real launch, the same as it would for any config
+    /// missing a key.</summary>
     private static void SetSystemDirectory(string retroArchDir)
     {
         Directory.CreateDirectory(EmulationPlatforms.BiosRootPath);
+
+        // Just a pre-made, conventionally-named spot to drop RetroArch-specific BIOS files in -
+        // not required (system_directory stays pointed at the shared root above, not this
+        // subfolder), since BIOS lookup there is recursive.
+        Directory.CreateDirectory(Path.Combine(EmulationPlatforms.BiosRootPath, "RetroArch"));
 
         var cfgPath = Path.Combine(retroArchDir, "retroarch.cfg");
         var desiredLine = $"system_directory = \"{EmulationPlatforms.BiosRootPath}\"";
