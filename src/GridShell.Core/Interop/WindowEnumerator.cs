@@ -22,9 +22,18 @@ public static class WindowEnumerator
     // earlier version of this exclusion assumed ApplicationFrameHost hosting and matched on the
     // window's exact title instead — kept below as a fallback for builds where that's still
     // true, but it no longer catches Settings on its own here).
+    //
+    // ShellExperienceHost hosts system flyouts (Quick Settings/Action Center, notifications,
+    // Widgets board) and normally stays DWM-cloaked except while one of those is open, which the
+    // cloaked check in IsEligible would exclude on its own. But its window was observed uncloaked
+    // and sitting in GridShell's taskbar persistently (confirmed live: process name exactly
+    // "ShellExperienceHost", title "Windows Shell Experience Host", DWMWA_CLOAKED == 0 at the
+    // time) — the re-cloak on flyout close is normally driven by explorer.exe, which isn't
+    // running under GridShell, so it can get stuck visible. Excluded by name instead of relying
+    // on the cloak check for this one.
     private static readonly HashSet<string> ExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "TextInputHost", "TabTip", "TabTip32", "SystemSettings",
+        "TextInputHost", "TabTip", "TabTip32", "SystemSettings", "ShellExperienceHost",
     };
 
     private const string ApplicationFrameHostProcessName = "ApplicationFrameHost";
