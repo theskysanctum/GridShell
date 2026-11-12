@@ -11,8 +11,8 @@ namespace GridShell;
 
 /// <summary>GridShell's own dual-pane file manager - two independently-navigable panes (left/
 /// right), full controller support on top of mouse/keyboard. Covers browsing, copy/move/
-/// delete/rename/new-folder, and archive extract/compress (via whichever of 7-Zip/PeaZip is
-/// installed) through the Start/Menu actions popup. Real Windows shell right-click context
+/// delete/rename/new-folder, and archive extract/compress (via the bundled 7za.exe, see
+/// ArchiveOperations) through the Start/Menu actions popup. Real Windows shell right-click context
 /// menus are deliberately out of scope - the user asked for archiver support specifically,
 /// not the full IContextMenu COM integration.</summary>
 public partial class FileExplorerWindow : Window, INotifyPropertyChanged

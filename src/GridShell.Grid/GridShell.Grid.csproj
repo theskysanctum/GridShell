@@ -68,6 +68,16 @@
     <None Include="Tools\aria2c.exe" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\aria2c.COPYING.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\aria2c.LICENSE.OpenSSL.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 7-Zip's official standalone console build (ip7z/7zip releases, the x64 "Extra" package)
+         - verified live to extract/create both .7z and .zip fully on its own (no companion DLL
+         needed, confirmed by running it with only this one file present). Used for
+         GitHubReleaseInstaller's .7z release assets (RPCS3's only real Windows build is a .7z,
+         not .zip) and as the File Explorer's only archiver (ArchiveOperations) - no more
+         detecting/depending on a system-installed 7-Zip or PeaZip for zip/7z/tar/gzip/bzip2/xz;
+         only RAR (proprietary, needs separately-licensed unrar code this build doesn't have)
+         stays unsupported. -->
+    <None Include="Tools\7za.exe" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Tools\7za.LICENSE.TXT" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

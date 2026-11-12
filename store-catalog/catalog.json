@@ -213,6 +213,15 @@
       "category": "Emulation",
       "description": "Sega Model 3 arcade emulator. Installed from the latest GitHub release, not winget - no winget package exists.",
       "platformSlugs": ["model3"]
+    },
+    {
+      "id": "rpcs3.rpcs3",
+      "name": "RPCS3",
+      "installMethod": "github",
+      "githubRepo": "RPCS3/rpcs3-binaries-win",
+      "category": "Emulation",
+      "description": "Sony PlayStation 3 emulator. The main RPCS3/rpcs3 repo has no release assets - its own CI publishes Windows builds to this companion repo instead.",
+      "platformSlugs": ["ps3"]
     }
   ]
 }

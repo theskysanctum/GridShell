@@ -19,30 +19,17 @@ public static class EmulatorDownloadCatalog
     private static readonly EmulatorDownloadLink RetroArch =
         new("RetroArch", "https://www.retroarch.com/?page=platforms");
 
-    private static readonly EmulatorDownloadLink Rpcs3 =
-        new("RPCS3", "https://rpcs3.net/download");
-
-    private static readonly EmulatorDownloadLink MiniVmac =
-        new("Mini vMac", "https://www.gryphel.com/c/minivmac/download.html");
-
     /// <summary>Platforms whose best/only realistic emulator has neither a winget package nor a
-    /// real GitHub release to install from, so a direct download link is still the only way to
-    /// get it - everything else (Dolphin, PCSX2, Cemu, Vita3K, xemu, Xenia, MAME, Azahar,
-    /// melonDS, PPSSPP, shadPS4, Ruffle via winget; Visual Pinball X and Supermodel via
-    /// GitHubReleaseInstaller) now lives in the Store instead (store-catalog/catalog.json),
-    /// confirmed one at a time via `winget search` and the GitHub releases API. RPCS3 has
-    /// neither a winget package nor any downloadable GitHub release asset (confirmed: its own
-    /// release page has zero attached assets and points users to rpcs3.net instead). Mini vMac
-    /// isn't even hosted on GitHub.</summary>
-    private static readonly Dictionary<string, EmulatorDownloadLink[]> Overrides = new()
-    {
-        ["ps3"] = new[] { Rpcs3 },
-
-        // Mini vMac over Basilisk II - more accurate (emulates real 68k hardware rather than
-        // patching ROMs) and still actively maintained; Basilisk II effectively isn't anymore.
-        // No RetroArch core covers classic Mac.
-        ["macintosh"] = new[] { MiniVmac },
-    };
+    /// real GitHub release to install from, so a direct download link would still be the only
+    /// way to get it - currently empty, since every platform that previously needed one (Dolphin,
+    /// PCSX2, Cemu, Vita3K, xemu, Xenia, MAME, Azahar, melonDS, PPSSPP, shadPS4, Ruffle via
+    /// winget; Visual Pinball X, Supermodel, and RPCS3 via GitHubReleaseInstaller) now lives in
+    /// the Store instead (store-catalog/catalog.json), confirmed one at a time via
+    /// `winget search` and the GitHub releases API. RPCS3's own RPCS3/rpcs3 repo has zero release
+    /// assets, but its companion RPCS3/rpcs3-binaries-win repo publishes real, continuously
+    /// updated Windows builds via its own CI - confirmed live (asset created the same day it was
+    /// checked).</summary>
+    private static readonly Dictionary<string, EmulatorDownloadLink[]> Overrides = new();
 
     public static IReadOnlyList<EmulatorDownloadLink> GetLinksFor(string platformSlug) =>
         Overrides.TryGetValue(platformSlug, out var specific) ? specific : new[] { RetroArch };
