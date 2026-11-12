@@ -9,55 +9,21 @@ public sealed record EmulatorDownloadLink(string Name, string Url);
 /// the vast majority of platforms here via its libretro cores (its own in-app Online Updater
 /// handles picking/installing the right core), so it's the default for everything; a platform
 /// gets a specific override only where a dedicated standalone emulator is the better/expected
-/// choice. Deliberately small and verified one link at a time (not attempting all 190
-/// platforms at once) - every URL here has been checked against the emulator's own official
-/// site, not guessed.</summary>
+/// choice AND that emulator has no winget package - anything winget can install is offered
+/// through the Store instead (see store-catalog/catalog.json), which also auto-wires
+/// EmulatorConfigs on install (EmulatorAutoWire), so a manual download link here would just be
+/// a redundant, worse path for those. Checked one emulator at a time against `winget search`
+/// and the emulator's own official site, not guessed.</summary>
 public static class EmulatorDownloadCatalog
 {
     private static readonly EmulatorDownloadLink RetroArch =
         new("RetroArch", "https://www.retroarch.com/?page=platforms");
 
-    private static readonly EmulatorDownloadLink Dolphin =
-        new("Dolphin", "https://dolphin-emu.org/download/");
-
-    private static readonly EmulatorDownloadLink Pcsx2 =
-        new("PCSX2", "https://pcsx2.net/downloads");
-
-    private static readonly EmulatorDownloadLink Ruffle =
-        new("Ruffle", "https://ruffle.rs/downloads");
-
     private static readonly EmulatorDownloadLink Rpcs3 =
         new("RPCS3", "https://rpcs3.net/download");
 
-    private static readonly EmulatorDownloadLink ShadPs4 =
-        new("shadPS4", "https://github.com/shadps4-emu/shadPS4/releases");
-
-    private static readonly EmulatorDownloadLink Cemu =
-        new("Cemu", "https://github.com/cemu-project/Cemu/releases");
-
     private static readonly EmulatorDownloadLink VisualPinball =
         new("Visual Pinball X", "https://github.com/vpinball/vpinball/releases");
-
-    private static readonly EmulatorDownloadLink Vita3K =
-        new("Vita3K", "https://vita3k.org/download");
-
-    private static readonly EmulatorDownloadLink Xemu =
-        new("Xemu", "https://xemu.app/docs/download");
-
-    private static readonly EmulatorDownloadLink XeniaCanary =
-        new("Xenia Canary", "https://github.com/xenia-canary/xenia-canary/releases/latest");
-
-    private static readonly EmulatorDownloadLink Mame =
-        new("MAME", "https://github.com/mamedev/mame/releases");
-
-    private static readonly EmulatorDownloadLink Azahar =
-        new("Azahar", "https://azahar-emu.org/");
-
-    private static readonly EmulatorDownloadLink MelonDs =
-        new("melonDS", "https://github.com/melonDS-emu/melonDS/releases/latest");
-
-    private static readonly EmulatorDownloadLink Ppsspp =
-        new("PPSSPP", "https://github.com/hrydgard/ppsspp/releases/latest");
 
     private static readonly EmulatorDownloadLink MiniVmac =
         new("Mini vMac", "https://www.gryphel.com/c/minivmac/download.html");
@@ -65,39 +31,16 @@ public static class EmulatorDownloadCatalog
     private static readonly EmulatorDownloadLink Supermodel =
         new("Supermodel", "https://github.com/trzy/Supermodel/releases/latest");
 
-    /// <summary>Platforms better served by a dedicated standalone emulator than a RetroArch
-    /// core - still offered alongside RetroArch where RetroArch does have a workable core too
-    /// (just not usually the best choice); omitted where RetroArch doesn't have one at all
-    /// (PS4, Visual Pinball). ScummVM is deliberately NOT listed here - it runs through
-    /// RetroArch's own core, so it's left to the plain default below.</summary>
+    /// <summary>Platforms whose best/only realistic emulator has no winget package, so a direct
+    /// download link is still the only way to get it - everything that DOES have a winget
+    /// package (Dolphin, PCSX2, Cemu, Vita3K, xemu, Xenia, MAME, Azahar, melonDS, PPSSPP,
+    /// shadPS4, Ruffle) now lives in the Store instead, confirmed via `winget search` for each.
+    /// RPCS3 has neither a winget package nor any downloadable GitHub release asset (confirmed:
+    /// its own release page has zero attached assets and points users to rpcs3.net instead).</summary>
     private static readonly Dictionary<string, EmulatorDownloadLink[]> Overrides = new()
     {
-        ["gamecube"] = new[] { Dolphin, RetroArch },
-        ["wii"] = new[] { Dolphin, RetroArch },
-        ["ps2"] = new[] { Pcsx2, RetroArch },
-        ["flash"] = new[] { Ruffle },
-
-        // The "hefty" systems - demanding enough that a dedicated standalone is the only
-        // realistic choice, not just the better one.
         ["ps3"] = new[] { Rpcs3 },
-        ["ps4"] = new[] { ShadPs4 },
-        ["wiiu"] = new[] { Cemu },
         ["vpinball"] = new[] { VisualPinball },
-        ["psvita"] = new[] { Vita3K },
-        ["xbox"] = new[] { Xemu },
-        ["xbox360"] = new[] { XeniaCanary },
-
-        // Standalone MAME tracks current MAME releases directly - RetroArch's bundled MAME
-        // cores are often several versions behind, so standalone is the more compatible
-        // choice while RetroArch is still offered as a lighter-weight alternative.
-        ["mame"] = new[] { Mame, RetroArch },
-
-        // Citra (the long-standing standard) was shut down in 2024; Azahar is its actively
-        // maintained community successor. No workable RetroArch 3DS core exists.
-        ["3ds"] = new[] { Azahar },
-
-        ["nds"] = new[] { MelonDs, RetroArch },
-        ["psp"] = new[] { Ppsspp, RetroArch },
 
         // Mini vMac over Basilisk II - more accurate (emulates real 68k hardware rather than
         // patching ROMs) and still actively maintained; Basilisk II effectively isn't anymore.

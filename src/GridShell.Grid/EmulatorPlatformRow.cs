@@ -77,8 +77,9 @@ public class EmulatorPlatformRow : INotifyPropertyChanged
     /// release builds vary (e.g. "PPSSPPWindows64.exe", "Cemu_1.2.3.exe") - first match wins.</summary>
     private static readonly (string ExeNameContains, string ArgumentTemplate)[] KnownEmulatorDefaults =
     {
-        // Verified against each emulator's own docs/README/source - see EmulatorDownloadCatalog
-        // for the matching download link and why each one is standalone over RetroArch.
+        // Verified against each emulator's own docs/README/source. Most of these install through
+        // the Store (store-catalog/catalog.json) now rather than EmulatorDownloadCatalog, which
+        // only still covers the handful with no winget package (see its own remarks).
         ("dolphin", "-b -e \"{rom}\" -C Dolphin.Display.Fullscreen=True"),
         ("pcsx2", "-fullscreen \"{rom}\""),
         ("rpcs3", "--no-gui --fullscreen \"{rom}\""),

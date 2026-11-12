@@ -147,6 +147,54 @@
       "category": "Emulation",
       "description": "Original Microsoft Xbox emulator.",
       "platformSlugs": ["xbox"]
+    },
+    {
+      "id": "shadps4-emu.shadps4",
+      "name": "shadPS4",
+      "wingetId": "shadps4-emu.shadPS4",
+      "category": "Emulation",
+      "description": "Sony PlayStation 4 emulator.",
+      "platformSlugs": ["ps4"]
+    },
+    {
+      "id": "vita3k.vita3k",
+      "name": "Vita3K",
+      "wingetId": "Vita3K.Vita3K",
+      "category": "Emulation",
+      "description": "Sony PlayStation Vita emulator.",
+      "platformSlugs": ["psvita"]
+    },
+    {
+      "id": "ruffle.ruffle",
+      "name": "Ruffle",
+      "wingetId": "Ruffle.Ruffle",
+      "category": "Emulation",
+      "description": "Adobe Flash Player emulator.",
+      "platformSlugs": ["flash"]
+    },
+    {
+      "id": "mamedev.mame",
+      "name": "MAME",
+      "wingetId": "MAMEdev.MAME",
+      "category": "Emulation",
+      "description": "Arcade machine emulator tracking current releases directly - more up to date than RetroArch's bundled MAME cores.",
+      "platformSlugs": ["mame"]
+    },
+    {
+      "id": "azaharemu.azahar",
+      "name": "Azahar",
+      "wingetId": "AzaharEmu.Azahar",
+      "category": "Emulation",
+      "description": "Nintendo 3DS emulator, the actively maintained community successor to Citra.",
+      "platformSlugs": ["3ds"]
+    },
+    {
+      "id": "melonds.melonds",
+      "name": "melonDS",
+      "wingetId": "melonDS.melonDS",
+      "category": "Emulation",
+      "description": "Nintendo DS emulator.",
+      "platformSlugs": ["nds"]
     }
   ]
 }
