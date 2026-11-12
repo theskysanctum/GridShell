@@ -29,7 +29,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0" Text="&#xe88e;" FontFamily="./Fonts/#Material Symbols Outlined"
-                       FontSize="20" Foreground="#4A90D9" VerticalAlignment="Center" Margin="0,0,12,0" />
+                       FontSize="20" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,12,0" />
             <TextBlock Grid.Column="1" x:Name="MessageText" FontSize="13"
                        Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap" />
         </Grid>

@@ -159,6 +159,15 @@ public partial class TaskbarWindow : Window
         _bluetoothBatteryWindow.Show();
     }
 
+    private void ControllerHintButton_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        var topLeft = button.PointToScreen(new System.Windows.Point(0, 0));
+        var bottom = topLeft.Y + button.ActualHeight;
+
+        new ControllerHintWindow(SidebarWidth + 8, bottom).Show();
+    }
+
     private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
     {
         ((App)Application.Current).OpenScreenshotMenu();

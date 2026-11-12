@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using GridShell.Core.Interop;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
@@ -28,6 +29,14 @@ public partial class ScreenCaptureOverlayWindow : Window
     public ScreenCaptureOverlayWindow()
     {
         InitializeComponent();
+
+        // Read live rather than bound via DynamicResource - Fill needs a translucent copy of
+        // the same color (WPF has no markup for "this resource, but at a different alpha"),
+        // so both are set together here instead of splitting Stroke into XAML and Fill into code.
+        var accentColor = (Application.Current.Resources["AccentBrush"] as SolidColorBrush)?.Color
+            ?? Colors.DodgerBlue;
+        SelectionRect.Stroke = new SolidColorBrush(accentColor);
+        SelectionRect.Fill = new SolidColorBrush(Color.FromArgb(0x33, accentColor.R, accentColor.G, accentColor.B));
 
         Left = SystemParameters.VirtualScreenLeft;
         Top = SystemParameters.VirtualScreenTop;

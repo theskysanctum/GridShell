@@ -140,6 +140,13 @@
                                Foreground="{DynamicResource PrimaryForegroundBrush}" />
                 </Button>
 
+                <Button Width="40" Height="40" Margin="0,0,0,8" HorizontalAlignment="Center"
+                        Click="ControllerHintButton_Click" Style="{StaticResource BaseTaskbarButtonStyle}"
+                        ToolTip="Controller status and shortcuts">
+                    <TextBlock Text="&#xe8fd;" FontFamily="{StaticResource IconFont}" FontSize="18"
+                               Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                </Button>
+
                 <!-- Collapsed entirely on a desktop (or anything reporting no battery) rather
                      than showing a meaningless 0%/unknown reading. -->
                 <StackPanel x:Name="BatteryPanel" HorizontalAlignment="Center" Margin="0,0,0,8" Visibility="Collapsed"

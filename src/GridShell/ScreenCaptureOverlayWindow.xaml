@@ -26,8 +26,7 @@
                    HorizontalAlignment="Center" VerticalAlignment="Top" />
 
         <Canvas x:Name="SelectionCanvas">
-            <Rectangle x:Name="SelectionRect" Stroke="#4A90D9" StrokeThickness="2"
-                       Fill="#334A90D9" Visibility="Collapsed" />
+            <Rectangle x:Name="SelectionRect" StrokeThickness="2" Visibility="Collapsed" />
         </Canvas>
     </Grid>
 </Window>
