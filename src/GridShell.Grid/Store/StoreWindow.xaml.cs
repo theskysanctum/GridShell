@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using GridShell.Core.Interop;
+using System.Windows.Media.Imaging;
 using GridShell.Core.Store;
 
 namespace GridShell;
@@ -70,6 +70,11 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             .Select(a => new StoreAppViewModel { App = a })
             .ToList();
 
+        foreach (var app in _allApps)
+        {
+            SetBundledIconIfAny(app);
+        }
+
         CatalogStatusText = _allApps.Count == 0
             ? "Couldn't load the catalog - check your internet connection and reopen the Store."
             : $"{_allApps.Count} apps available";
@@ -106,10 +111,6 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                 app.State = StoreAppState.Checking;
                 var installed = await WingetInstaller.IsInstalledAsync(app.App.WingetId);
                 app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
-                if (installed)
-                {
-                    SetIconIfFound(app);
-                }
             }
             finally
             {
@@ -120,16 +121,25 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         await Task.WhenAll(checks);
     }
 
-    /// <summary>Only ever has something to show once an app is actually installed - there's no
-    /// icon to extract before then, so the UI keeps showing the InitialLetter fallback square
-    /// until this finds a real exe.</summary>
-    private static void SetIconIfFound(StoreAppViewModel app)
+    /// <summary>The catalog's own bundled logo (store-catalog/icons/{id}.png, synced alongside
+    /// catalog.json - see StoreCatalogSync.GetIconPath) - shown immediately, whether or not the
+    /// app is installed, since there's no exe to extract an icon from before then. Catalog
+    /// entries without a bundled icon keep the InitialLetter fallback square.</summary>
+    private static void SetBundledIconIfAny(StoreAppViewModel app)
     {
-        var exePath = InstalledAppLocator.FindMainExe(app.App.Name);
-        if (exePath is not null)
+        var iconPath = StoreCatalogSync.GetIconPath(app.App.Id);
+        if (iconPath is null)
         {
-            app.Icon = ShellIcons.GetIcon(exePath);
+            return;
         }
+
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.UriSource = new Uri(iconPath, UriKind.Absolute);
+        bitmap.EndInit();
+        bitmap.Freeze();
+        app.Icon = bitmap;
     }
 
     private void ApplyFilter()
@@ -181,7 +191,6 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         else
         {
             EmulatorAutoWire.TryWire(app.App);
-            SetIconIfFound(app);
         }
     }
 

@@ -15,6 +15,7 @@ public static class StoreCatalogSync
     private const string RepoUrl = "https://github.com/theskysanctum/gridshell.git";
     private const string Branch = "master";
     private const string CatalogRelativePath = "store-catalog/catalog.json";
+    private const string IconsRelativeDir = "store-catalog/icons";
 
     private static readonly string LocalPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GridShell", "StoreCatalogCache");
@@ -82,6 +83,15 @@ public static class StoreCatalogSync
             // Harmless clutter left under LocalAppData if something still has a file open -
             // not worth failing the sync over.
         }
+    }
+
+    /// <summary>Full path to a catalog app's bundled icon (store-catalog/icons/{id}.png in the
+    /// synced clone), or null if that app has none yet - the UI falls back to its
+    /// initial-letter square in that case.</summary>
+    public static string? GetIconPath(string appId)
+    {
+        var path = Path.Combine(LocalPath, IconsRelativeDir, $"{appId}.png");
+        return File.Exists(path) ? path : null;
     }
 
     private static StoreCatalogFile Load()
