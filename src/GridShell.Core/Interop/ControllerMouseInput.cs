@@ -1,17 +1,19 @@
 ﻿using System.Linq;
 using System.Windows.Threading;
 using GridShell.Core.Controllers;
+using static Vanara.PInvoke.User32;
 
 namespace GridShell.Core.Interop;
 
 /// <summary>Drives the desktop mouse cursor from a controller's left stick (movement),
 /// triggers (R2 = left click, L2 = right click), a DualShock4/DualSense touchpad (relative
-/// movement while a finger is down, same feel as a laptop trackpad), and the right stick as a
+/// movement while a finger is down, same feel as a laptop trackpad), the right stick as a
 /// scroll wheel whenever the on-screen keyboard isn't showing (so it doesn't fight
-/// ControllerInput's own use of the right stick for OSK navigation while that IS showing) — a
-/// general mouse replacement, not specific to GridShell's own windows. Automatically does
-/// nothing while a Game-kind tile's process has foreground focus, so it never fights a game for
-/// the same stick/triggers/touchpad.</summary>
+/// ControllerInput's own use of the right stick for OSK navigation while that IS showing), and
+/// the shoulder buttons (L1/R1) as Alt+Left/Alt+Right (browser/file-explorer back and forward) —
+/// a general mouse+shortcut replacement, not specific to GridShell's own windows. Automatically
+/// does nothing while a Game-kind tile's process has foreground focus, so it never fights a game
+/// for the same stick/triggers/touchpad/shoulders.</summary>
 public sealed class ControllerMouseInput : IDisposable
 {
     private const double Deadzone = 0.15;
@@ -33,6 +35,7 @@ public sealed class ControllerMouseInput : IDisposable
     private DateTime _lastPreferencesLoad = DateTime.MinValue;
     private bool _leftDown;
     private bool _rightDown;
+    private PadButtons _lastButtons;
 
     public ControllerMouseInput()
     {
@@ -54,6 +57,7 @@ public sealed class ControllerMouseInput : IDisposable
         if (maybeReading is not { } reading || _gameDetector.IsGameForeground())
         {
             ReleaseHeldButtons();
+            _lastButtons = PadButtons.None;
             return;
         }
 
@@ -79,6 +83,21 @@ public sealed class ControllerMouseInput : IDisposable
                 SyntheticMouse.Scroll((int)(scrollY * ScrollUnitsPerTick));
             }
         }
+
+        // Edge-triggered (newly pressed this tick only) - held-down would otherwise fire a new
+        // Alt+Left/Alt+Right every ~16ms for as long as the shoulder stays down.
+        var pressedThisTick = reading.Buttons & ~_lastButtons;
+        if (pressedThisTick.HasFlag(PadButtons.LeftShoulder))
+        {
+            SyntheticKeyboard.PressKeyWithModifiers(VK.VK_LEFT, new[] { VK.VK_MENU });
+        }
+
+        if (pressedThisTick.HasFlag(PadButtons.RightShoulder))
+        {
+            SyntheticKeyboard.PressKeyWithModifiers(VK.VK_RIGHT, new[] { VK.VK_MENU });
+        }
+
+        _lastButtons = reading.Buttons;
     }
 
     /// <summary>PadReader.Read()'s own merged reading has no touchpad data (it's DS4/DS5-
