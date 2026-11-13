@@ -488,6 +488,24 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void RomFolderPathButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not string path)
+        {
+            return;
+        }
+
+        // Should already exist (EnsureSlugFoldersExist runs on load and on every new extra
+        // folder), but cheap/idempotent to make sure rather than failing to open a folder that
+        // genuinely isn't there yet for some other reason.
+        System.IO.Directory.CreateDirectory(path);
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{path}\"")
+        {
+            UseShellExecute = true,
+        });
+    }
+
     // --- Controllers: virtual Xbox360 pads (ViGEm) + hiding the original device (HidHide) --
 
     public ObservableCollection<ControllerEntry> Devices { get; } = new();

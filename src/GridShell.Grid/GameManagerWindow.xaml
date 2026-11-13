@@ -297,10 +297,34 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding StatusSummary}" FontSize="11" VerticalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       Foreground="{DynamicResource MutedForegroundBrush}" />
-                                            <Button Grid.Column="1" Padding="8,4" Click="OpenEmulatorButton_Click" CommandParameter="{Binding}"
+
+                                            <!-- Emulator setup is fully automatic now (no manual
+                                                 picker - see StatusSummary's own comment) and every
+                                                 folder below is already auto-created, so the one
+                                                 still-useful, actionable thing per platform is
+                                                 where to actually drop ROMs - the default root
+                                                 first/pinned, then each configured extra folder's
+                                                 own subfolder for this platform. -->
+                                            <ItemsControl Grid.Column="0" ItemsSource="{Binding RomFolderPaths}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Padding="0" Margin="0,1,0,0" HorizontalAlignment="Left"
+                                                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                                                Click="RomFolderPathButton_Click" CommandParameter="{Binding}"
+                                                                ToolTip="Open in File Explorer">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                                                           Margin="0,0,4,0" Foreground="{DynamicResource MutedForegroundBrush}" />
+                                                                <TextBlock Text="{Binding}" FontSize="11" TextDecorations="Underline"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           Foreground="{DynamicResource MutedForegroundBrush}" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <Button Grid.Column="1" Padding="8,4" VerticalAlignment="Top" Click="OpenEmulatorButton_Click" CommandParameter="{Binding}"
                                                     Visibility="{Binding IsConfigured, Converter={StaticResource BoolToVisibility}}"
                                                     ToolTip="Open this emulator on its own, to configure it">
                                                 <StackPanel Orientation="Horizontal">

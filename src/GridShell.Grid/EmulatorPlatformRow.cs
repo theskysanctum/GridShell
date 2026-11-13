@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -166,11 +167,27 @@ public class EmulatorPlatformRow : INotifyPropertyChanged
         }
     }
 
+    /// <summary>This platform's own subfolder under the default ROMs root, then under each
+    /// global extra ROM folder (see Game Manager's "Extra ROM folders" list) in the same order -
+    /// the default root is always first/pinned. The only thing left per platform worth showing
+    /// once emulator setup is fully automatic (see StatusSummary's own comment) and every
+    /// folder is already auto-created (EmulationPlatforms.EnsureSlugFoldersExist) - so showing
+    /// where to actually drop ROMs is the one still-useful, actionable thing here.</summary>
+    public ObservableCollection<string> RomFolderPaths { get; } = new();
+
     public void RefreshRomCount(IEnumerable<string>? extraRoots = null)
     {
+        var roots = new[] { EmulationPlatforms.RomsRootPath }.Concat(extraRoots ?? Enumerable.Empty<string>()).ToList();
+
         RomCount = RomScanner.GetRoms(Platform, extraRoots).Count;
         OnPropertyChanged(nameof(RomCount));
         OnPropertyChanged(nameof(RomCountText));
+
+        RomFolderPaths.Clear();
+        foreach (var root in roots)
+        {
+            RomFolderPaths.Add(Path.Combine(root, Platform.Slug));
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
