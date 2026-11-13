@@ -110,9 +110,26 @@ public static class WingetInstaller
     /// this app's --location folder (InstallAsync's own location) - winget's own uninstaller
     /// doesn't reliably clean that up for every installer technology, same "harmless clutter,
     /// don't fail over it" tolerance StoreCatalogSync already uses for its own stale-clone
-    /// cleanup.</summary>
+    /// cleanup.
+    ///
+    /// Never calls winget's own uninstall for a "ghost" entry (winget lists it, but no exe
+    /// actually resolves for it - its real uninstaller is already gone). winget's uninstall
+    /// fails that case with a COM error (confirmed live: 0x800401f5, "Application not found")
+    /// that makes Windows itself pop the default browser open with a "search the web for this
+    /// app" prompt - a stray window GridShell, as a shell replacement, can never let through to
+    /// its own taskbar. A ghost gets a direct registry-entry delete instead
+    /// (InstalledAppLocator.TryDeleteOrphanedUninstallEntry), which has no UI of its own even
+    /// when it fails (most often denied admin rights for a machine-wide entry).</summary>
     public static async Task<UninstallResult> UninstallAsync(StoreApp app)
     {
+        if (InstalledAppLocator.FindMainExe(app.Name) is null)
+        {
+            return InstalledAppLocator.TryDeleteOrphanedUninstallEntry(app.Name)
+                ? new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.")
+                : new UninstallResult(UninstallOutcome.Failed,
+                    "Couldn't clean up its leftover registry entry - this usually needs admin rights. Try running GridShell as Administrator, or clean it up manually.");
+        }
+
         var result = await RunAsync("uninstall",
             $"--id {app.WingetId} -e --silent --accept-source-agreements --disable-interactivity");
         if (result is null)
