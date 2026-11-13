@@ -205,11 +205,8 @@
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <!-- Busy / failed text status - whether it's installed is
-                                             implied by which of Install/Uninstall is showing, so
-                                             no separate "Installed" pill is needed here (the
-                                             transition itself gets its own toast, same as every
-                                             other GridShell notification). -->
+                                        <!-- Busy / failed text status - Installed gets its own
+                                             pill below instead of plain text. -->
                                         <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="0,0,10,0"
                                                    MaxWidth="160" TextWrapping="Wrap" TextAlignment="Right"
                                                    Foreground="{DynamicResource ErrorForegroundBrush}">
@@ -228,6 +225,16 @@
                                                    Foreground="{DynamicResource MutedForegroundBrush}"
                                                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
 
+                                        <Border Style="{StaticResource StatusBadgeStyle}" Margin="0,0,4,0"
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisibility}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           Margin="0,0,4,0" Foreground="{DynamicResource AccentBrush}" />
+                                                <TextBlock Text="Installed" FontSize="11.5"
+                                                           Foreground="{DynamicResource AccentBrush}" />
+                                            </StackPanel>
+                                        </Border>
+
                                         <Button Style="{StaticResource InstallButtonStyle}"
                                                 Click="InstallButton_Click" CommandParameter="{Binding}"
                                                 Visibility="{Binding CanInstall, Converter={StaticResource BoolToVisibility}}">
@@ -235,16 +242,6 @@
                                                 <TextBlock Text="&#xf090;" FontFamily="{StaticResource IconFont}" FontSize="13"
                                                            Margin="0,0,4,0" Foreground="White" />
                                                 <TextBlock Text="Install" FontSize="12" Foreground="White" />
-                                            </StackPanel>
-                                        </Button>
-
-                                        <Button Style="{StaticResource InstallButtonStyle}"
-                                                Click="UninstallButton_Click" CommandParameter="{Binding}"
-                                                Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVisibility}}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" FontSize="13"
-                                                           Margin="0,0,4,0" Foreground="White" />
-                                                <TextBlock Text="Uninstall" FontSize="12" Foreground="White" />
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using GridShell.Core.Interop;
 
 namespace GridShell.Core.Store;
 
@@ -14,15 +13,6 @@ public enum InstallOutcome
 }
 
 public sealed record InstallResult(InstallOutcome Outcome, string Message);
-
-public enum UninstallOutcome
-{
-    Uninstalled,
-    Failed,
-    WingetNotFound,
-}
-
-public sealed record UninstallResult(UninstallOutcome Outcome, string Message);
 
 /// <summary>Shells out to winget.exe (Windows Package Manager) rather than any COM/WinRT API -
 /// confirmed on a real machine (this one): `winget list --id &lt;id&gt; -e` exits 0 when already
@@ -45,36 +35,11 @@ public static class WingetInstaller
 
     /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
     /// InstallAsync uses - lets the Store reflect real install state when it opens, not just
-    /// whatever happened during the current app session.
-    ///
-    /// winget's own package database can go stale if the app's files are deleted outside
-    /// GridShell entirely, with no uninstall ever run - confirmed live: a user deleting
-    /// C:\GridShell\Applications by hand left every winget-tracked app still "installed" per
-    /// `winget list`, so the Store kept showing Uninstall (not Install) for apps whose exe no
-    /// longer existed, and the quick-launch buttons that depend on the same winget-reported
-    /// state silently did nothing. Cross-checking against InstalledAppLocator - the same real
-    /// exe lookup the rest of the Store already trusts - catches that: a "ghost" entry (winget
-    /// says yes, no exe actually resolves) reports NotInstalled so the Store's own Install
-    /// button works again.
-    ///
-    /// Deliberately does NOT try to winget-uninstall the ghost entry itself here - a status
-    /// check having a side effect every time the Store opens is surprising on its own, and
-    /// confirmed live to be actively harmful for some ghost entries: winget's uninstall can
-    /// fail with a COM error (0x800401f5, "Application not found") that Windows itself
-    /// reacts to by popping the default browser open with a "search the web for this app"
-    /// prompt - repeated every single Store open for any entry that can't be cleanly
-    /// uninstalled. Clearing a real ghost entry is the Store's own explicit Uninstall button's
-    /// job (user-initiated, once, with its own toast), not something to retry silently on
-    /// every open.</summary>
-    public static async Task<bool> IsInstalledAsync(StoreApp app)
+    /// whatever happened during the current app session.</summary>
+    public static async Task<bool> IsInstalledAsync(string wingetId)
     {
-        var listResult = await RunAsync("list", $"--id {app.WingetId} -e --accept-source-agreements");
-        if (listResult is not { ExitCode: 0 })
-        {
-            return false;
-        }
-
-        return InstalledAppLocator.FindMainExe(app.Name) is not null;
+        var listResult = await RunAsync("list", $"--id {wingetId} -e --accept-source-agreements");
+        return listResult is { ExitCode: 0 };
     }
 
     public static async Task<InstallResult> InstallAsync(StoreApp app)
@@ -107,58 +72,6 @@ public static class WingetInstaller
             : new InstallResult(InstallOutcome.Failed, LastMeaningfulLine(installResult.Value.Output));
     }
 
-    /// <summary>Shells out to `winget uninstall`, then best-effort deletes whatever's left under
-    /// this app's --location folder (InstallAsync's own location) - winget's own uninstaller
-    /// doesn't reliably clean that up for every installer technology, same "harmless clutter,
-    /// don't fail over it" tolerance StoreCatalogSync already uses for its own stale-clone
-    /// cleanup.
-    ///
-    /// Never calls winget's own uninstall for a "ghost" entry (winget lists it, but no exe
-    /// actually resolves for it - its real uninstaller is already gone). winget's uninstall
-    /// fails that case with a COM error (confirmed live: 0x800401f5, "Application not found")
-    /// that makes Windows itself pop the default browser open with a "search the web for this
-    /// app" prompt - a stray window GridShell, as a shell replacement, can never let through to
-    /// its own taskbar. A ghost gets a direct registry-entry delete instead
-    /// (InstalledAppLocator.TryDeleteOrphanedUninstallEntry), which has no UI of its own even
-    /// when it fails (most often denied admin rights for a machine-wide entry).</summary>
-    public static async Task<UninstallResult> UninstallAsync(StoreApp app)
-    {
-        if (InstalledAppLocator.FindMainExe(app.Name) is null)
-        {
-            return InstalledAppLocator.TryDeleteOrphanedUninstallEntry(app.Name)
-                ? new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.")
-                : new UninstallResult(UninstallOutcome.Failed,
-                    "Couldn't clean up its leftover registry entry - this usually needs admin rights. Try running GridShell as Administrator, or clean it up manually.");
-        }
-
-        var result = await RunAsync("uninstall",
-            $"--id {app.WingetId} -e --silent --accept-source-agreements --disable-interactivity");
-        if (result is null)
-        {
-            return new UninstallResult(UninstallOutcome.WingetNotFound,
-                "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
-        }
-
-        if (result.Value.ExitCode != 0)
-        {
-            return new UninstallResult(UninstallOutcome.Failed, LastMeaningfulLine(result.Value.Output));
-        }
-
-        var location = Path.Combine(InstallRoot, app.Id);
-        if (Directory.Exists(location))
-        {
-            try
-            {
-                Directory.Delete(location, recursive: true);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-            }
-        }
-
-        return new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.");
-    }
-
     private static async Task<(int ExitCode, string Output)?> RunAsync(string command, string arguments)
     {
         var startInfo = new ProcessStartInfo("winget.exe", $"{command} {arguments}")
@@ -176,13 +89,6 @@ public static class WingetInstaller
             {
                 return null;
             }
-
-            // winget.exe itself has no window of its own (CreateNoWindow above), but
-            // `install`/`uninstall` can spawn the actual vendor installer/uninstaller
-            // underneath - MSI, InstallShield, NSIS, anything - which isn't always fully
-            // silent. Hides that whole descendant tree from GridShell's own taskbar for as
-            // long as this winget invocation runs, regardless of what it turns out to be.
-            using var suppress = InstallerProcessSuppressor.Suppress(process.Id);
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var error = await process.StandardError.ReadToEndAsync();

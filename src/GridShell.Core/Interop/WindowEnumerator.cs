@@ -105,11 +105,6 @@ public static class WindowEnumerator
                 return false;
             }
 
-            if (InstallerProcessSuppressor.IsSuppressed((int)pid))
-            {
-                return false;
-            }
-
             try
             {
                 using var process = System.Diagnostics.Process.GetProcessById((int)pid);

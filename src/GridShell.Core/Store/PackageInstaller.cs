@@ -35,27 +35,6 @@ public static class PackageInstaller
     public static bool IsInstalled(string appId) =>
         InstalledAppLocator.FindBestExeInDirectory(InstallRoot(appId)) is not null;
 
-    /// <summary>Same as GitHubReleaseInstaller's own Uninstall - no real installer involved,
-    /// just a folder GridShell extracted an archive into, so removing it is just deleting that
-    /// folder.</summary>
-    public static UninstallResult Uninstall(string appId)
-    {
-        try
-        {
-            var installRoot = InstallRoot(appId);
-            if (Directory.Exists(installRoot))
-            {
-                Directory.Delete(installRoot, recursive: true);
-            }
-
-            return new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.");
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return new UninstallResult(UninstallOutcome.Failed, ex.Message);
-        }
-    }
-
     public static async Task<InstallResult> InstallAsync(StoreApp app)
     {
         if (string.IsNullOrEmpty(app.PackageFile))
