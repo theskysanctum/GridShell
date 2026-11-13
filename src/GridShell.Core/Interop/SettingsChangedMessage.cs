@@ -9,4 +9,18 @@ namespace GridShell.Core.Interop;
 public static class SettingsChangedMessage
 {
     public static readonly uint Id = RegisterWindowMessage("GridShellSettingsChanged");
+
+    /// <summary>Posts this message to every live GridShell (taskbar process) window - shared by
+    /// SettingsWindow and StoreWindow (Scenes), the two places outside the taskbar process itself
+    /// that change AppSettings fields the taskbar needs to react to live.</summary>
+    public static void NotifyTaskbar()
+    {
+        foreach (var process in System.Diagnostics.Process.GetProcessesByName("GridShell"))
+        {
+            foreach (var hwnd in ProcessWindowCloser.FindWindowsOf(process.Id))
+            {
+                PostMessage(hwnd, Id, IntPtr.Zero, IntPtr.Zero);
+            }
+        }
+    }
 }

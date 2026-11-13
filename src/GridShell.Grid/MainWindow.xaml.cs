@@ -428,10 +428,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var dialog = new StoreWindow(
             _allTiles,
+            _settings,
             onTilesChanged: () =>
             {
                 TileStore.Save(_allTiles);
                 ApplyFilter();
+            },
+            onSettingsChanged: () =>
+            {
+                AppSettingsStore.Save(_settings);
+                ApplySettings();
             })
         {
             Owner = this,

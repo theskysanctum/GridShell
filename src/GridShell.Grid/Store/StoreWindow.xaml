@@ -167,7 +167,8 @@
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
 
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
+                          HorizontalScrollBarVisibility="Disabled"
+                          Visibility="{Binding IsScenesCategory, Converter={StaticResource BoolToVisibilityInverse}}">
                 <ItemsControl ItemsSource="{Binding Apps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -245,6 +246,63 @@
                                         </Button>
                                     </StackPanel>
                                 </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Scenes: animated wallpapers, not StoreApps - a thumbnail/Apply card grid instead
+                 of the Apps list's icon/Install row, same two-pane shell either way. -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Visibility="{Binding IsScenesCategory, Converter={StaticResource BoolToVisibility}}">
+                <ItemsControl ItemsSource="{Binding Scenes}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="12" Width="260" Margin="0,0,12,12"
+                                    Background="{DynamicResource SurfaceBackgroundBrush}"
+                                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
+                                    ClipToBounds="True">
+                                <StackPanel>
+                                    <Grid Height="146">
+                                        <Border Background="{DynamicResource AccentBrush}"
+                                                Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibilityInverse}}">
+                                            <TextBlock Text="{Binding InitialLetter}" FontSize="28" FontWeight="Bold"
+                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                               Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibility}}" />
+                                    </Grid>
+
+                                    <StackPanel Margin="12,10,12,12">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13"
+                                                   Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                                        <TextBlock Text="{Binding Description}" FontSize="11.5" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,3,0,10" />
+
+                                        <Border Style="{StaticResource StatusBadgeStyle}" HorizontalAlignment="Left"
+                                                Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibility}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           Margin="0,0,4,0" Foreground="{DynamicResource AccentBrush}" />
+                                                <TextBlock Text="Current Wallpaper" FontSize="11.5"
+                                                           Foreground="{DynamicResource AccentBrush}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Button Style="{StaticResource InstallButtonStyle}" HorizontalAlignment="Left"
+                                                Click="ApplySceneButton_Click" CommandParameter="{Binding}"
+                                                Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibilityInverse}}">
+                                            <TextBlock Text="Apply" FontSize="12" Foreground="White" />
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

@@ -1020,16 +1020,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private static void NotifyTaskbarSettingsChanged()
-    {
-        foreach (var process in System.Diagnostics.Process.GetProcessesByName("GridShell"))
-        {
-            foreach (var hwnd in ProcessWindowCloser.FindWindowsOf(process.Id))
-            {
-                PostMessage(hwnd, SettingsChangedMessage.Id, IntPtr.Zero, IntPtr.Zero);
-            }
-        }
-    }
+    private static void NotifyTaskbarSettingsChanged() => SettingsChangedMessage.NotifyTaskbar();
 
     public SettingsWindow(AppSettings settings, Action onSettingsChanged)
     {

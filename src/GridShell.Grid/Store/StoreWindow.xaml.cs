@@ -8,6 +8,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using GridShell.Core.Interop;
+using GridShell.Core.Settings;
 using GridShell.Core.Store;
 using GridShell.Core.Tiles;
 
@@ -20,13 +22,21 @@ namespace GridShell;
 /// throughout, same DynamicResource brushes as every other window.</summary>
 public partial class StoreWindow : Window, INotifyPropertyChanged
 {
+    private const string ScenesCategoryLabel = "Scenes";
+
     private readonly List<Tile> _allTiles;
+    private readonly AppSettings _settings;
     private readonly Action _onTilesChanged;
+    private readonly Action _onSettingsChanged;
 
     private List<StoreAppViewModel> _allApps = new();
+    private List<StoreSceneViewModel> _allScenes = new();
 
     public ObservableCollection<StoreAppViewModel> Apps { get; } = new();
+    public ObservableCollection<StoreSceneViewModel> Scenes { get; } = new();
     public ObservableCollection<string> Categories { get; } = new();
+
+    public bool IsScenesCategory => SelectedCategory == ScenesCategoryLabel;
 
     private string _selectedCategory = "";
     public string SelectedCategory
@@ -36,6 +46,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         {
             _selectedCategory = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsScenesCategory));
             ApplyFilter();
         }
     }
@@ -56,13 +67,15 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-    public StoreWindow(List<Tile> allTiles, Action onTilesChanged)
+    public StoreWindow(List<Tile> allTiles, AppSettings settings, Action onTilesChanged, Action onSettingsChanged)
     {
         InitializeComponent();
         DataContext = this;
 
         _allTiles = allTiles;
+        _settings = settings;
         _onTilesChanged = onTilesChanged;
+        _onSettingsChanged = onSettingsChanged;
 
         Loaded += StoreWindow_Loaded;
     }
@@ -85,10 +98,29 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             ? "Couldn't load the catalog - check your internet connection and reopen the Store."
             : $"{_allApps.Count} apps available";
 
+        // Reads store-catalog/scenes.json from the same clone SyncAndLoadAsync just synced above
+        // - no separate sync needed.
+        _allScenes = StoreCatalogSync.LoadScenes().Scenes
+            .Select(s => new StoreSceneViewModel { Scene = s })
+            .ToList();
+
+        foreach (var scene in _allScenes)
+        {
+            SetSceneThumbnailIfAny(scene);
+            RefreshSceneIsCurrent(scene);
+        }
+
         Categories.Clear();
         foreach (var category in _allApps.Select(a => a.Category).Distinct().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase))
         {
             Categories.Add(category);
+        }
+
+        // Scenes aren't StoreApps, so they're not among _allApps' own categories - appended as
+        // its own fixed last entry instead, same left-rail category list either way.
+        if (_allScenes.Count > 0)
+        {
+            Categories.Add(ScenesCategoryLabel);
         }
 
         // No catch-all "All Apps" entry - land on the first real category instead, now that
@@ -172,9 +204,49 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         app.Icon = bitmap;
     }
 
+    /// <summary>Scenes' own bundled thumbnail (store-catalog/scenes/{id}.png in the synced
+    /// clone, same convention as app icons) - a scene without one keeps the InitialLetter
+    /// fallback square, same as an app with no bundled icon.</summary>
+    private static void SetSceneThumbnailIfAny(StoreSceneViewModel scene)
+    {
+        var thumbPath = StoreCatalogSync.GetSceneThumbnailPath(scene.Scene.Id);
+        if (thumbPath is null)
+        {
+            return;
+        }
+
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.UriSource = new Uri(thumbPath, UriKind.Absolute);
+        bitmap.EndInit();
+        bitmap.Freeze();
+        scene.Thumbnail = bitmap;
+    }
+
+    private void RefreshSceneIsCurrent(StoreSceneViewModel scene)
+    {
+        var entryPath = StoreCatalogSync.GetSceneEntryPath(scene.Scene.EntryFile);
+        scene.IsCurrent = entryPath is not null
+            && string.Equals(_settings.WallpaperUrl, entryPath, StringComparison.OrdinalIgnoreCase);
+    }
+
     private void ApplyFilter()
     {
         var query = SearchBox.Text;
+
+        if (IsScenesCategory)
+        {
+            Apps.Clear();
+            Scenes.Clear();
+            foreach (var scene in _allScenes.Where(s => string.IsNullOrWhiteSpace(query)
+                || s.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            {
+                Scenes.Add(scene);
+            }
+
+            return;
+        }
 
         // A search query searches every app regardless of the selected category - there's no
         // catch-all "All Apps" category to switch to first, so search would otherwise only ever
@@ -185,6 +257,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                 a.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 a.Category.Contains(query, StringComparison.OrdinalIgnoreCase));
 
+        Scenes.Clear();
         Apps.Clear();
         foreach (var app in matches)
         {
@@ -193,6 +266,35 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     }
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilter();
+
+    /// <summary>Applying a Scene is just pointing AppSettings.WallpaperUrl at its local synced
+    /// .html file - the same field/mechanism Settings' own "Appearance" tab already uses for a
+    /// custom wallpaper, so WallpaperWindow (running in the separate taskbar process) needs no
+    /// changes at all, just the same live-reload notification Settings already sends it.</summary>
+    private void ApplySceneButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not StoreSceneViewModel scene)
+        {
+            return;
+        }
+
+        var entryPath = StoreCatalogSync.GetSceneEntryPath(scene.Scene.EntryFile);
+        if (entryPath is null)
+        {
+            MessageBox.Show(this, $"{scene.Name}'s scene file is missing from the synced catalog.",
+                "Scenes", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        _settings.WallpaperUrl = entryPath;
+        _onSettingsChanged();
+        SettingsChangedMessage.NotifyTaskbar();
+
+        foreach (var s in _allScenes)
+        {
+            RefreshSceneIsCurrent(s);
+        }
+    }
 
     private async void InstallButton_Click(object sender, RoutedEventArgs e)
     {

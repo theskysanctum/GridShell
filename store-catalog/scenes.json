@@ -1,0 +1,28 @@
+{
+  "scenes": [
+    {
+      "id": "aurora-waves",
+      "name": "Aurora Waves",
+      "description": "Slow-drifting northern-lights bands over a starry night sky.",
+      "entryFile": "aurora-waves.html"
+    },
+    {
+      "id": "particle-drift",
+      "name": "Particle Drift",
+      "description": "Softly connected particles floating and reforming across the screen.",
+      "entryFile": "particle-drift.html"
+    },
+    {
+      "id": "gradient-flow",
+      "name": "Gradient Flow",
+      "description": "Smooth, colorful blobs of light slowly flowing past each other.",
+      "entryFile": "gradient-flow.html"
+    },
+    {
+      "id": "starfield",
+      "name": "Starfield",
+      "description": "A calm field of twinkling stars with the occasional shooting star.",
+      "entryFile": "starfield.html"
+    }
+  ]
+}
