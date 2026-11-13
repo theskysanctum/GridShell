@@ -156,7 +156,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Point each platform at an emulator - install one from the Store first (GridShell picks it up automatically once installed), or browse to one you already have. ROMs are scanned from C:\Games\ROMs\&lt;platform&gt;, plus any extra folders below."
+                    <TextBlock Grid.Row="0" Text="Point each platform at an emulator - install one from the Store first (GridShell picks it up automatically once installed), or browse to one you already have. ROMs are scanned from C:\GridShell\Games\ROMs\&lt;platform&gt;, plus any extra folders below - every platform's folder is created automatically."
                                Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,12" />
 
                     <StackPanel Grid.Row="1" Margin="0,0,0,16">
@@ -213,7 +213,7 @@
                             </Button>
                         </Grid>
 
-                        <TextBlock Text="Each needs its own &lt;platform&gt; subfolder, same as C:\Games\ROMs." FontSize="11"
+                        <TextBlock Text="Every platform's own subfolder is created automatically here, same as under the default ROMs folder." FontSize="11"
                                    Foreground="{DynamicResource MutedForegroundBrush}" TextWrapping="Wrap" Margin="0,0,0,6"
                                    Visibility="{Binding ExtraRomPaths.Count, Converter={StaticResource CountToVisibility}}" />
 

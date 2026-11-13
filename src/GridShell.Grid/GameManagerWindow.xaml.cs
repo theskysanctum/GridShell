@@ -71,6 +71,16 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
             _onSettingsChanged();
         }
 
+        // Every platform's own slug subfolder, ready-made under the default ROMs root and
+        // every extra folder already configured - covers extra folders added in an earlier
+        // session, before this existed, too. New extra folders get the same treatment in
+        // AddRomPoolButton_Click below.
+        EmulationPlatforms.EnsureSlugFoldersExist(EmulationPlatforms.RomsRootPath);
+        foreach (var extraRoot in _settings.ExtraRomPaths)
+        {
+            EmulationPlatforms.EnsureSlugFoldersExist(extraRoot);
+        }
+
         LoadEmulatorPlatforms();
 
         // Both processes read controllers via PadReader - whitelisting both up front means
@@ -419,6 +429,8 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         {
             return;
         }
+
+        EmulationPlatforms.EnsureSlugFoldersExist(path);
 
         ExtraRomPaths.Add(path);
         _settings.ExtraRomPaths = ExtraRomPaths.ToList();

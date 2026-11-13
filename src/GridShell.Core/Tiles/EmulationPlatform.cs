@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace GridShell.Core.Tiles;
 
 public sealed record EmulationPlatform(string Slug, string DisplayName, string Category, string[] RomExtensions);
@@ -228,4 +230,18 @@ public static class EmulationPlatforms
         new EmulationPlatform("vpinball", "Visual Pinball", "Home Computer", new[] { ".vpx" }),
         new EmulationPlatform("laser310", "VTech Laser 310", "Home Computer", new[] { ".zip", ".7z" }),
     };
+
+    /// <summary>Pre-creates every platform's own slug subfolder directly under root (e.g.
+    /// root\snes, root\psx, ...) - so RomsRootPath, and any extra ROM folder added in Game
+    /// Manager, always has a ready-made spot for each platform's ROMs rather than the user
+    /// having to know/create the right slug folder name themselves. Directory.CreateDirectory is
+    /// a no-op for one that already exists, so this is safe to call every time (app startup, and
+    /// again whenever a new extra folder is added) rather than only once.</summary>
+    public static void EnsureSlugFoldersExist(string root)
+    {
+        foreach (var platform in All)
+        {
+            Directory.CreateDirectory(Path.Combine(root, platform.Slug));
+        }
+    }
 }
