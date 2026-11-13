@@ -30,8 +30,20 @@ public static class WingetInstaller
     /// flag and landing exactly here instead of their normal default. Winget's own docs mark
     /// --location as "if supported" per-package, so this isn't guaranteed for every catalog
     /// entry - an install that doesn't support it just lands in that installer's own default
-    /// location instead, same as it always did, not a failure either way.</summary>
+    /// location instead, same as it always did, not a failure either way.
+    ///
+    /// The game-store launchers (NoLocationWingetIds below) are the one deliberate exception -
+    /// confirmed live: Steam's own registry entry breaks (its DisplayIcon/InstallLocation go
+    /// missing or wrong) when installed to a custom --location, which is exactly what made the
+    /// storefront quick-launch buttons report "Not currently installed" even once actually
+    /// installed. Letting those 4 install to their own normal default location keeps that
+    /// registry metadata intact for GameLauncherDetector/GameLibraryScanner to find.</summary>
     public const string InstallRoot = @"C:\GridShell\Applications";
+
+    private static readonly HashSet<string> NoLocationWingetIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Valve.Steam", "EpicGames.EpicGamesLauncher", "GOG.Galaxy", "ItchIo.Itch",
+    };
 
     /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
     /// InstallAsync uses - lets the Store reflect real install state when it opens, not just
@@ -57,10 +69,12 @@ public static class WingetInstaller
             return new InstallResult(InstallOutcome.AlreadyInstalled, "Already installed.");
         }
 
-        var location = Path.Combine(InstallRoot, app.Id);
+        var locationArg = NoLocationWingetIds.Contains(wingetId)
+            ? ""
+            : $" --location \"{Path.Combine(InstallRoot, app.Id)}\"";
         var installResult = await RunAsync("install",
             $"--id {wingetId} -e --silent --accept-package-agreements --accept-source-agreements " +
-            $"--disable-interactivity --source winget --location \"{location}\"");
+            $"--disable-interactivity --source winget{locationArg}");
         if (installResult is null)
         {
             return new InstallResult(InstallOutcome.WingetNotFound,

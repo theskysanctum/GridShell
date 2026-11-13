@@ -8,18 +8,34 @@ namespace GridShell.Core.Store;
 /// GitHubReleaseInstaller's own extraction folder for github-method ones), so a Store install
 /// actually shows up as something launchable rather than just being present on disk. Never
 /// duplicates a tile that already points at the same exe - repeat installs/opens of the Store
-/// are idempotent.</summary>
+/// are idempotent. Emulators (Category "Emulation") are deliberately excluded - they belong to
+/// Game Manager's own world (EmulatorAutoWire wires them for actual game-launching), not the
+/// Apps tab. Game-store launchers are excluded by their specific StoreApp.Id, not by Category
+/// "Gaming" wholesale - a future non-launcher Gaming entry should still get an Apps tile, only
+/// the storefronts themselves are redundant there (GameLibraryScanner already pulls their
+/// installed games straight into the Games tab).</summary>
 public static class StoreTileAutoWire
 {
+    private static readonly HashSet<string> StorefrontLauncherIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "valve.steam", "epicgames.epicgameslauncher", "gog.galaxy", "itchio.itch",
+    };
+
     /// <summary>Returns the Tile if something changed that needs an icon reload - either a
     /// brand new tile, or an existing one that just picked up a bundled Store icon it didn't
-    /// have before (see StoreIconCache) - or null if nothing changed (no resolvable exe yet, or
-    /// a matching tile already has its icon settled). The caller is expected to kick off
-    /// IconLoader.LoadIconAsync itself, same as every other place a Tile is created, since
-    /// IconLoader needs a live AppSettings for IGDB/favicon lookups that this class, living in
-    /// GridShell.Core.Store rather than the UI layer, has no reason to depend on.</summary>
+    /// have before (see StoreIconCache) - or null if nothing changed (no resolvable exe yet, the
+    /// app is an emulator or storefront launcher, or a matching tile already has its icon
+    /// settled). The caller is expected to kick off IconLoader.LoadIconAsync itself, same as
+    /// every other place a Tile is created, since IconLoader needs a live AppSettings for
+    /// IGDB/favicon lookups that this class, living in GridShell.Core.Store rather than the UI
+    /// layer, has no reason to depend on.</summary>
     public static Tile? TryWire(StoreApp app, List<Tile> allTiles)
     {
+        if (app.Category == "Emulation" || StorefrontLauncherIds.Contains(app.Id))
+        {
+            return null;
+        }
+
         var exePath = app.InstallMethod == "github"
             ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id), app.Name)
             : InstalledAppLocator.FindMainExe(app.Name);
