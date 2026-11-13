@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using GridShell.Core.Store;
+using GridShell.Core.Tiles;
 
 namespace GridShell;
 
@@ -19,6 +20,9 @@ namespace GridShell;
 /// throughout, same DynamicResource brushes as every other window.</summary>
 public partial class StoreWindow : Window, INotifyPropertyChanged
 {
+    private readonly List<Tile> _allTiles;
+    private readonly Action _onTilesChanged;
+
     private List<StoreAppViewModel> _allApps = new();
 
     public ObservableCollection<StoreAppViewModel> Apps { get; } = new();
@@ -52,10 +56,13 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-    public StoreWindow()
+    public StoreWindow(List<Tile> allTiles, Action onTilesChanged)
     {
         InitializeComponent();
         DataContext = this;
+
+        _allTiles = allTiles;
+        _onTilesChanged = onTilesChanged;
 
         Loaded += StoreWindow_Loaded;
     }
@@ -98,10 +105,15 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     /// each StoreAppViewModel starts that way and nothing checked reality against it - fixed by
     /// querying winget's own "already installed" check (WingetInstaller.IsInstalledAsync, same
     /// `winget list --id X -e` check InstallAsync uses) for every catalog entry on load.
-    /// Throttled to a handful at a time rather than firing 20+ winget.exe processes at once.</summary>
+    /// Throttled to a handful at a time rather than firing 20+ winget.exe processes at once. Also
+    /// backfills an Apps-tab tile (StoreTileAutoWire) for anything already installed before this
+    /// existed, or installed outside the Store - not just newly-installed apps - so opening the
+    /// Store once picks up everything already on the machine.</summary>
     private async Task RefreshInstalledStateAsync()
     {
         using var throttle = new SemaphoreSlim(4);
+        var tilesChanged = false;
+        var tilesLock = new object();
 
         var checks = _allApps.Select(async app =>
         {
@@ -113,6 +125,17 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                     ? GitHubReleaseInstaller.IsInstalled(app.App.Id)
                     : await WingetInstaller.IsInstalledAsync(app.App.WingetId);
                 app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
+
+                if (installed)
+                {
+                    lock (tilesLock)
+                    {
+                        if (StoreTileAutoWire.TryWire(app.App, _allTiles))
+                        {
+                            tilesChanged = true;
+                        }
+                    }
+                }
             }
             finally
             {
@@ -121,6 +144,11 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         });
 
         await Task.WhenAll(checks);
+
+        if (tilesChanged)
+        {
+            _onTilesChanged();
+        }
     }
 
     /// <summary>The catalog's own bundled logo (store-catalog/icons/{id}.png, synced alongside
@@ -198,6 +226,11 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             if (app.App.Id == "libretro.retroarch")
             {
                 await RetroArchCoreAutoWire.TryWireAllAsync();
+            }
+
+            if (StoreTileAutoWire.TryWire(app.App, _allTiles))
+            {
+                _onTilesChanged();
             }
         }
     }

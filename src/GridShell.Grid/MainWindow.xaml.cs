@@ -430,6 +430,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         dialog.ShowDialog();
     }
 
+    public void OpenStore()
+    {
+        var dialog = new StoreWindow(
+            _allTiles,
+            onTilesChanged: () =>
+            {
+                TileStore.Save(_allTiles);
+                ApplyFilter();
+            })
+        {
+            Owner = this,
+        };
+
+        dialog.Show();
+    }
+
     public void OpenGameManager()
     {
         var dialog = new GameManagerWindow(
@@ -539,7 +555,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void StoreButton_Click(object sender, RoutedEventArgs e)
     {
-        new StoreWindow().Show();
+        OpenStore();
         HideGrid(restorePreviousFocus: false);
     }
 
