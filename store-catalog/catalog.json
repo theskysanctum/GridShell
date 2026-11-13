@@ -261,6 +261,13 @@
       "wingetId": "XBMCFoundation.Kodi",
       "category": "Media",
       "description": "World famous media center with addons and able to scrape metadata for your music, movies, tv shows, and much more."
+    },
+    {
+      "id": "stremio.stremio",
+      "name": "Stremio",
+      "wingetId": "Stremio.Stremio",
+      "category": "Media",
+      "description": "Stremio is also a media center but with more of a focus on streaming."
     }
   ]
 }
