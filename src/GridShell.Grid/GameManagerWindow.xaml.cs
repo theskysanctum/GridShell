@@ -158,6 +158,11 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>Same button now does both halves of "find games already on disk": installed
+    /// games from Steam/Epic/GOG (GameLibraryScanner) AND ROMs sitting under each configured
+    /// platform's ROM folder(s) (RomScanner) - previously ROM folders were only ever counted for
+    /// display (EmulatorPlatformRow.RomCountText), never actually turned into tiles; adding one
+    /// for each ROM found was a manual, one-at-a-time AddTileWindow step until now.</summary>
     private async void ScanInstalledGamesButton_Click(object sender, RoutedEventArgs e)
     {
         InstalledGameScanStatus = "Scanning...";
@@ -190,15 +195,76 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
             added++;
         }
 
+        // Snapshotted here, on the UI thread, before handing off to the background Task.Run
+        // below - _allTiles and ExtraRomPaths (a UI-bound ObservableCollection) aren't safe to
+        // read from a background thread while the user could still be interacting with the
+        // window mid-scan.
+        var existingGameKeys = new HashSet<(string Platform, string Arguments)>(
+            _allTiles.Where(t => t.Kind == TileKind.Game && t.Platform is not null)
+                .Select(t => (t.Platform!, t.Arguments ?? "")));
+        var extraRomPaths = ExtraRomPaths.ToList();
+
+        var romTiles = await Task.Run(() => BuildRomTiles(existingGameKeys, extraRomPaths));
+        foreach (var tile in romTiles)
+        {
+            _allTiles.Add(tile);
+            _ = IconLoader.LoadIconAsync(tile, _settings);
+            added++;
+        }
+
         RefreshGameTiles();
         InstalledGameScanStatus = added == 0
-            ? $"No new games found ({found.Count} already added or none detected)."
-            : $"Added {added} game(s) from {found.Select(g => g.Source).Distinct().Count()} launcher(s).";
+            ? $"No new games found ({found.Count} installed-game(s)/ROM(s) already added or none detected)."
+            : $"Added {added} game(s) from {found.Select(g => g.Source).Distinct().Count()} launcher(s) and ROM folders.";
 
         if (added > 0)
         {
             _onTilesChanged();
         }
+    }
+
+    /// <summary>One Tile per ROM file under every platform that has a configured emulator -
+    /// EmulatorConfig.ArgumentTemplate's "{rom}" gets resolved to that exact file right now
+    /// (matching AddTileWindow's own one-at-a-time flow), not re-resolved at launch, so a tile
+    /// keeps pointing at the same ROM even if the emulator config changes later. Deduplicated by
+    /// (platform, resolved arguments) - the same key a repeat scan would produce for a ROM
+    /// already added, rather than by TargetPath alone (shared by every ROM under one emulator).
+    /// existingGameKeys/extraRomPaths are snapshotted by the caller before this runs on a
+    /// background thread - this method itself only touches EmulationPlatforms.All (static) and
+    /// RomScanner's own file I/O, never _allTiles/ExtraRomPaths directly.</summary>
+    private List<Tile> BuildRomTiles(HashSet<(string Platform, string Arguments)> existingGameKeys, List<string> extraRomPaths)
+    {
+        var newTiles = new List<Tile>();
+
+        foreach (var platform in EmulationPlatforms.All)
+        {
+            if (!_settings.EmulatorConfigs.TryGetValue(platform.Slug, out var config) ||
+                string.IsNullOrWhiteSpace(config.EmulatorPath))
+            {
+                continue;
+            }
+
+            foreach (var romPath in RomScanner.GetRoms(platform, extraRomPaths))
+            {
+                var arguments = config.ArgumentTemplate.Replace("{rom}", romPath);
+                if (!existingGameKeys.Add((platform.Slug, arguments)))
+                {
+                    continue;
+                }
+
+                newTiles.Add(new Tile
+                {
+                    Name = RomTitleCleaner.Clean(System.IO.Path.GetFileNameWithoutExtension(romPath)),
+                    TargetPath = config.EmulatorPath,
+                    Kind = TileKind.Game,
+                    IconSourcePath = config.EmulatorPath,
+                    Arguments = arguments,
+                    Platform = platform.Slug,
+                });
+            }
+        }
+
+        return newTiles;
     }
 
     private void ScrapeButton_Click(object sender, RoutedEventArgs e)

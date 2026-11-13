@@ -122,8 +122,8 @@
 
                         <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,12" />
 
-                        <TextBlock Text="Installed games" FontWeight="Bold" Margin="0,0,0,4" />
-                        <TextBlock Text="Adds a tile for every game already installed via Steam, Epic Games, or GOG Galaxy. itch.io isn't supported - its own integration guidelines require talking to a background daemon rather than reading its files directly."
+                        <TextBlock Text="Installed games &amp; ROMs" FontWeight="Bold" Margin="0,0,0,4" />
+                        <TextBlock Text="Adds a tile for every game already installed via Steam, Epic Games, or GOG Galaxy, plus every ROM found under a configured platform's ROM folder(s) below. itch.io isn't supported - its own integration guidelines require talking to a background daemon rather than reading its files directly."
                                    Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8" />
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -133,7 +133,7 @@
                             <Button Grid.Column="0" Padding="12,4" Click="ScanInstalledGamesButton_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xef7a;" FontFamily="{StaticResource IconFont}" FontSize="14" Margin="0,0,4,0" />
-                                    <TextBlock Text="Scan for installed games" />
+                                    <TextBlock Text="Scan for games &amp; ROMs" />
                                 </StackPanel>
                             </Button>
                             <TextBlock Grid.Column="1" Text="{Binding InstalledGameScanStatus}" FontSize="11"

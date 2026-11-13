@@ -21,7 +21,7 @@ public static class EmulatorAutoWire
         // of GridShell's own choosing and never touch the Uninstall registry - look there
         // directly instead of the registry scan winget-installed apps need.
         var exePath = app.InstallMethod == "github"
-            ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id))
+            ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id), app.Name)
             : InstalledAppLocator.FindMainExe(app.Name);
         if (exePath is null)
         {

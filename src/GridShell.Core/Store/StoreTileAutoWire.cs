@@ -19,7 +19,7 @@ public static class StoreTileAutoWire
     public static Tile? TryWire(StoreApp app, List<Tile> allTiles)
     {
         var exePath = app.InstallMethod == "github"
-            ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id))
+            ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id), app.Name)
             : InstalledAppLocator.FindMainExe(app.Name);
 
         if (exePath is null)

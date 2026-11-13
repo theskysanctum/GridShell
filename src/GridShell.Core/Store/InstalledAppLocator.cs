@@ -46,7 +46,7 @@ public static class InstalledAppLocator
                     var installLocation = subKey?.GetValue("InstallLocation") as string;
                     if (!string.IsNullOrEmpty(installLocation) && Directory.Exists(installLocation))
                     {
-                        var best = BestExeIn(installLocation);
+                        var best = BestExeIn(installLocation, displayName);
                         if (best is not null)
                         {
                             return best;
@@ -70,22 +70,52 @@ public static class InstalledAppLocator
         return null;
     }
 
-    /// <summary>Same largest-non-skip-pattern heuristic as the registry-driven lookup above, but
-    /// against a folder GridShell itself extracted an app into (GitHubReleaseInstaller) rather
-    /// than one found via the Uninstall registry - those installs never register there, since
-    /// there's no real installer involved, just a zip extraction.</summary>
-    public static string? FindBestExeInDirectory(string directory)
+    /// <summary>Same heuristic as the registry-driven lookup above, but against a folder
+    /// GridShell itself extracted an app into (GitHubReleaseInstaller) rather than one found via
+    /// the Uninstall registry - those installs never register there, since there's no real
+    /// installer involved, just a zip extraction. nameHint is optional since not every caller
+    /// has a display name handy (e.g. a GitHub-release emulator install already named exactly
+    /// after its own StoreApp.Id).</summary>
+    public static string? FindBestExeInDirectory(string directory, string? nameHint = null)
     {
-        return Directory.Exists(directory) ? BestExeIn(directory) : null;
+        return Directory.Exists(directory) ? BestExeIn(directory, nameHint) : null;
     }
 
-    private static string? BestExeIn(string installLocation)
+    /// <summary>Picks the real main exe out of an install folder that can contain several -
+    /// confirmed live against Brave's own install (which bundles a "BraveVpnWireguardService"
+    /// helper exe alongside the real brave.exe, and the helper happens to be the larger file),
+    /// where the old "just take the largest non-skip-pattern .exe anywhere under the install
+    /// root" heuristic picked the wrong one entirely. Now tries an exact name match first (the
+    /// exe's own filename, letters/digits only, case-insensitive, against the same normalization
+    /// of nameHint - "GitHubDesktop.exe" vs. "GitHub Desktop" matches this way) before falling
+    /// back to the old largest-file heuristic, which still correctly handles installs where the
+    /// real exe's name doesn't match the display name at all (e.g. GitHub Desktop's own
+    /// Squirrel-style versioned install, where that match already succeeds anyway, or any install
+    /// with only one real candidate exe to begin with).</summary>
+    private static string? BestExeIn(string installLocation, string? nameHint = null)
     {
         try
         {
-            return Directory.EnumerateFiles(installLocation, "*.exe", SearchOption.AllDirectories)
+            var candidates = Directory.EnumerateFiles(installLocation, "*.exe", SearchOption.AllDirectories)
                 .Where(path => !SkipNameFragments.Any(fragment =>
                     Path.GetFileName(path).Contains(fragment, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            if (nameHint is not null)
+            {
+                var normalizedHint = NormalizeForNameMatch(nameHint);
+                var nameMatch = candidates
+                    .Where(path => NormalizeForNameMatch(Path.GetFileNameWithoutExtension(path)) == normalizedHint)
+                    .OrderByDescending(path => new FileInfo(path).Length)
+                    .FirstOrDefault();
+
+                if (nameMatch is not null)
+                {
+                    return nameMatch;
+                }
+            }
+
+            return candidates
                 .OrderByDescending(path => new FileInfo(path).Length)
                 .FirstOrDefault();
         }
@@ -94,4 +124,7 @@ public static class InstalledAppLocator
             return null;
         }
     }
+
+    private static string NormalizeForNameMatch(string value) =>
+        new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 }
