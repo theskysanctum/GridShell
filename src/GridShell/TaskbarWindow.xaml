@@ -18,8 +18,12 @@
             <Style.Triggers>
                 <!-- Most real icons (e.g. a circular favicon) have transparent corners, so the
                      fallback letter must be fully hidden once a real icon is showing — just
-                     layering the icon on top isn't enough, it still shows through around it. -->
+                     layering the icon on top isn't enough, it still shows through around it.
+                     Same for a glyph (a Game tile's controller icon, or the Store's own). -->
                 <DataTrigger Binding="{Binding HasIcon}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasGlyph}" Value="True">
                     <Setter Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
             </Style.Triggers>
@@ -112,7 +116,16 @@
                                                Style="{StaticResource InitialFallbackStyle}" />
                                     <Image Source="{Binding Icon}" Width="26" Height="26"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                           Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}" />
+                                    <!-- A Game tile's window always gets the controller glyph
+                                         (never its own cover art), and the Store window always
+                                         gets its own glyph (never GridShell's generic window
+                                         icon) - see TaskbarEntryMatcher. -->
+                                    <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}" FontSize="20"
+                                               Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Visibility="{Binding HasGlyph, Converter={StaticResource BoolToVisibility}}" />
                                 </Grid>
                             </Button>
                             <!-- Active-window indicator — the same language VS Code's own

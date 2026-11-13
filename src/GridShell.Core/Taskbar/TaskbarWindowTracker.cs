@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Windows.Media;
 using System.Windows.Threading;
 using GridShell.Core.Interop;
+using GridShell.Core.Tiles;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 
@@ -72,31 +74,44 @@ public sealed class TaskbarWindowTracker : IDisposable
 
     private void Refresh()
     {
-        var current = WindowEnumerator.EnumerateEligibleWindows();
-        var currentSet = new HashSet<HWND>(current);
+        // Loaded fresh each refresh rather than cached - tiles.json is small and this only
+        // runs every couple of seconds (or on a window-change event), cheap enough next to the
+        // window enumeration itself.
+        var resolvedTiles = TaskbarEntryMatcher.ResolveTiles(TileStore.Load());
+
+        var matches = new Dictionary<HWND, TaskbarEntryMatcher.Match>();
+        foreach (var hwnd in WindowEnumerator.EnumerateEligibleWindows())
+        {
+            if (TaskbarEntryMatcher.Resolve(hwnd, GetTitle(hwnd), resolvedTiles) is { } match)
+            {
+                matches[hwnd] = match;
+            }
+        }
 
         for (var i = Windows.Count - 1; i >= 0; i--)
         {
-            if (!currentSet.Contains(Windows[i].Handle))
+            if (!matches.ContainsKey(Windows[i].Handle))
             {
                 Windows.RemoveAt(i);
             }
         }
 
         var existingHandles = new HashSet<HWND>(Windows.Select(w => w.Handle));
-        foreach (var hwnd in current)
+        foreach (var (hwnd, match) in matches)
         {
-            if (!existingHandles.Contains(hwnd))
+            if (existingHandles.Contains(hwnd))
             {
-                var ownIcon = ShellIcons.GetWindowOwnIcon(hwnd);
-                Windows.Add(new TaskbarWindowEntry
-                {
-                    Handle = hwnd,
-                    Title = GetTitle(hwnd),
-                    Icon = ownIcon ?? ShellIcons.GetProcessIconForWindow(hwnd),
-                    HasOwnIcon = ownIcon is not null,
-                });
+                continue;
             }
+
+            var entry = new TaskbarWindowEntry { Handle = hwnd, Title = GetTitle(hwnd), Glyph = match.Glyph };
+            if (match.Glyph is null)
+            {
+                entry.Icon = ResolveIcon(hwnd, match.CustomIconPath, out var hasOwnIcon);
+                entry.HasOwnIcon = hasOwnIcon;
+            }
+
+            Windows.Add(entry);
         }
 
         var foreground = GetForegroundWindow();
@@ -107,11 +122,28 @@ public sealed class TaskbarWindowTracker : IDisposable
         }
     }
 
+    /// <summary>A matched Tile's own CustomIconPath wins when set - the same icon the grid
+    /// itself shows for that tile, rather than whatever the shell would extract independently.
+    /// Falls back to the usual window/process icon otherwise (a GridShell-first-party window,
+    /// or a matched tile with no custom icon of its own).</summary>
+    private static ImageSource? ResolveIcon(HWND hwnd, string? customIconPath, out bool hasOwnIcon)
+    {
+        if (customIconPath is not null && ImageLoader.LoadFromFile(customIconPath) is { } customIcon)
+        {
+            hasOwnIcon = true;
+            return customIcon;
+        }
+
+        var ownIcon = ShellIcons.GetWindowOwnIcon(hwnd);
+        hasOwnIcon = ownIcon is not null;
+        return ownIcon ?? ShellIcons.GetProcessIconForWindow(hwnd);
+    }
+
     private void RetryPendingIcons()
     {
         foreach (var entry in Windows)
         {
-            if (!entry.HasOwnIcon && ShellIcons.GetWindowOwnIcon(entry.Handle) is { } ownIcon)
+            if (!entry.HasGlyph && !entry.HasOwnIcon && ShellIcons.GetWindowOwnIcon(entry.Handle) is { } ownIcon)
             {
                 entry.Icon = ownIcon;
                 entry.HasOwnIcon = true;
