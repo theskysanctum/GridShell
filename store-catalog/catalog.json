@@ -260,7 +260,7 @@
       "name": "Kodi Media Center",
       "wingetId": "XBMCFoundation.Kodi"
       "category": "Media",
-      "description": "World famous media center with addons and able to scrape metadata for your muisc, movies, tv shows, and much more."
-    },
+      "description": "World famous media center with addons and able to scrape metadata for your muisc, movies, tv shows, and much more.",
+    }
   ]
 }
