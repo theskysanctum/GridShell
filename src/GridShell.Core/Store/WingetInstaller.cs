@@ -53,9 +53,18 @@ public static class WingetInstaller
     /// longer existed, and the quick-launch buttons that depend on the same winget-reported
     /// state silently did nothing. Cross-checking against InstalledAppLocator - the same real
     /// exe lookup the rest of the Store already trusts - catches that: a "ghost" entry (winget
-    /// says yes, no exe actually resolves) gets a best-effort winget uninstall to clear the
-    /// stale registration, then reports NotInstalled either way, so the Store self-heals back
-    /// to a working Install button instead of staying stuck.</summary>
+    /// says yes, no exe actually resolves) reports NotInstalled so the Store's own Install
+    /// button works again.
+    ///
+    /// Deliberately does NOT try to winget-uninstall the ghost entry itself here - a status
+    /// check having a side effect every time the Store opens is surprising on its own, and
+    /// confirmed live to be actively harmful for some ghost entries: winget's uninstall can
+    /// fail with a COM error (0x800401f5, "Application not found") that Windows itself
+    /// reacts to by popping the default browser open with a "search the web for this app"
+    /// prompt - repeated every single Store open for any entry that can't be cleanly
+    /// uninstalled. Clearing a real ghost entry is the Store's own explicit Uninstall button's
+    /// job (user-initiated, once, with its own toast), not something to retry silently on
+    /// every open.</summary>
     public static async Task<bool> IsInstalledAsync(StoreApp app)
     {
         var listResult = await RunAsync("list", $"--id {app.WingetId} -e --accept-source-agreements");
@@ -64,13 +73,7 @@ public static class WingetInstaller
             return false;
         }
 
-        if (InstalledAppLocator.FindMainExe(app.Name) is not null)
-        {
-            return true;
-        }
-
-        await UninstallAsync(app);
-        return false;
+        return InstalledAppLocator.FindMainExe(app.Name) is not null;
     }
 
     public static async Task<InstallResult> InstallAsync(StoreApp app)
