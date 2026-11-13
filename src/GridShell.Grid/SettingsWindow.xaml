@@ -20,31 +20,6 @@
         <local:CountToVisibilityConverter x:Key="CountToVisibility" />
         <local:CountToVisibilityInverseConverter x:Key="CountToVisibilityInverse" />
 
-        <Style x:Key="SceneApplyButtonStyle" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{DynamicResource AccentBrush}" CornerRadius="16"
-                                Padding="14,7" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Opacity" Value="0.85" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SceneCurrentBadgeStyle" TargetType="Border">
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="8,3" />
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-
     </Window.Resources>
     <Grid Margin="16">
         <TabControl Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0">
@@ -110,7 +85,8 @@
             </TabItem>
 
             <TabItem Header="Appearance">
-                <StackPanel Margin="0,12,0,0" IsEnabled="{Binding CanEditAppearance}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,12,8,0" IsEnabled="{Binding CanEditAppearance}">
                     <TextBlock Text="Theme" Margin="0,0,0,4" />
                     <ComboBox SelectedValue="{Binding Theme}" SelectedValuePath="Tag" Margin="0,0,0,16">
                         <ComboBoxItem Content="Dark" Tag="Dark" />
@@ -310,49 +286,62 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border CornerRadius="12" Width="220" Margin="0,0,10,10"
-                                        Background="{DynamicResource SurfaceBackgroundBrush}"
-                                        BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
-                                        ClipToBounds="True">
-                                    <StackPanel>
-                                        <Grid Height="120">
-                                            <Border Background="{DynamicResource AccentBrush}"
-                                                    Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibilityInverse}}">
-                                                <TextBlock Text="{Binding InitialLetter}" FontSize="24" FontWeight="Bold"
-                                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
-                                                   Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibility}}" />
-                                        </Grid>
+                                <!-- The whole card is the control - clicking its preview (or
+                                     anywhere on it) is how a Scene is selected, no separate Apply
+                                     button. The currently-applied one gets an accent border plus
+                                     a checkmark badge over its thumbnail instead. -->
+                                <Button Click="ApplySceneButton_Click" CommandParameter="{Binding}"
+                                        Cursor="Hand" Focusable="False" Margin="0,0,10,10"
+                                        ToolTip="{Binding Name}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Card" CornerRadius="12" Width="220"
+                                                    Background="{DynamicResource SurfaceBackgroundBrush}"
+                                                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
+                                                    ClipToBounds="True">
+                                                <StackPanel>
+                                                    <Grid Height="120">
+                                                        <Border Background="{DynamicResource AccentBrush}"
+                                                                Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                            <TextBlock Text="{Binding InitialLetter}" FontSize="24" FontWeight="Bold"
+                                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                                               Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibility}}" />
 
-                                        <StackPanel Margin="10,8,10,10">
-                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12.5"
-                                                       Foreground="{DynamicResource PrimaryForegroundBrush}" />
-                                            <TextBlock Text="{Binding Description}" FontSize="11" TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,2,0,8" />
+                                                        <Border Background="{DynamicResource AccentBrush}" CornerRadius="11" Width="22" Height="22"
+                                                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                                                                Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibility}}">
+                                                            <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                    </Grid>
 
-                                            <Border Style="{StaticResource SceneCurrentBadgeStyle}" HorizontalAlignment="Left"
-                                                    Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibility}}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
-                                                               Margin="0,0,4,0" Foreground="{DynamicResource AccentBrush}" />
-                                                    <TextBlock Text="Current Wallpaper" FontSize="11"
-                                                               Foreground="{DynamicResource AccentBrush}" />
+                                                    <StackPanel Margin="10,8,10,10">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12.5"
+                                                                   Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                                                        <TextBlock Text="{Binding Description}" FontSize="11" TextWrapping="Wrap"
+                                                                   Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,2,0,0" />
+                                                    </StackPanel>
                                                 </StackPanel>
                                             </Border>
-
-                                            <Button Style="{StaticResource SceneApplyButtonStyle}" HorizontalAlignment="Left"
-                                                    Click="ApplySceneButton_Click" CommandParameter="{Binding}"
-                                                    Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibilityInverse}}">
-                                                <TextBlock Text="Apply" FontSize="11.5" Foreground="White" />
-                                            </Button>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
+                                            <ControlTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                                    <Setter TargetName="Card" Property="BorderThickness" Value="2" />
+                                                </DataTrigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Card" Property="Opacity" Value="0.88" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="Downloads">
