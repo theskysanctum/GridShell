@@ -44,11 +44,33 @@ public static class WingetInstaller
 
     /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
     /// InstallAsync uses - lets the Store reflect real install state when it opens, not just
-    /// whatever happened during the current app session.</summary>
-    public static async Task<bool> IsInstalledAsync(string wingetId)
+    /// whatever happened during the current app session.
+    ///
+    /// winget's own package database can go stale if the app's files are deleted outside
+    /// GridShell entirely, with no uninstall ever run - confirmed live: a user deleting
+    /// C:\GridShell\Applications by hand left every winget-tracked app still "installed" per
+    /// `winget list`, so the Store kept showing Uninstall (not Install) for apps whose exe no
+    /// longer existed, and the quick-launch buttons that depend on the same winget-reported
+    /// state silently did nothing. Cross-checking against InstalledAppLocator - the same real
+    /// exe lookup the rest of the Store already trusts - catches that: a "ghost" entry (winget
+    /// says yes, no exe actually resolves) gets a best-effort winget uninstall to clear the
+    /// stale registration, then reports NotInstalled either way, so the Store self-heals back
+    /// to a working Install button instead of staying stuck.</summary>
+    public static async Task<bool> IsInstalledAsync(StoreApp app)
     {
-        var listResult = await RunAsync("list", $"--id {wingetId} -e --accept-source-agreements");
-        return listResult is { ExitCode: 0 };
+        var listResult = await RunAsync("list", $"--id {app.WingetId} -e --accept-source-agreements");
+        if (listResult is not { ExitCode: 0 })
+        {
+            return false;
+        }
+
+        if (InstalledAppLocator.FindMainExe(app.Name) is not null)
+        {
+            return true;
+        }
+
+        await UninstallAsync(app);
+        return false;
     }
 
     public static async Task<InstallResult> InstallAsync(StoreApp app)
