@@ -287,6 +287,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         TileList.Focus();
         _controller.Start();
+        // Re-checks every time the grid opens, not just once at startup - confirmed live: a
+        // storefront installed (via BrowserInstaller, see StoreWindow) while GridShell was
+        // already running stayed "not installed" on its quick-launch button until GridShell
+        // itself restarted, since this only ran once before.
+        DetectGameLaunchers();
 
         var slideIn = new DoubleAnimation(-SystemParameters.PrimaryScreenWidth, 0, SlideDuration)
         {

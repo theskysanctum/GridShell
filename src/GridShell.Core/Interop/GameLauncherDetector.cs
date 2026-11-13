@@ -21,11 +21,12 @@ public static class GameLauncherDetector
     public static string? FindExe(GameLauncher launcher) => launcher switch
     {
         GameLauncher.Steam => FindSteam() ?? InstalledAppLocator.FindMainExe("Steam"),
-        // Heroic installs as a standalone portable exe (GitHubReleaseInstaller), never through
-        // a real installer - no registry entry to scan, unlike every other launcher here.
-        GameLauncher.Heroic => InstalledAppLocator.FindBestExeInDirectory(
-            GitHubReleaseInstaller.InstallRoot("heroicgameslauncher.heroic"), "Heroic"),
-        GameLauncher.Itch => FindItch() ?? InstalledAppLocator.FindMainExe("itch"),
+        // Steam/Heroic/itch all install via BrowserInstaller now (Install just opens each
+        // one's own download page) - wherever the user's own installer puts them, which for
+        // Heroic means its real Setup.exe, not a GridShell-managed folder. The same registry
+        // scan every normally-installed app uses is the only thing that still makes sense here.
+        GameLauncher.Heroic => InstalledAppLocator.FindMainExe("Heroic"),
+        GameLauncher.Itch => InstalledAppLocator.FindMainExe("itch"),
         _ => null,
     };
 
@@ -44,15 +45,6 @@ public static class GameLauncherDetector
         }
 
         var exe = Path.Combine(steamDir.Replace('/', '\\'), "Steam.exe");
-        return File.Exists(exe) ? exe : null;
-    }
-
-    /// <summary>itch's desktop app is usually a per-user Squirrel-style install at this fixed
-    /// path with no system registry entry - InstalledAppLocator.FindMainExe is the fallback for
-    /// any install that doesn't match this exact assumption.</summary>
-    private static string? FindItch()
-    {
-        var exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "itch", "itch.exe");
         return File.Exists(exe) ? exe : null;
     }
 }
