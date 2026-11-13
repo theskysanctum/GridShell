@@ -19,14 +19,12 @@ namespace GridShell;
 /// throughout, same DynamicResource brushes as every other window.</summary>
 public partial class StoreWindow : Window, INotifyPropertyChanged
 {
-    private const string AllCategoriesLabel = "All Apps";
-
     private List<StoreAppViewModel> _allApps = new();
 
     public ObservableCollection<StoreAppViewModel> Apps { get; } = new();
     public ObservableCollection<string> Categories { get; } = new();
 
-    private string _selectedCategory = AllCategoriesLabel;
+    private string _selectedCategory = "";
     public string SelectedCategory
     {
         get => _selectedCategory;
@@ -81,16 +79,17 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             : $"{_allApps.Count} apps available";
 
         Categories.Clear();
-        Categories.Add(AllCategoriesLabel);
         foreach (var category in _allApps.Select(a => a.Category).Distinct().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase))
         {
             Categories.Add(category);
         }
 
-        // Re-push SelectedCategory now that Categories actually has entries - the ListBox's
-        // SelectedItem binding has nothing to match against until now, so it wouldn't otherwise
-        // show "All Apps" selected despite that already being the property's value.
-        SelectedCategory = AllCategoriesLabel;
+        // No catch-all "All Apps" entry - land on the first real category instead, now that
+        // Categories actually has entries for the ListBox's SelectedItem binding to match against.
+        if (Categories.Count > 0)
+        {
+            SelectedCategory = Categories[0];
+        }
 
         _ = RefreshInstalledStateAsync();
     }
@@ -148,19 +147,15 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private void ApplyFilter()
     {
         var query = SearchBox.Text;
-        IEnumerable<StoreAppViewModel> matches = _allApps;
 
-        if (SelectedCategory != AllCategoriesLabel)
-        {
-            matches = matches.Where(a => a.Category == SelectedCategory);
-        }
-
-        if (!string.IsNullOrWhiteSpace(query))
-        {
-            matches = matches.Where(a =>
+        // A search query searches every app regardless of the selected category - there's no
+        // catch-all "All Apps" category to switch to first, so search would otherwise only ever
+        // match within whichever single category happens to be selected.
+        IEnumerable<StoreAppViewModel> matches = string.IsNullOrWhiteSpace(query)
+            ? _allApps.Where(a => a.Category == SelectedCategory)
+            : _allApps.Where(a =>
                 a.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                 a.Category.Contains(query, StringComparison.OrdinalIgnoreCase));
-        }
 
         Apps.Clear();
         foreach (var app in matches)
