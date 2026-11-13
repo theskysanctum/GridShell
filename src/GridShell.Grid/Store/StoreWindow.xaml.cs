@@ -156,6 +156,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                 {
                     "github" => GitHubReleaseInstaller.IsInstalled(app.App.Id),
                     "package" => PackageInstaller.IsInstalled(app.App.Id),
+                    "direct" => DirectInstaller.IsInstalled(app.App),
                     _ => await WingetInstaller.IsInstalledAsync(app.App),
                 };
                 app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
@@ -296,6 +297,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         {
             "github" => await GitHubReleaseInstaller.InstallAsync(app.App),
             "package" => await PackageInstaller.InstallAsync(app.App),
+            "direct" => await DirectInstaller.InstallAsync(app.App),
             _ => await WingetInstaller.InstallAsync(app.App),
         };
 
@@ -348,6 +350,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         {
             "github" => GitHubReleaseInstaller.Uninstall(app.App.Id),
             "package" => PackageInstaller.Uninstall(app.App.Id),
+            "direct" => await DirectInstaller.UninstallAsync(app.App),
             _ => await WingetInstaller.UninstallAsync(app.App),
         };
 

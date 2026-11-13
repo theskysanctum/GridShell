@@ -79,7 +79,7 @@ public static class GitHubReleaseInstaller
                 .Select(a => (Name: a.GetProperty("name").GetString() ?? "", Url: a.GetProperty("browser_download_url").GetString() ?? ""))
                 .ToList();
 
-            var chosen = SelectWindowsArchiveAsset(assets);
+            var chosen = SelectWindowsAsset(assets);
             if (chosen is null)
             {
                 return new InstallResult(InstallOutcome.Failed, "No suitable Windows release asset found.");
@@ -93,15 +93,26 @@ public static class GitHubReleaseInstaller
 
             Directory.CreateDirectory(installRoot);
 
-            var isSevenZip = chosen.Value.Name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase);
+            // A standalone portable exe (confirmed live: Heroic Games Launcher's own release
+            // ships "Heroic-<version>-Portable-x64.exe" - a whole self-contained Electron app
+            // in one file, no installer and nothing to extract) just gets saved directly into
+            // the install root under its own original filename - there's no archive step at
+            // all for this case.
+            if (chosen.Value.Kind == AssetKind.StandaloneExe)
+            {
+                var exeBytes = await Http.GetByteArrayAsync(chosen.Value.Url);
+                await File.WriteAllBytesAsync(Path.Combine(installRoot, chosen.Value.Name), exeBytes);
+                return new InstallResult(InstallOutcome.Installed, "Installed.");
+            }
+
             var archivePath = Path.Combine(Path.GetTempPath(),
-                $"gridshell-store-{app.Id}-{Guid.NewGuid():N}{(isSevenZip ? ".7z" : ".zip")}");
+                $"gridshell-store-{app.Id}-{Guid.NewGuid():N}{(chosen.Value.Kind == AssetKind.SevenZip ? ".7z" : ".zip")}");
             try
             {
                 var bytes = await Http.GetByteArrayAsync(chosen.Value.Url);
                 await File.WriteAllBytesAsync(archivePath, bytes);
 
-                if (isSevenZip)
+                if (chosen.Value.Kind == AssetKind.SevenZip)
                 {
                     var extractResult = await SevenZipExtractor.ExtractAsync(archivePath, installRoot);
                     if (extractResult is not null)
@@ -127,42 +138,60 @@ public static class GitHubReleaseInstaller
         }
     }
 
-    /// <summary>Picks the best 64-bit, non-debug Windows archive (.zip or .7z) among a release's
-    /// assets. Verified against several real, differently-shaped cases rather than one: Supermodel
-    /// ships exactly one Windows zip per release with no arch/config markers at all (passes
-    /// straight through), Visual Pinball X ships 4+ zip variants per release (Release/Debug
-    /// x86/x64, and the exact naming scheme has changed between releases), RPCS3's binaries repo
-    /// ships a single .7z plus a .sha256 checksum sidecar file (the extension filter alone
-    /// excludes the checksum), and Eden ships Windows/Android/Linux/macOS builds side by side plus
-    /// several incompatible Windows CPU targets (amd64, Steam-Deck-style "rog-ally" Zen4-only, and
-    /// Snapdragon arm64) with standard/PGO compiler-optimization variants of each - excluding
-    /// "debug"/"x86"/"linux"/"macos"/"arm64"/"rog-ally"/"android", preferring a name that still
-    /// says "win", and within that preferring a name saying "pgo" (Eden's own release notes call
-    /// the PGO build the recommended one) correctly narrows every case seen down to the one right
-    /// asset.</summary>
-    private static (string Name, string Url)? SelectWindowsArchiveAsset(List<(string Name, string Url)> assets)
+    private enum AssetKind
     {
-        var archives = assets.Where(a =>
-            a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
-            a.Name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase)).ToList();
-
-        var candidates = archives.Where(a =>
-            !a.Name.Contains("debug", StringComparison.OrdinalIgnoreCase) &&
-            !a.Name.Contains("linux", StringComparison.OrdinalIgnoreCase) &&
-            !a.Name.Contains("macos", StringComparison.OrdinalIgnoreCase) &&
-            !a.Name.Contains("android", StringComparison.OrdinalIgnoreCase) &&
-            !a.Name.Contains("arm64", StringComparison.OrdinalIgnoreCase) &&
-            !a.Name.Contains("rog-ally", StringComparison.OrdinalIgnoreCase) &&
-            !a.Name.Contains("x86", StringComparison.OrdinalIgnoreCase)).ToList();
-
-        var preferringWin = candidates.Where(a => a.Name.Contains("win", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (preferringWin.Count == 0)
-        {
-            return candidates.Count > 0 ? candidates[0] : null;
-        }
-
-        var preferringPgo = preferringWin.Where(a => a.Name.Contains("pgo", StringComparison.OrdinalIgnoreCase)).ToList();
-        return preferringPgo.Count > 0 ? preferringPgo[0] : preferringWin[0];
+        Zip,
+        SevenZip,
+        StandaloneExe,
     }
 
+    /// <summary>Picks the best 64-bit, non-debug Windows asset among a release's assets - an
+    /// archive (.zip or .7z) to extract if one exists, otherwise a standalone portable exe
+    /// (confirmed live: Heroic Games Launcher ships "Heroic-<version>-Portable-x64.exe" as a
+    /// whole self-contained Electron app in one file, alongside a real "-Setup-x64.exe"
+    /// installer this deliberately never picks - "portable" in the name is the only thing that
+    /// tells the two apart). Verified against several real, differently-shaped cases rather
+    /// than one: Supermodel ships exactly one Windows zip per release with no arch/config
+    /// markers at all (passes straight through), Visual Pinball X ships 4+ zip variants per
+    /// release (Release/Debug x86/x64, and the exact naming scheme has changed between
+    /// releases), RPCS3's binaries repo ships a single .7z plus a .sha256 checksum sidecar file
+    /// (the extension filter alone excludes the checksum), and Eden ships Windows/Android/
+    /// Linux/macOS builds side by side plus several incompatible Windows CPU targets (amd64,
+    /// Steam-Deck-style "rog-ally" Zen4-only, and Snapdragon arm64) with standard/PGO compiler-
+    /// optimization variants of each - excluding "debug"/"x86"/"linux"/"macos"/"arm64"/
+    /// "rog-ally"/"android"/"setup"/"installer", preferring a name that still says "win", and
+    /// within that preferring a name saying "pgo" (Eden's own release notes call the PGO build
+    /// the recommended one) correctly narrows every case seen down to the one right asset.</summary>
+    private static (string Name, string Url, AssetKind Kind)? SelectWindowsAsset(List<(string Name, string Url)> assets)
+    {
+        bool IsExcluded(string name) =>
+            name.Contains("debug", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("linux", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("macos", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("android", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("arm64", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("rog-ally", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("x86", StringComparison.OrdinalIgnoreCase);
+
+        var archiveCandidates = assets.Where(a =>
+            (a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+             a.Name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase)) &&
+            !IsExcluded(a.Name)).ToList();
+
+        if (archiveCandidates.Count > 0)
+        {
+            var preferringWin = archiveCandidates.Where(a => a.Name.Contains("win", StringComparison.OrdinalIgnoreCase)).ToList();
+            var pool = preferringWin.Count > 0 ? preferringWin : archiveCandidates;
+            var preferringPgo = pool.Where(a => a.Name.Contains("pgo", StringComparison.OrdinalIgnoreCase)).ToList();
+            var chosen = preferringPgo.Count > 0 ? preferringPgo[0] : pool[0];
+            var kind = chosen.Name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) ? AssetKind.SevenZip : AssetKind.Zip;
+            return (chosen.Name, chosen.Url, kind);
+        }
+
+        var portableExe = assets.FirstOrDefault(a =>
+            a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
+            a.Name.Contains("portable", StringComparison.OrdinalIgnoreCase) &&
+            !IsExcluded(a.Name));
+        return portableExe.Name is null ? null : (portableExe.Name, portableExe.Url, AssetKind.StandaloneExe);
+    }
 }

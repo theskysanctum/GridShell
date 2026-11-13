@@ -53,20 +53,23 @@
       "id": "valve.steam",
       "name": "Steam",
       "wingetId": "Valve.Steam",
+      "installMethod": "direct",
       "category": "Gaming",
       "description": "Valve's PC gaming storefront and launcher."
     },
     {
-      "id": "epicgames.epicgameslauncher",
-      "name": "Epic Games Launcher",
-      "wingetId": "EpicGames.EpicGamesLauncher",
+      "id": "heroicgameslauncher.heroic",
+      "name": "Heroic Games Launcher",
+      "installMethod": "github",
+      "githubRepo": "Heroic-Games-Launcher/HeroicGamesLauncher",
       "category": "Gaming",
-      "description": "Epic Games Store's PC gaming storefront and launcher."
+      "description": "Open-source launcher for Epic Games Store, GOG, and Amazon Games - a lighter alternative to Epic's own official launcher."
     },
     {
       "id": "gog.galaxy",
       "name": "GOG GALAXY",
       "wingetId": "GOG.Galaxy",
+      "installMethod": "direct",
       "category": "Gaming",
       "description": "GOG's PC gaming storefront and launcher, with DRM-free installs."
     },
@@ -74,6 +77,7 @@
       "id": "itchio.itch",
       "name": "itch",
       "wingetId": "ItchIo.Itch",
+      "installMethod": "direct",
       "category": "Gaming",
       "description": "Desktop app for itch.io, the indie game marketplace."
     },

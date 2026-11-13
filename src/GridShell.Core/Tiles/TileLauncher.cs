@@ -115,10 +115,13 @@ public static class TileLauncher
         }
     }
 
+    // Heroic's own exe carries its version in the filename ("Heroic-2.22.4-Portable-x64.exe" -
+    // it's a standalone portable exe, not a real install with a fixed name), so it's matched by
+    // prefix rather than the exact-filename equality every other launcher here uses.
     private static readonly (GameLauncher Launcher, string ExeName)[] KnownLaunchers =
     {
         (GameLauncher.Steam, "Steam.exe"),
-        (GameLauncher.Epic, "EpicGamesLauncher.exe"),
+        (GameLauncher.Heroic, "Heroic"),
         (GameLauncher.Gog, "GalaxyClient.exe"),
         (GameLauncher.Itch, "itch.exe"),
     };
@@ -128,7 +131,11 @@ public static class TileLauncher
         var fileName = Path.GetFileName(targetPath);
         foreach (var (launcher, exeName) in KnownLaunchers)
         {
-            if (string.Equals(fileName, exeName, StringComparison.OrdinalIgnoreCase))
+            var matches = launcher == GameLauncher.Heroic
+                ? fileName.StartsWith(exeName, StringComparison.OrdinalIgnoreCase)
+                : string.Equals(fileName, exeName, StringComparison.OrdinalIgnoreCase);
+
+            if (matches)
             {
                 return launcher;
             }

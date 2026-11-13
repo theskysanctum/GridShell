@@ -70,6 +70,56 @@ public static class InstalledAppLocator
         return null;
     }
 
+    /// <summary>The registry's own uninstall command for the first Uninstall entry matching
+    /// displayNameContains, if any - prefers QuietUninstallString when the installer bothered
+    /// to declare one (already a full silent command line, so AlreadyQuiet comes back true and
+    /// the caller shouldn't append its own switch on top), falling back to the plain
+    /// UninstallString otherwise (AlreadyQuiet false - the caller needs to append its own
+    /// silent switch, since this is normally the interactive-uninstall command).</summary>
+    public static (string Command, bool AlreadyQuiet)? FindUninstallString(string displayNameContains)
+    {
+        var hives = new[] { Registry.CurrentUser, Registry.LocalMachine };
+        var uninstallKeyPaths = new[]
+        {
+            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        };
+
+        foreach (var hive in hives)
+        {
+            foreach (var keyPath in uninstallKeyPaths)
+            {
+                using var uninstallKey = hive.OpenSubKey(keyPath);
+                if (uninstallKey is null)
+                {
+                    continue;
+                }
+
+                foreach (var subKeyName in uninstallKey.GetSubKeyNames())
+                {
+                    using var subKey = uninstallKey.OpenSubKey(subKeyName);
+                    var displayName = subKey?.GetValue("DisplayName") as string;
+                    if (displayName is null || !displayName.Contains(displayNameContains, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (subKey?.GetValue("QuietUninstallString") as string is { Length: > 0 } quiet)
+                    {
+                        return (quiet, true);
+                    }
+
+                    if (subKey?.GetValue("UninstallString") as string is { Length: > 0 } plain)
+                    {
+                        return (plain, false);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>Deletes the Uninstall registry entry matching displayNameContains, if any -
     /// used when there's no real uninstaller left to call (the app is a "ghost": winget still
     /// lists it, but FindMainExe already came back null for it). A straight registry delete has

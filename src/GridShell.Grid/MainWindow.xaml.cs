@@ -39,7 +39,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private GridTab _activeTab = GridTab.Apps;
 
     private string? _steamExePath;
-    private string? _epicExePath;
+    private string? _heroicExePath;
     private string? _gogExePath;
     private string? _itchExePath;
 
@@ -348,14 +348,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _ = Task.Run(() =>
         {
             _steamExePath = GameLauncherDetector.FindExe(GameLauncher.Steam);
-            _epicExePath = GameLauncherDetector.FindExe(GameLauncher.Epic);
+            _heroicExePath = GameLauncherDetector.FindExe(GameLauncher.Heroic);
             _gogExePath = GameLauncherDetector.FindExe(GameLauncher.Gog);
             _itchExePath = GameLauncherDetector.FindExe(GameLauncher.Itch);
         });
     }
 
     private void SteamButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_steamExePath);
-    private void EpicButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_epicExePath);
+    private void HeroicButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_heroicExePath);
     private void GogButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_gogExePath);
     private void ItchButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_itchExePath);
 
