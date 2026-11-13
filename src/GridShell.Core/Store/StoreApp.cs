@@ -37,6 +37,17 @@ public sealed class StoreApp
     [JsonPropertyName("browserUrl")]
     public string? BrowserUrl { get; set; }
 
+    /// <summary>Only meaningful for InstallMethod "winget" - Steam's own winget package only
+    /// offers a Scope:machine install with a genuine elevation requirement (confirmed live:
+    /// its real installer refuses to even start non-elevated, not just a UAC prompt), unlike
+    /// every other winget-installed catalog app. WingetInstaller runs install/uninstall for
+    /// this one app via Windows' own "runas" verb - a single UAC prompt for just that one
+    /// winget.exe invocation, not GridShell itself running elevated. Also skips --location for
+    /// the same app (confirmed separately: a custom --location breaks Steam's own registry
+    /// entry regardless of elevation).</summary>
+    [JsonPropertyName("requiresElevation")]
+    public bool RequiresElevation { get; set; }
+
     /// <summary>"owner/repo" - only set when InstallMethod is "github".</summary>
     [JsonPropertyName("githubRepo")]
     public string? GithubRepo { get; set; }

@@ -41,9 +41,9 @@ public static class WingetInstaller
     /// entry - an install that doesn't support it just lands in that installer's own default
     /// location instead, same as it always did, not a failure either way.
     ///
-    /// Steam/Epic/GOG/itch don't come through here at all any more (see DirectInstaller) -
-    /// --location broke their own registry entries badly enough that it was simpler to stop
-    /// routing them through winget entirely than to keep special-casing them here.</summary>
+    /// Steam is the one exception - StoreApp.RequiresElevation skips --location for it (a
+    /// custom location broke its own registry entry regardless of elevation) and routes its
+    /// install/uninstall through RunElevatedAsync instead.</summary>
     public const string InstallRoot = @"C:\GridShell\Applications";
 
     /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
@@ -85,10 +85,20 @@ public static class WingetInstaller
             return new InstallResult(InstallOutcome.AlreadyInstalled, "Already installed.");
         }
 
-        var locationArg = $" --location \"{Path.Combine(InstallRoot, app.Id)}\"";
-        var installResult = await RunAsync("install",
-            $"--id {wingetId} -e --silent --accept-package-agreements --accept-source-agreements " +
-            $"--disable-interactivity --source winget{locationArg}");
+        var locationArg = app.RequiresElevation ? "" : $" --location \"{Path.Combine(InstallRoot, app.Id)}\"";
+        var installArgs = $"--id {wingetId} -e --silent --accept-package-agreements --accept-source-agreements " +
+                           $"--disable-interactivity --source winget{locationArg}";
+
+        if (app.RequiresElevation)
+        {
+            var elevatedExitCode = await RunElevatedAsync("install", installArgs);
+            return elevatedExitCode is 0
+                ? new InstallResult(InstallOutcome.Installed, "Installed.")
+                : new InstallResult(InstallOutcome.Failed,
+                    "Install failed, or the admin prompt was cancelled.");
+        }
+
+        var installResult = await RunAsync("install", installArgs);
         if (installResult is null)
         {
             return new InstallResult(InstallOutcome.WingetNotFound,
@@ -123,17 +133,29 @@ public static class WingetInstaller
                     "Couldn't clean up its leftover registry entry - this usually needs admin rights. Try running GridShell as Administrator, or clean it up manually.");
         }
 
-        var result = await RunAsync("uninstall",
-            $"--id {app.WingetId} -e --silent --accept-source-agreements --disable-interactivity");
-        if (result is null)
-        {
-            return new UninstallResult(UninstallOutcome.WingetNotFound,
-                "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
-        }
+        var uninstallArgs = $"--id {app.WingetId} -e --silent --accept-source-agreements --disable-interactivity";
 
-        if (result.Value.ExitCode != 0)
+        if (app.RequiresElevation)
         {
-            return new UninstallResult(UninstallOutcome.Failed, LastMeaningfulLine(result.Value.Output));
+            var elevatedExitCode = await RunElevatedAsync("uninstall", uninstallArgs);
+            if (elevatedExitCode != 0)
+            {
+                return new UninstallResult(UninstallOutcome.Failed, "Uninstall failed, or the admin prompt was cancelled.");
+            }
+        }
+        else
+        {
+            var result = await RunAsync("uninstall", uninstallArgs);
+            if (result is null)
+            {
+                return new UninstallResult(UninstallOutcome.WingetNotFound,
+                    "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
+            }
+
+            if (result.Value.ExitCode != 0)
+            {
+                return new UninstallResult(UninstallOutcome.Failed, LastMeaningfulLine(result.Value.Output));
+            }
         }
 
         var location = Path.Combine(InstallRoot, app.Id);
@@ -179,6 +201,41 @@ public static class WingetInstaller
         {
             // winget.exe genuinely isn't on PATH/installed - a real, documented possibility
             // (App Installer isn't guaranteed present), not just a theoretical edge case.
+            return null;
+        }
+    }
+
+    /// <summary>Runs winget.exe elevated via Windows' own "runas" verb - a single UAC prompt
+    /// for just this one winget.exe invocation, not GridShell itself running elevated (which
+    /// would also elevate every app/game TileLauncher launches, inherited from the parent
+    /// process - never wanted that). UseShellExecute=true is required for "runas" to trigger
+    /// the consent prompt at all, which means no output redirection is possible here (a real
+    /// Windows constraint, not a choice) - only the exit code comes back, so callers get a
+    /// generic failure message rather than winget's own last line of output.</summary>
+    private static async Task<int?> RunElevatedAsync(string command, string arguments)
+    {
+        var startInfo = new ProcessStartInfo("winget.exe", $"{command} {arguments}")
+        {
+            UseShellExecute = true,
+            Verb = "runas",
+        };
+
+        try
+        {
+            using var process = Process.Start(startInfo);
+            if (process is null)
+            {
+                return null;
+            }
+
+            await process.WaitForExitAsync();
+            return process.ExitCode;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // Covers both "winget.exe genuinely isn't on PATH" and "the user clicked No on the
+            // UAC prompt" - Windows surfaces both as the same exception here, with no reliable
+            // way to tell them apart from the exception alone.
             return null;
         }
     }
