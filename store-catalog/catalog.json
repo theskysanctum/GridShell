@@ -1,13 +1,6 @@
 {
   "apps": [
     {
-      "id": "7zip.7zip",
-      "name": "7-Zip",
-      "wingetId": "7zip.7zip",
-      "category": "Utilities",
-      "description": "Free, open-source file archiver with a high compression ratio."
-    },
-    {
       "id": "notepadplusplus.notepadplusplus",
       "name": "Notepad++",
       "wingetId": "Notepad++.Notepad++",
