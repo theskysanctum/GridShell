@@ -254,6 +254,13 @@
       "category": "Emulation",
       "description": "Sony PlayStation 3 emulator. The main RPCS3/rpcs3 repo has no release assets - its own CI publishes Windows builds to this companion repo instead.",
       "platformSlugs": ["ps3"]
+    },
+    {
+      "id": "brave.brave",
+      "name": "Brave Browser",
+      "wingetId": "Brave.Brave",
+      "category": "Browsers",
+      "description": "The Official Brave Web Browser. It's ad-free with built-in VPN and Tor."
     }
   ]
 }
