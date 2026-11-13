@@ -42,6 +42,27 @@ public static class GitHubReleaseInstaller
     public static bool IsInstalled(string appId) =>
         InstalledAppLocator.FindBestExeInDirectory(InstallRoot(appId)) is not null;
 
+    /// <summary>There's no real installer to hand off to, same as InstallAsync's own doc
+    /// comment notes - "installed" is just "that folder has an exe in it", so "uninstalled" is
+    /// just deleting the folder.</summary>
+    public static UninstallResult Uninstall(string appId)
+    {
+        try
+        {
+            var installRoot = InstallRoot(appId);
+            if (Directory.Exists(installRoot))
+            {
+                Directory.Delete(installRoot, recursive: true);
+            }
+
+            return new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new UninstallResult(UninstallOutcome.Failed, ex.Message);
+        }
+    }
+
     public static async Task<InstallResult> InstallAsync(StoreApp app)
     {
         if (string.IsNullOrEmpty(app.GithubRepo))

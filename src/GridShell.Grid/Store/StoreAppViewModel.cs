@@ -11,6 +11,7 @@ public enum StoreAppState
     Checking,
     Installing,
     Installed,
+    Uninstalling,
     Failed,
 }
 
@@ -53,6 +54,7 @@ public sealed class StoreAppViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(CanInstall));
+            OnPropertyChanged(nameof(CanUninstall));
             OnPropertyChanged(nameof(IsInstalled));
             OnPropertyChanged(nameof(IsFailed));
             OnPropertyChanged(nameof(IsBusy));
@@ -72,14 +74,16 @@ public sealed class StoreAppViewModel : INotifyPropertyChanged
     }
 
     public bool CanInstall => State is StoreAppState.NotInstalled or StoreAppState.Failed;
+    public bool CanUninstall => State == StoreAppState.Installed;
     public bool IsInstalled => State == StoreAppState.Installed;
     public bool IsFailed => State == StoreAppState.Failed;
-    public bool IsBusy => State is StoreAppState.Checking or StoreAppState.Installing;
+    public bool IsBusy => State is StoreAppState.Checking or StoreAppState.Installing or StoreAppState.Uninstalling;
 
     public string StatusText => State switch
     {
         StoreAppState.Checking => "Checking...",
         StoreAppState.Installing => "Installing...",
+        StoreAppState.Uninstalling => "Uninstalling...",
         StoreAppState.Installed => "Installed",
         StoreAppState.Failed => ErrorMessage ?? "Failed",
         _ => "",

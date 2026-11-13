@@ -244,6 +244,16 @@
                                                 <TextBlock Text="Install" FontSize="12" Foreground="White" />
                                             </StackPanel>
                                         </Button>
+
+                                        <Button Style="{StaticResource InstallButtonStyle}"
+                                                Click="UninstallButton_Click" CommandParameter="{Binding}"
+                                                Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVisibility}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           Margin="0,0,4,0" Foreground="White" />
+                                                <TextBlock Text="Uninstall" FontSize="12" Foreground="White" />
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </Grid>
                             </Border>

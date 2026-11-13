@@ -14,6 +14,15 @@ public enum InstallOutcome
 
 public sealed record InstallResult(InstallOutcome Outcome, string Message);
 
+public enum UninstallOutcome
+{
+    Uninstalled,
+    Failed,
+    WingetNotFound,
+}
+
+public sealed record UninstallResult(UninstallOutcome Outcome, string Message);
+
 /// <summary>Shells out to winget.exe (Windows Package Manager) rather than any COM/WinRT API -
 /// confirmed on a real machine (this one): `winget list --id &lt;id&gt; -e` exits 0 when already
 /// installed and 20 when not (undocumented by Microsoft; both empirically verified here, not
@@ -70,6 +79,41 @@ public static class WingetInstaller
         return installResult.Value.ExitCode == 0
             ? new InstallResult(InstallOutcome.Installed, "Installed.")
             : new InstallResult(InstallOutcome.Failed, LastMeaningfulLine(installResult.Value.Output));
+    }
+
+    /// <summary>Shells out to `winget uninstall`, then best-effort deletes whatever's left under
+    /// this app's --location folder (InstallAsync's own location) - winget's own uninstaller
+    /// doesn't reliably clean that up for every installer technology, same "harmless clutter,
+    /// don't fail over it" tolerance StoreCatalogSync already uses for its own stale-clone
+    /// cleanup.</summary>
+    public static async Task<UninstallResult> UninstallAsync(StoreApp app)
+    {
+        var result = await RunAsync("uninstall",
+            $"--id {app.WingetId} -e --silent --accept-source-agreements --disable-interactivity");
+        if (result is null)
+        {
+            return new UninstallResult(UninstallOutcome.WingetNotFound,
+                "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
+        }
+
+        if (result.Value.ExitCode != 0)
+        {
+            return new UninstallResult(UninstallOutcome.Failed, LastMeaningfulLine(result.Value.Output));
+        }
+
+        var location = Path.Combine(InstallRoot, app.Id);
+        if (Directory.Exists(location))
+        {
+            try
+            {
+                Directory.Delete(location, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+
+        return new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.");
     }
 
     private static async Task<(int ExitCode, string Output)?> RunAsync(string command, string arguments)

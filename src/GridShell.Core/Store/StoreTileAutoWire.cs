@@ -32,9 +32,7 @@ public static class StoreTileAutoWire
             return null;
         }
 
-        var exePath = app.InstallMethod == "github"
-            ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id), app.Name)
-            : InstalledAppLocator.FindMainExe(app.Name);
+        var exePath = ResolveExePath(app);
 
         if (exePath is null)
         {
@@ -71,4 +69,23 @@ public static class StoreTileAutoWire
 
         return isNew || gotIcon ? tile : null;
     }
+
+    /// <summary>Finds the Apps-tab tile (if any) that TryWire created for this Store app, by the
+    /// same exe-path resolution it uses - so an Uninstall flow can remove exactly that tile
+    /// before the exe it points at stops existing, rather than guessing by name.</summary>
+    public static Tile? FindWiredTile(StoreApp app, List<Tile> allTiles)
+    {
+        var exePath = ResolveExePath(app);
+        return exePath is null
+            ? null
+            : allTiles.FirstOrDefault(t =>
+                t.Kind == TileKind.App && t.TargetPath.Equals(exePath, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? ResolveExePath(StoreApp app) => app.InstallMethod switch
+    {
+        "github" => InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id), app.Name),
+        "package" => InstalledAppLocator.FindBestExeInDirectory(PackageInstaller.InstallRoot(app.Id), app.Name),
+        _ => InstalledAppLocator.FindMainExe(app.Name),
+    };
 }
