@@ -64,6 +64,27 @@
       "description": "Valve's PC gaming storefront and launcher."
     },
     {
+      "id": "epicgames.epicgameslauncher",
+      "name": "Epic Games Launcher",
+      "wingetId": "EpicGames.EpicGamesLauncher",
+      "category": "Gaming",
+      "description": "Epic Games Store's PC gaming storefront and launcher."
+    },
+    {
+      "id": "gog.galaxy",
+      "name": "GOG GALAXY",
+      "wingetId": "GOG.Galaxy",
+      "category": "Gaming",
+      "description": "GOG's PC gaming storefront and launcher, with DRM-free installs."
+    },
+    {
+      "id": "itchio.itch",
+      "name": "itch",
+      "wingetId": "ItchIo.Itch",
+      "category": "Gaming",
+      "description": "Desktop app for itch.io, the indie game marketplace."
+    },
+    {
       "id": "microsoft.visualstudiocode",
       "name": "Visual Studio Code",
       "wingetId": "Microsoft.VisualStudioCode",
