@@ -55,7 +55,6 @@ public sealed class StoreAppViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(CanInstall));
             OnPropertyChanged(nameof(CanUninstall));
-            OnPropertyChanged(nameof(IsInstalled));
             OnPropertyChanged(nameof(IsFailed));
             OnPropertyChanged(nameof(IsBusy));
         }
@@ -75,7 +74,6 @@ public sealed class StoreAppViewModel : INotifyPropertyChanged
 
     public bool CanInstall => State is StoreAppState.NotInstalled or StoreAppState.Failed;
     public bool CanUninstall => State == StoreAppState.Installed;
-    public bool IsInstalled => State == StoreAppState.Installed;
     public bool IsFailed => State == StoreAppState.Failed;
     public bool IsBusy => State is StoreAppState.Checking or StoreAppState.Installing or StoreAppState.Uninstalling;
 

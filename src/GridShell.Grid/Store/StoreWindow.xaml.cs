@@ -311,6 +311,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         }
         else
         {
+            new ToastWindow($"{app.Name} installed.", TimeSpan.FromSeconds(5)).Show();
             EmulatorAutoWire.TryWire(app.App);
 
             // RetroArch itself has no fixed platformSlugs (EmulatorAutoWire's one-exe-one-
@@ -353,6 +354,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         if (result.Outcome == UninstallOutcome.Uninstalled)
         {
             app.State = StoreAppState.NotInstalled;
+            new ToastWindow($"{app.Name} uninstalled.", TimeSpan.FromSeconds(5)).Show();
 
             if (wiredTile is not null)
             {
