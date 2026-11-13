@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GridShell: a controller-first launcher for Windows</title>
-<meta name="description" content="GridShell replaces the Windows Start Menu and taskbar with a fullscreen launcher grid you can drive with a controller. Free, open source, and easy to undo.">
+<title>GridShell: controller-first desktop shell for Windows</title>
+<meta name="description" content="GridShell replaces the Windows Start Menu and taskbar with a fullscreen launcher grid, file manager, download manager, and emulation workflow built for controllers and couch setups.">
 <link rel="canonical" href="https://theskysanctum.com/gridshell/">
-<meta property="og:title" content="GridShell: a controller-first launcher for Windows">
-<meta property="og:description" content="A fullscreen launcher grid, file explorer, download manager, and emulation setup for Windows, built for controllers.">
+<meta property="og:title" content="GridShell: controller-first desktop shell for Windows">
+<meta property="og:description" content="A fullscreen launcher grid, dual-pane file explorer, taskbar sidebar, download manager, and emulation toolkit for Windows, built for controllers.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://theskysanctum.com/gridshell/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -60,7 +60,7 @@ h1{margin:0;font:600 clamp(2.3rem,5.2vw,3.5rem)/1 "Segoe UI Variable Display","S
 .corner{position:absolute;right:.8rem;bottom:.6rem;display:flex;gap:.5rem;align-items:center}
 .corner-btn{width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff}
 .corner-btn.power{background:var(--panel2);color:var(--mute)}
-.t{border-radius:.35rem;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;font-weight:600;font-size:.62rem;color:#fff;outline:2px solid transparent;outline-offset:2px;transition:outline-color .15s}
+.t{border-radius:.35rem;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;font-weight:600;font-size:.62rem;color:#fff;outline:2px solid transparent}
 .t.on{outline-color:var(--accent)}
 .t i{width:1.6rem;height:1.6rem;border-radius:.4rem;display:block}
 .c1{background:#1E6FD9}.c2{background:#0E9594}.c3{background:#3C9A4B}.c4{background:#D9731A}.c5{background:#7B52C9}.c6{background:#C8453B}.c7{background:#3F5266}.c8{background:#B0943A}
@@ -70,10 +70,6 @@ section.alt{background:var(--panel)}
 .head{max-width:40rem;margin-bottom:2.2rem}
 h2{margin:0 0 .6rem;font:600 2rem/1.15 "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.02em}
 .head p{margin:0;color:var(--mute)}
-.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:0;padding:0;list-style:none;background:var(--line);border:1px solid var(--line)}
-.feat li{background:var(--bg);padding:1.4rem 1.4rem 1.5rem}
-.feat b{display:block;font-size:1.1rem;margin-bottom:.3rem}
-.feat span{color:var(--mute);font-size:1rem}
 .catgrid{display:grid;grid-template-columns:1fr 1fr;gap:2.2rem 3rem}
 .cat h3{margin:0 0 .8rem;font-size:1.05rem;color:var(--accent)}
 .cat ul{margin:0;padding:0;list-style:none;display:grid;gap:.55rem}
@@ -109,7 +105,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 .shots{display:grid;grid-template-columns:1fr 1fr;gap:2.2rem 2.5rem}
 .shot figcaption{margin-top:.7rem;color:var(--mute);font-size:.85rem}
 .shot figcaption b{color:var(--text);font-weight:600}
-.frame{position:relative;aspect-ratio:16/9;border:1px solid var(--line);background:#0A0C10;box-shadow:0 20px 50px -24px rgba(0,0,0,.8);overflow:hidden;display:grid;grid-template-columns:3.3rem 1fr;font-size:.62rem}
+.frame{position:relative;aspect-ratio:16/9;border:1px solid var(--line);background:#0A0C10;box-shadow:0 20px 50px -24px rgba(0,0,0,.8);overflow:hidden;display:grid;grid-template-columns:3.3rem 1fr;min-height:0}
 .frame.tall{aspect-ratio:16/11}
 .frame .side{grid-column:1}
 .frame .main{grid-column:2;display:flex;flex-direction:column;min-height:0}
@@ -179,12 +175,12 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <header class="hero"><div class="wrap">
 <div>
 <h1>Your Windows desktop, built for a controller.</h1>
-<p class="sub">GridShell replaces the Start Menu and taskbar with a fullscreen launcher grid. Open apps, games, files, and downloads from the couch, with a controller, a keyboard, or a mouse.</p>
+<p class="sub">GridShell replaces the Start Menu and taskbar with a full-screen launcher grid. It also includes a dual-pane file explorer, download manager, emulation tooling, and a built-in taskbar/sidebar workflow for modern couch-PC setups.</p>
 <div class="acts">
 <a class="btn main" href="https://github.com/theskysanctum/gridshell/releases/latest/download/GridShell-Setup.exe">Download for Windows</a>
 <a class="btn" href="#features">See what it does</a>
 </div>
-<ul class="facts"><li>Free</li><li>Open source (MIT)</li><li>Easy to undo</li></ul>
+<ul class="facts"><li>Open source</li><li>Controller-first</li><li>Works next to Windows</li></ul>
 </div>
 <div>
 <div class="screen" aria-hidden="true">
@@ -236,82 +232,72 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 </div>
 </div>
 </div>
-</div>
-<p class="cap">An illustration of the launcher layout - tiles, tabs, and sidebar match the real app.</p>
+<p class="cap">A launcher-first Windows shell built for couch play, keyboard, and controller input.</p>
 </div>
 </div></header>
 
 <section id="features" class="alt"><div class="wrap">
 <div class="head">
 <h2>Everything you reach for, in one place</h2>
-<p>Every screen works with a controller first, and still works fine with a keyboard and mouse.</p>
+<p>GridShell is built around a full-screen launcher, but it also includes the file tools, downloads, and emulation workflows you need for a complete Windows setup.</p>
 </div>
 <div class="catgrid">
 
 <div class="cat"><h3>Launcher grid</h3><ul>
-<li><b>Apps, Web, and Games tabs</b> - a fullscreen tile grid you move through with the D-pad or stick, the keyboard, or the mouse.</li>
-<li><b>Search</b> - just start typing to filter tiles, no button to find first.</li>
-<li><b>Tile management</b> - add, rename, change the icon, or remove a tile; Games tiles can fetch IGDB cover art.</li>
-<li><b>Installed games</b> - Steam, Epic, and GOG Galaxy libraries are detected automatically and get a tile each.</li>
-<li><b>Quick-launch storefronts</b> - Steam, Epic, GOG, and itch sit next to the power button on every tab, and close themselves once the game you launched from them exits.</li>
-<li><b>Anything you open slides the grid away</b> - tiles, storefronts, File Explorer, Downloads, Settings, all of it.</li>
+<li><b>Apps, Web, and Games tabs</b> — a fullscreen tile grid that works with a D-pad, stick, keyboard, or mouse.</li>
+<li><b>Fast search</b> — type once and filter the grid without hunting for menus.</li>
+<li><b>Custom tiles</b> — add, rename, change icons, or remove shortcuts; games can fetch cover art automatically.</li>
+<li><b>Installed-game detection</b> — Steam, Epic Games, and GOG libraries are scanned and surfaced as tiles.</li>
+<li><b>Quick storefront launchers</b> — Steam, Epic, GOG, and itch can launch directly from the grid.</li>
 </ul></div>
 
-<div class="cat"><h3>Controller support</h3><ul>
-<li><b>Broad controller recognition</b> - Xbox, PlayStation (DualShock 4 / DualSense), and Nintendo Switch Pro / Joy-Con pads, via SDL3.</li>
-<li><b>Nintendo-aware on-screen keyboard</b> - hint labels swap to match A/B/X/Y on a Switch-layout pad automatically.</li>
-<li><b>Controller Manager</b> - turns a pad GridShell can read but Windows' XInput can't into a virtual Xbox 360 controller (ViGEm), and can hide the original device (HidHide) so apps only see one.</li>
-<li><b>Per-controller tuning</b> - button remap, LED color (DualShock 4 / DualSense), rumble, gyro/accelerometer, touchpad click mode and sensitivity, and experimental adaptive triggers (DualSense).</li>
-<li><b>On-screen keyboard</b> - type anywhere in Windows with a controller alone.</li>
+<div class="cat"><h3>Controller and shell</h3><ul>
+<li><b>Controller-first navigation</b> — broad support for Xbox, PlayStation, and Nintendo controllers.</li>
+<li><b>On-screen keyboard</b> — type anywhere in Windows with a controller alone.</li>
+<li><b>Taskbar sidebar</b> — window list, clock, and battery information, while reserving real desktop space.</li>
+<li><b>Two run modes</b> — side-by-side with Windows, or as the full shell with a watchdog fallback.</li>
 </ul></div>
 
 <div class="cat"><h3>File Explorer</h3><ul>
-<li><b>Dual-pane browsing</b> - two independently navigable panes, full controller support alongside mouse and keyboard.</li>
-<li><b>File operations</b> - copy, cut, paste, rename, delete, and new folder, from a popup menu reachable by right-click, a controller button, or the keyboard.</li>
-<li><b>Archives</b> - extract or compress to Zip and 7z, via whichever of 7-Zip or PeaZip is installed.</li>
-<li><b>Disc images</b> - compress to CHD and extract Xbox ISOs for emulation, right from the file list.</li>
+<li><b>Dual-pane browsing</b> — navigate two independent panes with mouse, keyboard, or controller.</li>
+<li><b>File operations</b> — copy, cut, paste, rename, delete, and new folder from the action menu.</li>
+<li><b>Archive support</b> — extract and compress to Zip and 7z using installed tools.</li>
+<li><b>Disc image tools</b> — convert CHD and extract Xbox ISOs for emulation workflows.</li>
 </ul></div>
 
 <div class="cat"><h3>Download Manager</h3><ul>
-<li><b>Paste and go</b> - drop in a direct link or a magnet link.</li>
-<li><b>Real-Debrid</b> - optional; unrestricts hoster links and resolves magnets/torrents when you add an API token.</li>
-<li><b>Fast transfers</b> - a bundled aria2 daemon handles the actual downloading.</li>
-<li><b>Browser capture</b> - a small Chrome extension sends your browser's downloads straight into the Download Manager.</li>
+<li><b>Paste a link or magnet</b> — drop direct downloads or torrents into the queue immediately.</li>
+<li><b>Real-Debrid</b> — optional support for hoster unrestricting and magnet resolution.</li>
+<li><b>Bundled aria2 daemon</b> — fast multi-connection transfers for large files.</li>
+<li><b>Browser capture</b> — route browser downloads straight into GridShell.</li>
 </ul></div>
 
 <div class="cat"><h3>Emulation</h3><ul>
-<li><b>190+ platforms</b> - each mapped to RetroArch or the best standalone emulator, and set to open fullscreen.</li>
-<li><b>RetroAchievements</b> - log in once, and it's applied automatically across every RetroArch, Dolphin, and PCSX2 you've set up.</li>
-<li><b>ROM organization</b> - scans a default ROMs folder plus as many extra folders as you add, each with its own per-platform subfolder.</li>
+<li><b>190+ platform mappings</b> — each system maps to RetroArch or the best standalone emulator.</li>
+<li><b>RetroAchievements</b> — sign in once and apply it across supported emulators.</li>
+<li><b>ROM organization</b> — scan default and custom ROM folders with per-platform organization.</li>
+<li><b>Full-screen launching</b> — emulators are configured to open directly into fullscreen.</li>
 </ul></div>
 
-<div class="cat"><h3>Appearance</h3><ul>
-<li><b>Theme and color</b> - dark or light theme, a curated accent-color palette, or your own custom color.</li>
-<li><b>Tile size</b> - small, medium, or large.</li>
-<li><b>Fonts</b> - four bundled fonts, or point it at your own font file for the whole UI.</li>
-<li><b>Start button icon</b> - a curated icon gallery, or your own image.</li>
-<li><b>Wallpaper</b> - a local image, video, or .html file, or a live URL; defaults to your current Windows wallpaper if you leave it blank.</li>
-<li><b>Widgets</b> - overlay widgets on top of an image or video wallpaper.</li>
-</ul></div>
-
-<div class="cat"><h3>Taskbar sidebar</h3><ul>
-<li><b>Window list</b> - see and switch between every open window, with a click bringing the grid down out of the way automatically.</li>
-<li><b>Clock and battery</b> - including battery levels for connected Bluetooth devices, not just the PC itself.</li>
-<li><b>Behaves like a real taskbar</b> - reserves its own strip of desktop space, and stays out of Alt+Tab itself.</li>
+<div class="cat"><h3>Appearance and settings</h3><ul>
+<li><b>Theme and accent</b> — dark or light mode, curated palette, or custom color.</li>
+<li><b>Tile size and fonts</b> — adjust the interface to fit your display and taste.</li>
+<li><b>Wallpaper support</b> — image, video, HTML, or URL; use your active Windows wallpaper by default.</li>
+<li><b>Widgets</b> — overlay widgets on desktop wallpapers or full-screen backgrounds.</li>
 </ul></div>
 
 <div class="cat"><h3>Networking and devices</h3><ul>
-<li><b>Wi-Fi</b> - scan, connect, and manage saved networks, without relying on Windows' own networking UI.</li>
-<li><b>Bluetooth</b> - scan, pair, and unpair devices, including simple legacy PIN pairing.</li>
-<li><b>Audio</b> - pick the output/input device and set volume for each, independent of Windows' own mixer.</li>
-<li><b>Display</b> - switch the primary monitor, change resolution, and adjust brightness where supported.</li>
+<li><b>Wi-Fi</b> — scan, connect, and manage saved networks from the shell.</li>
+<li><b>Bluetooth</b> — pair and unpair devices and manage simple legacy PIN pairing.</li>
+<li><b>Audio and display</b> — adjust output/input devices, volume, monitor selection, resolution, and brightness.</li>
+<li><b>Controller tuning</b> — remap buttons, check LEDs, rumble, gyro, touchpad settings, and adaptive trigger support.</li>
 </ul></div>
 
 <div class="cat"><h3>Safety and flexibility</h3><ul>
-<li><b>Two ways to run it</b> - next to Windows with zero side effects, or as the full Windows shell (replacing <code>explorer.exe</code>) with a watchdog that falls back to Explorer if GridShell keeps failing.</li>
-<li><b>Kiosk Mode</b> - a PIN lock that blocks editing tiles/widgets/wallpaper and exiting GridShell, for handing the PC to a kid.</li>
-<li><b>Power menu</b> - lock, sign out, sleep, restart, or shut down, right from the grid.</li>
-<li><b>Easy to undo</b> - close it, or turn the shell setting back off, and your normal desktop is back immediately.</li>
+<li><b>Kiosk Mode</b> — lock the shell down with a PIN for a child-friendly or public-facing PC.</li>
+<li><b>Power menu</b> — lock, sign out, sleep, restart, or shutdown directly from the grid.</li>
+<li><b>Easy to undo</b> — close the app, disable the shell, and your normal desktop comes back immediately.</li>
+<li><b>Watchdog protection</b> — if it is registered as the shell, it can fall back to Explorer after repeated failures.</li>
 </ul></div>
 
 </div>
@@ -320,7 +306,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <section id="screens" class="alt"><div class="wrap">
 <div class="head">
 <h2>See it in action</h2>
-<p>Illustrations built from GridShell's own layout code, at a 1920x1080 proportion.</p>
+<p>GridShell is designed to feel like a traditional launcher first, while still exposing full Windows functionality exactly when you need it.</p>
 </div>
 <div class="shots">
 
@@ -343,7 +329,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="corner"><div class="corner-btn c5">◆</div><div class="corner-btn c7">◆</div><div class="corner-btn c4">◆</div><div class="corner-btn c6">◆</div><div class="corner-btn power">⏻</div></div>
 </div>
 </div>
-<figcaption><b>Web tab</b> - bookmarked sites alongside Apps and Games, same grid and tab bar.</figcaption></figure>
+<figcaption><b>Web tab</b> — the same launcher layout can surface apps, websites, and utilities right next to each other.</figcaption></figure>
 
 <figure class="shot"><div class="frame" aria-hidden="true">
 <div class="side">
@@ -370,7 +356,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="corner"><div class="corner-btn c5">◆</div><div class="corner-btn c7">◆</div><div class="corner-btn c4">◆</div><div class="corner-btn c6">◆</div><div class="corner-btn power">⏻</div></div>
 </div>
 </div>
-<figcaption><b>Games tab</b> - box-art tiles grouped by platform, detected installs and emulated systems side by side.</figcaption></figure>
+<figcaption><b>Games tab</b> — detected PC and emulated libraries sit side-by-side in a single launcher flow.</figcaption></figure>
 
 <figure class="shot"><div class="frame" aria-hidden="true">
 <div class="side">
@@ -397,7 +383,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="fmstatus">D-pad: move • A: open • B: up/close • LB/RB: switch pane • X / right-click: actions</div>
 </div>
 </div>
-<figcaption><b>File Explorer</b> - dual independently-navigable panes, with copy/cut/paste, archives, and disc images from the actions menu.</figcaption></figure>
+<figcaption><b>File Explorer</b> — dual-pane, controller-friendly navigation with archive and disc-image tools built in.</figcaption></figure>
 
 <figure class="shot"><div class="frame" aria-hidden="true">
 <div class="side">
@@ -413,43 +399,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="dlrow"><span>Linux.iso</span><span>Complete</span><span>2.6 GB</span><span>-</span><div class="dlprog"><i style="width:100%"></i></div></div>
 </div>
 </div>
-<figcaption><b>Download Manager</b> - paste a link or magnet; Real-Debrid and a bundled aria2 daemon handle the rest.</figcaption></figure>
-
-<figure class="shot"><div class="frame" aria-hidden="true">
-<div class="side">
-<div class="launcher">▦</div>
-<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
-<div class="spacer"></div><div class="batt">82%<br>9:41</div>
-</div>
-<div class="main"><div class="dim"></div>
-<div class="dialog">
-<h4>Controller Manager</h4>
-<p class="note">Turns a controller GridShell can read via SDL but Windows' XInput can't into a virtual Xbox 360 controller - hiding the original needs ViGEmBus and HidHide.</p>
-<div class="cmrow"><div class="name"><b>DualSense Wireless Controller</b><span>XInput-native - no translation needed</span></div><div class="cmbtn">Configure...</div></div>
-<div class="cmrow"><div class="name"><b>Switch Pro Controller</b><span>SDL-only - not yet visible to XInput apps</span></div><div class="cmbtn">Configure...</div><div class="cmbtn">Create Virtual Pad</div><div class="cmbtn">Hide Device</div></div>
-</div>
-</div>
-</div>
-<figcaption><b>Controller Manager</b> - per-pad remap, LED color, rumble, gyro/accelerometer, touchpad, and adaptive triggers.</figcaption></figure>
-
-<figure class="shot"><div class="frame tall" aria-hidden="true">
-<div class="side">
-<div class="launcher">▦</div>
-<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
-<div class="spacer"></div><div class="batt">82%<br>9:41</div>
-</div>
-<div class="main"><div class="dim"></div>
-<div class="dialog">
-<h4>Settings</h4>
-<div class="stabs"><div class="stab">App Behavior</div><div class="stab">Tiles</div><div class="stab">Widgets</div><div class="stab on">Appearance</div><div class="stab">Downloads</div><div class="stab">Audio</div><div class="stab">Bluetooth</div><div class="stab">Wi-Fi</div><div class="stab">Display</div><div class="stab">Emulation</div></div>
-<div class="srow"><label>Theme</label><div class="sselect">Dark</div></div>
-<div class="srow"><label>Accent color</label><div class="swatches"><div class="swatch on" style="background:#2DBE8F"></div><div class="swatch" style="background:#1E6FD9"></div><div class="swatch" style="background:#C8453B"></div><div class="swatch" style="background:#7B52C9"></div><div class="swatch" style="background:#D9731A"></div></div></div>
-<div class="srow"><label>Font</label><div class="sselect">Roboto</div></div>
-<div class="srow"><label>Wallpaper</label><div class="sselect" style="min-width:12rem">C:\Wallpapers\sunset.mp4</div></div>
-</div>
-</div>
-</div>
-<figcaption><b>Settings</b> - theme, accent, tile size, fonts, wallpaper, plus Wi-Fi, Bluetooth, audio, display, and emulation setup.</figcaption></figure>
+<figcaption><b>Download Manager</b> — drop a direct link or magnet and let GridShell handle the rest.</figcaption></figure>
 
 </div>
 </div></section>
@@ -457,45 +407,43 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <section id="start"><div class="wrap">
 <div class="head">
 <h2>Get started in a few minutes</h2>
-<p>The installer includes everything it needs. You do not have to install .NET first.</p>
+<p>The installer is self-contained. You don't have to install .NET first to get running.</p>
 </div>
 <ol class="steps">
-<li><b>Download the installer</b><span>Get <code>GridShell-Setup</code> from the latest release on GitHub.</span></li>
-<li><b>Run it</b><span>It asks for administrator permission and installs to <code>C:\GridShell</code>. Leave "Launch GridShell" ticked at the end.</span></li>
-<li><b>Pick up a controller</b><span>GridShell opens on the launcher grid. Use the D-pad or stick to move, and the face buttons to open things.</span></li>
+<li><b>Download the installer</b><span>Grab the latest <code>GridShell-Setup</code> from the GitHub releases page.</span></li>
+<li><b>Run it</b><span>It installs to <code>C:\GridShell</code> and asks for admin permissions so shell integration can work correctly.</span></li>
+<li><b>Pick up a controller</b><span>Launch the app and use the D-pad or stick to move between tiles, then press face buttons to open things.</span></li>
 </ol>
 <dl class="req">
-<div><dt>Windows</dt><dd>10 (19041 or newer) or 11</dd></div>
-<div><dt>Processor</dt><dd>64-bit (x64)</dd></div>
+<div><dt>Windows</dt><dd>10 (19041+) or 11</dd></div>
+<div><dt>Architecture</dt><dd>x64</dd></div>
 <div><dt>Installer size</dt><dd>About 30 MB</dd></div>
-<div><dt>Price and license</dt><dd>Free, MIT</dd></div>
+<div><dt>License</dt><dd>MIT</dd></div>
 </dl>
 </div></section>
 
 <section id="run" class="alt"><div class="wrap">
 <div class="head">
 <h2>Two ways to run it</h2>
-<p>Start with the first. It changes nothing about how Windows starts.</p>
+<p>Start in safe mode to keep your Windows setup untouched. Switch to full shell mode only when you’re ready.</p>
 </div>
 <div class="modes">
-<div class="mode"><h3>Next to Windows <span class="tag">Safe</span></h3><p>Run <code>GridShell.exe</code>. It hides the real taskbar while it runs. Close it, or pick "Restore Explorer", and Windows is back right away.</p></div>
-<div class="mode"><h3>As your Windows shell <span class="tag warn">Careful</span></h3><p>Replaces <code>explorer.exe</code> at login. A watchdog restarts GridShell if it crashes and falls back to Explorer after repeated failures. Try it in a virtual machine or a spare account first, because it changes how your whole session starts.</p></div>
+<div class="mode"><h3>Next to Windows <span class="tag">Safe</span></h3><p>Run <code>GridShell.exe</code>. It hides the real taskbar while it is active, and restores Explorer immediately when you close it or choose “Restore Explorer.”</p></div>
+<div class="mode"><h3>As your Windows shell <span class="tag warn">Careful</span></h3><p>Replace <code>explorer.exe</code> at login. A watchdog relaunches GridShell if it crashes and falls back to Explorer after repeated failures. Use this in a VM or secondary account first.</p></div>
 </div>
 </div></section>
 
 <section id="faq"><div class="wrap">
 <div class="head"><h2>Questions</h2></div>
 <div class="faq">
-<details><summary>Is GridShell free?</summary><p>Yes. GridShell's own code is MIT licensed, and the source is on GitHub. It bundles a few other tools, like aria2 and chdman, under their own licenses.</p></details>
-<details><summary>Will it break my Windows install?</summary><p>Not in the default mode. GridShell runs next to Windows, hides the taskbar while it is open, and puts everything back when you close it. Only the optional "use as my Windows shell" setting changes how Windows starts.</p></details>
-<details><summary>How do I get back to normal Windows?</summary><p>Running next to Windows: just close GridShell, or choose "Restore Explorer" - your normal desktop is back immediately. Running it as your Windows shell is different: closing GridShell only gets you Explorer for the current session. You have to go into GridShell's Settings and turn the "Use GridShell as the Windows shell" option back off yourself, or GridShell replaces Explorer again on your next login. The watchdog only steps in on its own if GridShell keeps crashing - it doesn't turn the setting off for you otherwise. If you can't get into Settings at all, you can undo it directly: open Registry Editor (or <code>reg</code> from a command prompt) as administrator and set <code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon</code>'s <code>Shell</code> value back to <code>explorer.exe</code>, then sign out or restart.</p></details>
-<details><summary>Which controllers work?</summary><p>Xbox, PlayStation (DualShock 4 and DualSense), and Nintendo Switch Pro / Joy-Con controllers all work, through SDL3.</p></details>
-<details><summary>Do I need a controller?</summary><p>No. Everything works with a keyboard and mouse too.</p></details>
-<details><summary>Do I need Real-Debrid?</summary><p>No. It is optional. Without it, the Download Manager still downloads regular links with aria2. Real-Debrid adds support for magnets and hoster links.</p></details>
-<details><summary>Does it come with games or emulators?</summary><p>No games. GridShell maps each platform to RetroArch or a standalone emulator and sets it up to open fullscreen, and it adds tiles for games you already have in Steam, Epic, and GOG Galaxy.</p></details>
-<details><summary>Windows says it does not recognize the installer.</summary><p>That is Windows SmartScreen, which warns about files it has not seen much. You can check the source and the release on GitHub. Choose "More info", then "Run anyway", if you are comfortable.</p></details>
-<details><summary>How do I uninstall it?</summary><p>Use Apps in Windows Settings, find GridShell, and choose Uninstall. Turn off the shell setting first if you used it.</p></details>
-<details><summary>Where do I report a bug or ask for a feature?</summary><p>Open an issue on <a href="https://github.com/theskysanctum/gridshell/issues">GitHub</a>.</p></details>
+<details><summary>Is GridShell free?</summary><p>Yes. GridShell’s own code is MIT licensed and the source is on GitHub. It also bundles a few external tools under their own licenses.</p></details>
+<details><summary>Will it break my Windows install?</summary><p>Not in the default mode. It runs alongside Windows, hides the taskbar while it is active, and restores the desktop when you close it.</p></details>
+<details><summary>How do I get back to normal Windows?</summary><p>Either close GridShell from the power menu or choose “Restore Explorer.” If you enabled shell mode, turn it off and your normal desktop returns at the next login.</p></details>
+<details><summary>Do I need a controller?</summary><p>No. GridShell works with a keyboard and mouse too, but it is designed around controller-first navigation.</p></details>
+<details><summary>Do I need Real-Debrid?</summary><p>No. Direct downloads still work without it. Real-Debrid adds support for magnet-based torrents and some hoster unrestricting.</p></details>
+<details><summary>Does it include games or emulators?</summary><p>No bundled games. It maps platforms to RetroArch or a best-available standalone emulator and helps organize and launch them.</p></details>
+<details><summary>How do I uninstall it?</summary><p>Use Windows Settings → Apps → Installed apps, choose GridShell, and uninstall it. If you used shell mode, disable that setting first.</p></details>
+<details><summary>Where do I report bugs or feature requests?</summary><p>Open an issue on the <a href="https://github.com/theskysanctum/gridshell/issues">GitHub repository</a>.</p></details>
 </div>
 </div></section>
 
@@ -503,7 +451,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="head"><h2>Build it yourself</h2></div>
 <p>You need the .NET 10 SDK and Windows 10 (version 19041 or newer) or Windows 11.</p>
 <pre><code>dotnet build GridShell.slnx</code></pre>
-<p style="margin-top:1rem">Each project's <code>bin</code> folder then holds its executable. <code>GridShell.exe</code> is the taskbar process, and it starts <code>GridShell.Grid.exe</code> for you.</p>
+<p style="margin-top:1rem">Each project builds into its own <code>bin</code> folder. <code>GridShell.exe</code> is the taskbar process and starts <code>GridShell.Grid.exe</code> when needed.</p>
 </div></section>
 
 <footer><div class="wrap">
