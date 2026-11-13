@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.IO;
 using System.Windows.Media;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
@@ -40,7 +41,10 @@ public static class IconLoader
 
     private static async Task<ImageSource?> ResolveIconAsync(Tile tile, AppSettings? settings)
     {
-        if (tile.CustomIconPath is { } customPath)
+        // Only trust a custom icon if its file is actually still there - a cache that was
+        // cleared out from under a tile (TileIcons, igdb-covers, etc.) or a path the user moved
+        // should fall through to the normal per-kind resolution below instead of going blank.
+        if (tile.CustomIconPath is { } customPath && File.Exists(customPath))
         {
             return await Task.Run(() => ImageLoader.LoadFromFile(customPath));
         }

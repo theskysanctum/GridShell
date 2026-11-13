@@ -1,3 +1,4 @@
+using System.IO;
 using GridShell.Core.Tiles;
 
 namespace GridShell.Core.Store;
@@ -61,7 +62,8 @@ public static class StoreTileAutoWire
         // Prefer the Store's own bundled artwork over shell-icon extraction, which has proven
         // unreliable for some installs - but never clobber a user's own "Change Icon..." choice.
         var gotIcon = false;
-        if (tile.CustomIconPath is null && StoreIconCache.GetOrCacheIconPath(app.Id) is { } cachedIconPath)
+        if ((tile.CustomIconPath is null || !File.Exists(tile.CustomIconPath))
+            && StoreIconCache.GetOrCacheIconPath(app.Id) is { } cachedIconPath)
         {
             tile.CustomIconPath = cachedIconPath;
             gotIcon = true;
