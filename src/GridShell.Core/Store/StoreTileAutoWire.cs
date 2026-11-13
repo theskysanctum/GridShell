@@ -82,10 +82,18 @@ public static class StoreTileAutoWire
                 t.Kind == TileKind.App && t.TargetPath.Equals(exePath, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>For a winget install, the registry-driven lookup (FindMainExe) can come back
+    /// empty even though the app is really there - confirmed live: 7-Zip's own MSI leaves
+    /// BOTH InstallLocation and DisplayIcon blank in its Uninstall entry, a real gap in what
+    /// that package's manifest reports, not anything GridShell did wrong. Falls back to the
+    /// exact folder WingetInstaller's own --location flag requested
+    /// (WingetInstaller.InstallRoot\{app.Id}) - winget still actually installs there even when
+    /// it doesn't bother reflecting that path back into the registry.</summary>
     private static string? ResolveExePath(StoreApp app) => app.InstallMethod switch
     {
         "github" => InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id), app.Name),
         "package" => InstalledAppLocator.FindBestExeInDirectory(PackageInstaller.InstallRoot(app.Id), app.Name),
-        _ => InstalledAppLocator.FindMainExe(app.Name),
+        _ => InstalledAppLocator.FindMainExe(app.Name)
+             ?? InstalledAppLocator.FindBestExeInDirectory(Path.Combine(WingetInstaller.InstallRoot, app.Id), app.Name),
     };
 }
