@@ -35,21 +35,6 @@
             </Grid>
         </DataTemplate>
 
-        <DataTemplate x:Key="TileRowTemplate">
-            <Grid Margin="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"
-                           Foreground="{DynamicResource PrimaryForegroundBrush}" TextTrimming="CharacterEllipsis" />
-                <Button Grid.Column="1" Width="28" Margin="4,0,0,0"
-                        Click="RemoveTileButton_Click" CommandParameter="{Binding}" ToolTip="Remove">
-                    <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" FontSize="14" />
-                </Button>
-            </Grid>
-        </DataTemplate>
-
     </Window.Resources>
     <Grid Margin="16">
         <TabControl Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0">
@@ -112,20 +97,6 @@
                     <Button Content="Exit GridShell" Padding="10,6" HorizontalAlignment="Left"
                             Click="ExitGridShell_Click" />
                 </StackPanel>
-            </TabItem>
-
-            <TabItem Header="Tiles">
-                <TabControl Margin="0,12,0,0" Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0"
-                            IsEnabled="{Binding CanEditTiles}">
-                    <TabItem Header="Apps">
-                        <ListBox ItemsSource="{Binding AppTiles}" Background="{DynamicResource SurfaceBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}"
-                                 ItemTemplate="{StaticResource TileRowTemplate}" />
-                    </TabItem>
-                    <TabItem Header="Web">
-                        <ListBox ItemsSource="{Binding WebTiles}" Background="{DynamicResource SurfaceBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}"
-                                 ItemTemplate="{StaticResource TileRowTemplate}" />
-                    </TabItem>
-                </TabControl>
             </TabItem>
 
             <TabItem Header="Widgets">

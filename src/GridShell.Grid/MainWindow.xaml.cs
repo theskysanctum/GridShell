@@ -411,13 +411,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public void OpenSettings()
     {
         var dialog = new SettingsWindow(
-            _allTiles,
             _settings,
-            onTilesChanged: () =>
-            {
-                TileStore.Save(_allTiles);
-                ApplyFilter();
-            },
             onSettingsChanged: () =>
             {
                 AppSettingsStore.Save(_settings);
@@ -535,12 +529,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         HideGrid(restorePreviousFocus: false);
         OpenSettings();
-    }
-
-    private void ControllerManagerButton_Click(object sender, RoutedEventArgs e)
-    {
-        HideGrid(restorePreviousFocus: false);
-        new ControllerManagerWindow { Owner = this }.ShowDialog();
     }
 
     private void ExplorerButton_Click(object sender, RoutedEventArgs e)

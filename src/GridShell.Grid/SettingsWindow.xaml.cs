@@ -30,9 +30,7 @@ namespace GridShell;
 
 public partial class SettingsWindow : Window, INotifyPropertyChanged
 {
-    private readonly List<Tile> _allTiles;
     private readonly AppSettings _settings;
-    private readonly Action _onTilesChanged;
     private readonly Action _onSettingsChanged;
 
     private bool _autostartEnabled;
@@ -56,8 +54,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private static readonly string WatchdogExePath = SiblingExePath.Resolve("GridShell.Watchdog", "GridShell.Watchdog.exe");
 
     public ObservableCollection<DetectedBrowser> Browsers { get; } = new();
-    public ObservableCollection<Tile> AppTiles { get; } = new();
-    public ObservableCollection<Tile> WebTiles { get; } = new();
 
     private List<DesktopWidget> _allWidgets = new();
     public ObservableCollection<DesktopWidget> Widgets { get; } = new();
@@ -764,13 +760,12 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         !string.IsNullOrWhiteSpace(_settings.WallpaperUrl)
         && (MediaWrapperHtml.IsVideo(_settings.WallpaperUrl) || MediaWrapperHtml.IsImage(_settings.WallpaperUrl));
 
-    public bool CanEditTiles => !KioskModeEnabled;
     public bool CanEditAppearance => !KioskModeEnabled;
     public bool CanEditWidgets => !KioskModeEnabled && WidgetsAvailable;
 
     public string KioskModeButtonText => KioskModeEnabled ? "Disable Kiosk Mode..." : "Enable Kiosk Mode...";
 
-    /// <summary>Locks down Tiles/Appearance/Widgets editing and exiting GridShell. Changing
+    /// <summary>Locks down Appearance/Widgets editing and exiting GridShell. Changing
     /// this directly (private setter) is only ever done after KioskModeButton_Click's PIN flow
     /// succeeds - there's no plain two-way-bound checkbox, since turning it on requires setting
     /// a PIN first and turning it off requires verifying one.</summary>
@@ -782,7 +777,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             _settings.KioskModeEnabled = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(KioskModeButtonText));
-            OnPropertyChanged(nameof(CanEditTiles));
             OnPropertyChanged(nameof(CanEditAppearance));
             OnPropertyChanged(nameof(CanEditWidgets));
             _onSettingsChanged();
@@ -1054,7 +1048,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public SettingsWindow(List<Tile> allTiles, AppSettings settings, Action onTilesChanged, Action onSettingsChanged)
+    public SettingsWindow(AppSettings settings, Action onSettingsChanged)
     {
         InitializeComponent();
         DataContext = this;
@@ -1063,9 +1057,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         this.ScaleToWorkArea(widthFraction: 0.6, heightFraction: 0.92,
             minWidth: 520, minHeight: 560, maxWidth: 760, maxHeight: 940);
 
-        _allTiles = allTiles;
         _settings = settings;
-        _onTilesChanged = onTilesChanged;
         _onSettingsChanged = onSettingsChanged;
 
         Loaded += SettingsWindow_Loaded;
@@ -1130,9 +1122,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         // Settings alone already surfaces an available update instead of needing an extra click.
         CheckForUpdatesButton_Click(this, new RoutedEventArgs());
 
-        RefreshTileList(TileKind.App);
-        RefreshTileList(TileKind.Website);
-
         _allWidgets = WidgetStore.Load();
         RefreshWidgetList();
     }
@@ -1171,35 +1160,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             NotifyTaskbarSettingsChanged();
         }
     }
-
-    private ObservableCollection<Tile> ListFor(TileKind kind) => kind switch
-    {
-        TileKind.Website => WebTiles,
-        _ => AppTiles,
-    };
-
-    private void RefreshTileList(TileKind kind)
-    {
-        var list = ListFor(kind);
-        list.Clear();
-        foreach (var tile in _allTiles.Where(t => t.Kind == kind).OrderBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase))
-        {
-            list.Add(tile);
-        }
-    }
-
-    private void RemoveTileButton_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as Button)?.CommandParameter is not Tile tile)
-        {
-            return;
-        }
-
-        _allTiles.Remove(tile);
-        RefreshTileList(tile.Kind);
-        _onTilesChanged();
-    }
-
 
     private void RefreshAccentSwatches()
     {

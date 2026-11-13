@@ -13,7 +13,7 @@ namespace GridShell;
 /// <summary>Per-device configuration - remap, LED, rumble test, gyro/accel readout, touchpad,
 /// and experimental adaptive triggers. Reads/writes ControllerPreferencesStore, keyed by this
 /// device's VID:PID, so settings survive restarts and get re-applied the next time a virtual
-/// pad is created for this device (see ControllerManagerWindow/ControllerEntry).</summary>
+/// pad is created for this device (see GameManagerWindow's Controllers tab/ControllerEntry).</summary>
 public partial class ControllerConfigWindow : Window, INotifyPropertyChanged
 {
     private readonly PadDevice _device;
