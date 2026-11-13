@@ -13,21 +13,29 @@ public sealed class StoreApp
     [JsonPropertyName("wingetId")]
     public string WingetId { get; set; } = "";
 
-    /// <summary>"winget" (default), "github", "package", or "direct" - github entries have no
-    /// WingetId, and are installed instead by GitHubReleaseInstaller downloading and extracting
-    /// the latest release's Windows archive (.zip or .7z) from GithubRepo. Used for emulators
-    /// with no winget package but a real downloadable GitHub release (RPCS3's own repo has
-    /// neither, but its companion RPCS3/rpcs3-binaries-win repo does - see
+    /// <summary>"winget" (default), "github", "package", "direct", or "browser" - github
+    /// entries have no WingetId, and are installed instead by GitHubReleaseInstaller downloading
+    /// and extracting the latest release's Windows archive (.zip or .7z) from GithubRepo. Used
+    /// for emulators with no winget package but a real downloadable GitHub release (RPCS3's own
+    /// repo has neither, but its companion RPCS3/rpcs3-binaries-win repo does - see
     /// GitHubReleaseInstaller's remarks). "package" is for one that has neither (e.g. Dolphin -
     /// winget's own package is broken, and Dolphin publishes no GitHub releases at all) -
     /// PackageInstaller extracts PackageFile straight out of this same synced repo clone
     /// instead. "direct" is for apps that winget CAN install but whose own registry entry
-    /// breaks under winget's quirks (Steam/Epic/GOG/itch - see DirectInstaller's remarks) -
-    /// WingetId is reused as the winget-pkgs PackageIdentifier purely to look up the current
-    /// installer URL/type/switches, but the actual install/uninstall never goes through
-    /// winget.exe itself.</summary>
+    /// breaks under winget's quirks (see DirectInstaller's remarks) - WingetId is reused as the
+    /// winget-pkgs PackageIdentifier purely to look up the current installer URL/type/switches,
+    /// but the actual install/uninstall never goes through winget.exe itself. "browser" (Steam,
+    /// Heroic, itch) is the simplest of all: after enough trouble automating these specific
+    /// installs, the Store's Install button just opens BrowserUrl and leaves the actual
+    /// install/uninstall entirely to the user - GridShell still detects whether it's really
+    /// installed afterward via the normal registry/exe lookup, same as every other method.</summary>
     [JsonPropertyName("installMethod")]
     public string InstallMethod { get; set; } = "winget";
+
+    /// <summary>The official download/info page to open - only set when InstallMethod is
+    /// "browser".</summary>
+    [JsonPropertyName("browserUrl")]
+    public string? BrowserUrl { get; set; }
 
     /// <summary>"owner/repo" - only set when InstallMethod is "github".</summary>
     [JsonPropertyName("githubRepo")]

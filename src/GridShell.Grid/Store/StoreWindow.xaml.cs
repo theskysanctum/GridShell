@@ -157,6 +157,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                     "github" => GitHubReleaseInstaller.IsInstalled(app.App.Id),
                     "package" => PackageInstaller.IsInstalled(app.App.Id),
                     "direct" => DirectInstaller.IsInstalled(app.App),
+                    "browser" => BrowserInstaller.IsInstalled(app.App),
                     _ => await WingetInstaller.IsInstalledAsync(app.App),
                 };
                 app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
@@ -292,6 +293,19 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        // Doesn't fit the Installed/Failed shape every other method's result does - there's no
+        // way to know whether the user actually installed anything, just whether the browser
+        // opened - so this is its own case entirely rather than forced through that switch.
+        if (app.App.InstallMethod == "browser")
+        {
+            new ToastWindow(
+                BrowserInstaller.Open(app.App)
+                    ? $"Opened {app.Name}'s download page - install it yourself, then reopen the Store to pick it up."
+                    : $"Couldn't open {app.Name}'s download page.",
+                TimeSpan.FromSeconds(5)).Show();
+            return;
+        }
+
         app.State = StoreAppState.Installing;
         var result = app.App.InstallMethod switch
         {
@@ -340,6 +354,18 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     {
         if ((sender as Button)?.CommandParameter is not StoreAppViewModel app)
         {
+            return;
+        }
+
+        // GridShell didn't install this one (BrowserInstaller just opened a download page),
+        // so it has no installer-specific knowledge to safely silently uninstall it either -
+        // same reasoning that's kept winget's own uninstall from guessing the wrong switch for
+        // an installer technology it doesn't actually know. Opens Windows' own Apps & Features
+        // page instead of attempting anything.
+        if (app.App.InstallMethod == "browser")
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-settings:appsfeatures") { UseShellExecute = true });
+            new ToastWindow($"Opened Apps & Features - uninstall {app.Name} from there.", TimeSpan.FromSeconds(5)).Show();
             return;
         }
 
