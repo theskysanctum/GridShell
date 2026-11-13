@@ -96,7 +96,6 @@ public partial class TaskbarWindow : Window
         {
             ((App)Application.Current).ApplyTheme();
             ((App)Application.Current).ReloadWallpaper();
-            ((App)Application.Current).ReloadWidgets();
             handled = true;
         }
         else if (msg == (int)WindowMessage.WM_DISPLAYCHANGE || msg == (int)WindowMessage.WM_DPICHANGED)

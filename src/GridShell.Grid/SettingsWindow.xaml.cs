@@ -16,7 +16,6 @@ using GridShell.Core.Interop.Display;
 using GridShell.Core.Interop.WiFi;
 using GridShell.Core.Tiles;
 using GridShell.Core.Updates;
-using GridShell.Core.Widgets;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using AppSettings = GridShell.Core.Settings.AppSettings;
@@ -54,9 +53,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private static readonly string WatchdogExePath = SiblingExePath.Resolve("GridShell.Watchdog", "GridShell.Watchdog.exe");
 
     public ObservableCollection<DetectedBrowser> Browsers { get; } = new();
-
-    private List<DesktopWidget> _allWidgets = new();
-    public ObservableCollection<DesktopWidget> Widgets { get; } = new();
 
     private static readonly string[] PresetAccentColors =
         { "#4A90D9", "#D9534F", "#5CB85C", "#F0AD4E", "#9B59B6", "#1ABC9C" };
@@ -744,28 +740,16 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             _wallpaperUrl = value;
             OnPropertyChanged();
             _settings.WallpaperUrl = string.IsNullOrWhiteSpace(value) ? null : value;
-            OnPropertyChanged(nameof(WidgetsAvailable));
-            OnPropertyChanged(nameof(CanEditWidgets));
             _onSettingsChanged();
             NotifyTaskbarSettingsChanged();
         }
     }
 
-    /// <summary>Whether the wallpaper is set to a video/image file at all - the default
-    /// wallpaper (no WallpaperUrl override, falling back to the real current Windows wallpaper
-    /// image) deliberately doesn't count, nor does an .html page or a bare remote URL without
-    /// a recognized media extension. ANDed with Kiosk Mode via CanEditWidgets below, not
-    /// replaced by it - the two gates are independent reasons the tab can be unusable.</summary>
-    public bool WidgetsAvailable =>
-        !string.IsNullOrWhiteSpace(_settings.WallpaperUrl)
-        && (MediaWrapperHtml.IsVideo(_settings.WallpaperUrl) || MediaWrapperHtml.IsImage(_settings.WallpaperUrl));
-
     public bool CanEditAppearance => !KioskModeEnabled;
-    public bool CanEditWidgets => !KioskModeEnabled && WidgetsAvailable;
 
     public string KioskModeButtonText => KioskModeEnabled ? "Disable Kiosk Mode..." : "Enable Kiosk Mode...";
 
-    /// <summary>Locks down Appearance/Widgets editing and exiting GridShell. Changing
+    /// <summary>Locks down Appearance editing and exiting GridShell. Changing
     /// this directly (private setter) is only ever done after KioskModeButton_Click's PIN flow
     /// succeeds - there's no plain two-way-bound checkbox, since turning it on requires setting
     /// a PIN first and turning it off requires verifying one.</summary>
@@ -778,7 +762,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(KioskModeButtonText));
             OnPropertyChanged(nameof(CanEditAppearance));
-            OnPropertyChanged(nameof(CanEditWidgets));
             _onSettingsChanged();
             NotifyTaskbarSettingsChanged();
         }
@@ -1121,44 +1104,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         // Checked once automatically on open - not a silent background poller, just so opening
         // Settings alone already surfaces an available update instead of needing an extra click.
         CheckForUpdatesButton_Click(this, new RoutedEventArgs());
-
-        _allWidgets = WidgetStore.Load();
-        RefreshWidgetList();
-    }
-
-    private void RefreshWidgetList()
-    {
-        Widgets.Clear();
-        foreach (var widget in _allWidgets)
-        {
-            Widgets.Add(widget);
-        }
-    }
-
-    private void RemoveWidgetButton_Click(object sender, RoutedEventArgs e)
-    {
-        if ((sender as Button)?.CommandParameter is not DesktopWidget widget)
-        {
-            return;
-        }
-
-        _allWidgets.Remove(widget);
-        RefreshWidgetList();
-        WidgetStore.Save(_allWidgets);
-        NotifyTaskbarSettingsChanged();
-    }
-
-    private void AddWidgetButton_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new AddWidgetWindow { Owner = this };
-
-        if (dialog.ShowDialog() == true && dialog.ResultWidget is { } newWidget)
-        {
-            _allWidgets.Add(newWidget);
-            RefreshWidgetList();
-            WidgetStore.Save(_allWidgets);
-            NotifyTaskbarSettingsChanged();
-        }
     }
 
     private void RefreshAccentSwatches()

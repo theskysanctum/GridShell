@@ -6,7 +6,7 @@ using GridShell.Core.Settings;
 
 namespace GridShell;
 
-/// <summary>Small modal for Kiosk Mode's PIN - same role as AddTileWindow/AddWidgetWindow
+/// <summary>Small modal for Kiosk Mode's PIN - same role as AddTileWindow
 /// (separate dialog, ShowDialog, result read after). Two modes:
 /// - Set (parameterless constructor): choose a new PIN, confirmed by re-entry; exposes
 ///   ResultPinHash (via PinHasher.Hash) on success.

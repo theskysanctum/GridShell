@@ -3,7 +3,6 @@ using System.Windows.Interop;
 using GridShell.Core.Controllers;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
-using GridShell.Core.Widgets;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 
@@ -14,7 +13,6 @@ public partial class App : System.Windows.Application
     private TaskbarWindow? _taskbarWindow;
     private WallpaperWindow? _wallpaperWindow;
     private ScreenshotMenuWindow? _screenshotMenu;
-    private readonly List<WidgetWindow> _widgetWindows = new();
     private bool _wallpaperPausedForGame;
     private readonly GridLauncher _launcher = new();
     private readonly GlobalKeyboardHook _keyboardHook = new();
@@ -67,7 +65,6 @@ public partial class App : System.Windows.Application
 
         _wallpaperWindow = new WallpaperWindow();
         _wallpaperWindow.Show();
-        CreateWidgetWindows();
 
         _taskbarWindow = new TaskbarWindow(_launcher);
         _taskbarWindow.Show();
@@ -168,34 +165,6 @@ public partial class App : System.Windows.Application
         }
     }
 
-    /// <summary>Creates one WidgetWindow per entry in WidgetStore.Load() - each places itself
-    /// at HWND_TOP (see WidgetWindow's own SendToTop), above the wallpaper without ever
-    /// claiming topmost status, so ordinary app windows still end up above them once
-    /// activated.</summary>
-    private void CreateWidgetWindows()
-    {
-        foreach (var widget in WidgetStore.Load())
-        {
-            var window = new WidgetWindow(widget);
-            window.Show();
-            _widgetWindows.Add(window);
-        }
-    }
-
-    /// <summary>Full recreate on any Settings-driven widget add/remove/edit - simplest correct
-    /// approach, no diffing, consistent with how Tiles/the wallpaper have no fine-grained
-    /// in-place edit either.</summary>
-    public void ReloadWidgets()
-    {
-        foreach (var window in _widgetWindows)
-        {
-            window.Close();
-        }
-
-        _widgetWindows.Clear();
-        CreateWidgetWindows();
-    }
-
     protected override void OnExit(ExitEventArgs e)
     {
         _taskbarHideTimer.Stop();
@@ -212,11 +181,6 @@ public partial class App : System.Windows.Application
 
         // Restore the real taskbar now that GridShell's own sidebar is going away.
         ShellTaskbarVisibility.Show();
-        foreach (var window in _widgetWindows)
-        {
-            window.Close();
-        }
-
         _wallpaperWindow?.Close();
         base.OnExit(e);
     }

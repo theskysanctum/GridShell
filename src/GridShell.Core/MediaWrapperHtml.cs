@@ -3,8 +3,8 @@ using System.Linq;
 
 namespace GridShell.Core;
 
-/// <summary>Shared video/image-wrapper-page logic for WallpaperWindow and WidgetWindow - both
-/// need to navigate a WebView2 to a local or remote image/video via a tiny generated HTML page.
+/// <summary>Shared video/image-wrapper-page logic for WallpaperWindow - needs to navigate a
+/// WebView2 to a local or remote image/video via a tiny generated HTML page.
 /// A generated wrapper page must be navigated to as a real file:// page, not via
 /// NavigateToString - Chromium's "URL safety check" rejects a &lt;video&gt;/&lt;img&gt; src pointing at
 /// file:// from a page that isn't itself file://, which NavigateToString's page isn't.</summary>

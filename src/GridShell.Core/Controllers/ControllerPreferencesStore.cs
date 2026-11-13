@@ -5,7 +5,7 @@ namespace GridShell.Core.Controllers;
 
 /// <summary>Persists per-device Controller Manager preferences to
 /// %AppData%\GridShell\controller-prefs.json, keyed by "VID:PID" hex - same shape/pattern as
-/// WidgetStore/TileStore.</summary>
+/// TileStore.</summary>
 public static class ControllerPreferencesStore
 {
     private static readonly string StorePath = Path.Combine(
