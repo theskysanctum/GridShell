@@ -46,4 +46,18 @@ public sealed class StoreSceneViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+
+    private bool _isApplying;
+    public bool IsApplying
+    {
+        get => _isApplying;
+        set
+        {
+            _isApplying = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ApplyButtonText));
+        }
+    }
+
+    public string ApplyButtonText => IsApplying ? "Downloading..." : "Apply";
 }

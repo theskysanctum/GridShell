@@ -299,7 +299,7 @@
                                         <Button Style="{StaticResource InstallButtonStyle}" HorizontalAlignment="Left"
                                                 Click="ApplySceneButton_Click" CommandParameter="{Binding}"
                                                 Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibilityInverse}}">
-                                            <TextBlock Text="Apply" FontSize="12" Foreground="White" />
+                                            <TextBlock Text="{Binding ApplyButtonText}" FontSize="12" Foreground="White" />
                                         </Button>
                                     </StackPanel>
                                 </StackPanel>

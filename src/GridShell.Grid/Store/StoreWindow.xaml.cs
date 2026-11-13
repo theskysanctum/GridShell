@@ -98,15 +98,15 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             ? "Couldn't load the catalog - check your internet connection and reopen the Store."
             : $"{_allApps.Count} apps available";
 
-        // Reads store-catalog/scenes.json from the same clone SyncAndLoadAsync just synced above
-        // - no separate sync needed.
-        _allScenes = StoreCatalogSync.LoadScenes().Scenes
+        // Fetched directly over HTTP (StoreSceneSync), not through the app-catalog clone above -
+        // Scenes are a deliberately separate, on-demand download.
+        _allScenes = (await StoreSceneSync.FetchCatalogAsync()).Scenes
             .Select(s => new StoreSceneViewModel { Scene = s })
             .ToList();
 
         foreach (var scene in _allScenes)
         {
-            SetSceneThumbnailIfAny(scene);
+            SetSceneThumbnail(scene);
             RefreshSceneIsCurrent(scene);
         }
 
@@ -208,31 +208,30 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         app.Icon = bitmap;
     }
 
-    /// <summary>Scenes' own bundled thumbnail (store-catalog/scenes/{id}.png in the synced
-    /// clone, same convention as app icons) - a scene without one keeps the InitialLetter
-    /// fallback square, same as an app with no bundled icon.</summary>
-    private static void SetSceneThumbnailIfAny(StoreSceneViewModel scene)
+    /// <summary>Scenes' own thumbnail, loaded straight from raw.githubusercontent.com (PNGs
+    /// don't hit the text/plain-forcing behavior .html files do - see StoreSceneSync) - WPF's
+    /// BitmapImage downloads a remote UriSource on its own in the background, no manual fetch
+    /// needed. A broken/missing thumbnail URL just never completes rather than showing the
+    /// InitialLetter fallback - an acceptable gap for a small, fully GridShell-controlled set of
+    /// scenes.</summary>
+    private static void SetSceneThumbnail(StoreSceneViewModel scene)
     {
-        var thumbPath = StoreCatalogSync.GetSceneThumbnailPath(scene.Scene.Id);
-        if (thumbPath is null)
-        {
-            return;
-        }
-
         var bitmap = new BitmapImage();
         bitmap.BeginInit();
         bitmap.CacheOption = BitmapCacheOption.OnLoad;
-        bitmap.UriSource = new Uri(thumbPath, UriKind.Absolute);
+        bitmap.UriSource = new Uri(StoreSceneSync.GetThumbnailUrl(scene.Scene.Id), UriKind.Absolute);
         bitmap.EndInit();
-        bitmap.Freeze();
         scene.Thumbnail = bitmap;
     }
 
+    /// <summary>Compares against the path a download WOULD land at (StoreSceneSync.
+    /// GetLocalCachePath), not whether it's actually been downloaded yet - so a scene already
+    /// applied in a previous session still shows as current without needing to re-fetch it just
+    /// to check.</summary>
     private void RefreshSceneIsCurrent(StoreSceneViewModel scene)
     {
-        var entryPath = StoreCatalogSync.GetSceneEntryPath(scene.Scene.EntryFile);
-        scene.IsCurrent = entryPath is not null
-            && string.Equals(_settings.WallpaperUrl, entryPath, StringComparison.OrdinalIgnoreCase);
+        var expectedPath = StoreSceneSync.GetLocalCachePath(scene.Scene.EntryFile);
+        scene.IsCurrent = string.Equals(_settings.WallpaperUrl, expectedPath, StringComparison.OrdinalIgnoreCase);
     }
 
     private void ApplyFilter()
@@ -275,17 +274,20 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     /// .html file - the same field/mechanism Settings' own "Appearance" tab already uses for a
     /// custom wallpaper, so WallpaperWindow (running in the separate taskbar process) needs no
     /// changes at all, just the same live-reload notification Settings already sends it.</summary>
-    private void ApplySceneButton_Click(object sender, RoutedEventArgs e)
+    private async void ApplySceneButton_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.CommandParameter is not StoreSceneViewModel scene)
         {
             return;
         }
 
-        var entryPath = StoreCatalogSync.GetSceneEntryPath(scene.Scene.EntryFile);
+        scene.IsApplying = true;
+        var entryPath = await StoreSceneSync.DownloadEntryAsync(scene.Scene.EntryFile);
+        scene.IsApplying = false;
+
         if (entryPath is null)
         {
-            MessageBox.Show(this, $"{scene.Name}'s scene file is missing from the synced catalog.",
+            MessageBox.Show(this, $"Couldn't download {scene.Name} - check your internet connection.",
                 "Scenes", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

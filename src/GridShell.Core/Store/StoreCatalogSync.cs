@@ -7,18 +7,18 @@ using LibGit2Sharp;
 namespace GridShell.Core.Store;
 
 /// <summary>Keeps a local clone of GridShell's own repo around just to read
-/// store-catalog/catalog.json (and store-catalog/scenes.json) from it - lets the curated app/
-/// scene lists be updated by pushing to those files, with no GridShell release needed. WinGet
-/// (see WingetInstaller) is the only thing that actually installs software; this just supplies
-/// what to list - Scenes have nothing to "install" at all, just a local file path.</summary>
+/// store-catalog/catalog.json from it - lets the curated app list be updated by pushing to that
+/// one file, with no GridShell release needed. WinGet (see WingetInstaller) is the only thing
+/// that actually installs software; this just supplies what to list. Scenes (see
+/// StoreSceneSync) deliberately don't go through this clone - they're fetched directly over
+/// plain HTTP instead, so Scenes stay a genuinely separate, on-demand download rather than
+/// riding along with every app-catalog sync.</summary>
 public static class StoreCatalogSync
 {
     private const string RepoUrl = "https://github.com/theskysanctum/gridshell.git";
     private const string Branch = "master";
     private const string CatalogRelativePath = "store-catalog/catalog.json";
     private const string IconsRelativeDir = "store-catalog/icons";
-    private const string SceneCatalogRelativePath = "store-catalog/scenes.json";
-    private const string ScenesRelativeDir = "store-catalog/scenes";
 
     private static readonly string LocalPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GridShell", "StoreCatalogCache");
@@ -51,39 +51,6 @@ public static class StoreCatalogSync
         }
 
         return Load();
-    }
-
-    /// <summary>Reads store-catalog/scenes.json from the clone SyncAndLoadAsync already synced -
-    /// no separate re-clone, since StoreWindow always calls SyncAndLoadAsync (for apps) first and
-    /// this just reads the same already-fresh clone for Scenes, which aren't StoreApps (nothing
-    /// to install, just a local file path to hand to WallpaperUrl).</summary>
-    public static StoreSceneCatalogFile LoadScenes()
-    {
-        var path = Path.Combine(LocalPath, SceneCatalogRelativePath);
-        if (!File.Exists(path))
-        {
-            return new StoreSceneCatalogFile();
-        }
-
-        var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<StoreSceneCatalogFile>(json) ?? new StoreSceneCatalogFile();
-    }
-
-    /// <summary>Full path to a scene's entry HTML file in the synced clone - what to assign to
-    /// AppSettings.WallpaperUrl - or null if it's missing (deleted/renamed server-side since the
-    /// last sync).</summary>
-    public static string? GetSceneEntryPath(string entryFile)
-    {
-        var path = Path.Combine(LocalPath, ScenesRelativeDir, entryFile);
-        return File.Exists(path) ? path : null;
-    }
-
-    /// <summary>Full path to a scene's bundled thumbnail (store-catalog/scenes/{id}.png in the
-    /// synced clone - same per-id-filename convention as GetIconPath), or null if it has none.</summary>
-    public static string? GetSceneThumbnailPath(string sceneId)
-    {
-        var path = Path.Combine(LocalPath, ScenesRelativeDir, $"{sceneId}.png");
-        return File.Exists(path) ? path : null;
     }
 
     private static void Sync()
