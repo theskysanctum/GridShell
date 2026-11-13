@@ -40,7 +40,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private string? _steamExePath;
     private string? _heroicExePath;
-    private string? _gogExePath;
     private string? _itchExePath;
 
     // Same reasoning as TaskbarWindow's identical timer: GetSystemMetrics/the work area can
@@ -349,14 +348,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             _steamExePath = GameLauncherDetector.FindExe(GameLauncher.Steam);
             _heroicExePath = GameLauncherDetector.FindExe(GameLauncher.Heroic);
-            _gogExePath = GameLauncherDetector.FindExe(GameLauncher.Gog);
             _itchExePath = GameLauncherDetector.FindExe(GameLauncher.Itch);
         });
     }
 
     private void SteamButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_steamExePath);
     private void HeroicButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_heroicExePath);
-    private void GogButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_gogExePath);
     private void ItchButton_Click(object sender, RoutedEventArgs e) => LaunchGameLauncher(_itchExePath);
 
     private void LaunchGameLauncher(string? exePath)

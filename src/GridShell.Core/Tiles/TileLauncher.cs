@@ -63,7 +63,7 @@ public static class TileLauncher
             });
 
             // A game tile whose target IS one of the known PC game storefront launchers (Steam,
-            // Epic, GOG, itch) - e.g. Steam.exe with "-applaunch <id>" - actually starts that
+            // Heroic, itch) - e.g. Steam.exe with "-applaunch <id>" - actually starts that
             // launcher, not the real game; it hands off to/spawns the game itself. Once the
             // user's done, nothing closes the launcher on its own, so it's scoped exactly to
             // this: only a tile explicitly configured to launch through one of them, never any
@@ -122,7 +122,6 @@ public static class TileLauncher
     {
         (GameLauncher.Steam, "Steam.exe"),
         (GameLauncher.Heroic, "Heroic"),
-        (GameLauncher.Gog, "GalaxyClient.exe"),
         (GameLauncher.Itch, "itch.exe"),
     };
 

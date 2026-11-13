@@ -18,7 +18,7 @@ public static class StoreTileAutoWire
 {
     private static readonly HashSet<string> StorefrontLauncherIds = new(StringComparer.OrdinalIgnoreCase)
     {
-        "valve.steam", "heroicgameslauncher.heroic", "gog.galaxy", "itchio.itch",
+        "valve.steam", "heroicgameslauncher.heroic", "itchio.itch",
     };
 
     /// <summary>Returns the Tile if something changed that needs an icon reload - either a

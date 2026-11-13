@@ -8,15 +8,14 @@ public enum GameLauncher
 {
     Steam,
     Heroic,
-    Gog,
     Itch,
 }
 
 /// <summary>Finds each PC game storefront client's own executable, if installed - not game
-/// install paths, the launcher app itself (Steam.exe, Heroic's own portable exe,
-/// GalaxyClient.exe, itch.exe), so GridShell can offer a quick-launch button for each and
-/// (separately) know which exe to close once a game tile that launches through one of them
-/// ends.</summary>
+/// install paths, the launcher app itself (Steam.exe, Heroic's own portable exe, itch.exe), so
+/// GridShell can offer a quick-launch button for each and (separately) know which exe to close
+/// once a game tile that launches through one of them ends. Heroic covers both Epic and GOG
+/// itself (plus Amazon Games) - neither gets its own separate launcher entry here.</summary>
 public static class GameLauncherDetector
 {
     public static string? FindExe(GameLauncher launcher) => launcher switch
@@ -26,7 +25,6 @@ public static class GameLauncherDetector
         // a real installer - no registry entry to scan, unlike every other launcher here.
         GameLauncher.Heroic => InstalledAppLocator.FindBestExeInDirectory(
             GitHubReleaseInstaller.InstallRoot("heroicgameslauncher.heroic"), "Heroic"),
-        GameLauncher.Gog => InstalledAppLocator.FindMainExe("GOG Galaxy"),
         GameLauncher.Itch => FindItch() ?? InstalledAppLocator.FindMainExe("itch"),
         _ => null,
     };
