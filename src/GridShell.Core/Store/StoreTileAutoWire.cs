@@ -11,11 +11,13 @@ namespace GridShell.Core.Store;
 /// are idempotent.</summary>
 public static class StoreTileAutoWire
 {
-    /// <summary>Returns the newly-added Tile (still iconless - the caller is expected to kick
-    /// off IconLoader.LoadIconAsync itself, same as every other place a Tile is created, since
+    /// <summary>Returns the Tile if something changed that needs an icon reload - either a
+    /// brand new tile, or an existing one that just picked up a bundled Store icon it didn't
+    /// have before (see StoreIconCache) - or null if nothing changed (no resolvable exe yet, or
+    /// a matching tile already has its icon settled). The caller is expected to kick off
+    /// IconLoader.LoadIconAsync itself, same as every other place a Tile is created, since
     /// IconLoader needs a live AppSettings for IGDB/favicon lookups that this class, living in
-    /// GridShell.Core.Store rather than the UI layer, has no reason to depend on) or null if
-    /// nothing was added (no resolvable exe yet, or a tile already points at it).</summary>
+    /// GridShell.Core.Store rather than the UI layer, has no reason to depend on.</summary>
     public static Tile? TryWire(StoreApp app, List<Tile> allTiles)
     {
         var exePath = app.InstallMethod == "github"
@@ -27,20 +29,33 @@ public static class StoreTileAutoWire
             return null;
         }
 
-        if (allTiles.Any(t => t.Kind == TileKind.App && t.TargetPath.Equals(exePath, StringComparison.OrdinalIgnoreCase)))
+        var existing = allTiles.FirstOrDefault(t =>
+            t.Kind == TileKind.App && t.TargetPath.Equals(exePath, StringComparison.OrdinalIgnoreCase));
+
+        var tile = existing;
+        var isNew = false;
+        if (tile is null)
         {
-            return null;
+            tile = new Tile
+            {
+                Name = app.Name,
+                TargetPath = exePath,
+                IconSourcePath = exePath,
+                Kind = TileKind.App,
+            };
+            allTiles.Add(tile);
+            isNew = true;
         }
 
-        var tile = new Tile
+        // Prefer the Store's own bundled artwork over shell-icon extraction, which has proven
+        // unreliable for some installs - but never clobber a user's own "Change Icon..." choice.
+        var gotIcon = false;
+        if (tile.CustomIconPath is null && StoreIconCache.GetOrCacheIconPath(app.Id) is { } cachedIconPath)
         {
-            Name = app.Name,
-            TargetPath = exePath,
-            IconSourcePath = exePath,
-            Kind = TileKind.App,
-        };
+            tile.CustomIconPath = cachedIconPath;
+            gotIcon = true;
+        }
 
-        allTiles.Add(tile);
-        return tile;
+        return isNew || gotIcon ? tile : null;
     }
 }
