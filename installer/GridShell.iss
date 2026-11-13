@@ -1,5 +1,5 @@
 #define MyAppName "GridShell"
-#define MyAppVersion "1.1.44"
+#define MyAppVersion "1.1.45"
 #define MyAppPublisher "GridShell"
 #define MyAppURL "https://github.com/theskysanctum/GridShell"
 #define MyAppExeName "GridShell.exe"
