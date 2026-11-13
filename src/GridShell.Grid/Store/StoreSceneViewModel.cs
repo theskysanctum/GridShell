@@ -36,6 +36,8 @@ public sealed class StoreSceneViewModel : INotifyPropertyChanged
 
     public string InitialLetter => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
 
+    // --- Settings' Appearance tab (Apply among already-downloaded scenes) -------------------
+
     private bool _isCurrent;
     public bool IsCurrent
     {
@@ -47,17 +49,30 @@ public sealed class StoreSceneViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool _isApplying;
-    public bool IsApplying
+    // --- Store (download, doesn't touch the wallpaper at all) -------------------------------
+
+    private bool _isDownloaded;
+    public bool IsDownloaded
     {
-        get => _isApplying;
+        get => _isDownloaded;
         set
         {
-            _isApplying = value;
+            _isDownloaded = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(ApplyButtonText));
         }
     }
 
-    public string ApplyButtonText => IsApplying ? "Downloading..." : "Apply";
+    private bool _isDownloading;
+    public bool IsDownloading
+    {
+        get => _isDownloading;
+        set
+        {
+            _isDownloading = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DownloadButtonText));
+        }
+    }
+
+    public string DownloadButtonText => IsDownloading ? "Downloading..." : "Download";
 }

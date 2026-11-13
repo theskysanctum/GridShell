@@ -61,6 +61,11 @@ public static class StoreSceneSync
     /// without triggering a download just to check.</summary>
     public static string GetLocalCachePath(string entryFile) => Path.Combine(CacheDir, entryFile);
 
+    /// <summary>Whether DownloadEntryAsync has already fetched this scene - Store uses this to
+    /// show "Downloaded" instead of "Download", and Settings uses it to decide which scenes are
+    /// even eligible to Apply (only ones already downloaded there).</summary>
+    public static bool IsDownloaded(string entryFile) => File.Exists(GetLocalCachePath(entryFile));
+
     /// <summary>Downloads one scene's entry HTML (only that file - not the catalog, not the
     /// other scenes) into a small local cache keyed by filename, skipping the fetch entirely if
     /// already cached from a previous Apply. Returns the local file:// -navigable path, or null

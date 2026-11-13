@@ -8,7 +8,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using GridShell.Core.Interop;
 using GridShell.Core.Settings;
 using GridShell.Core.Store;
 using GridShell.Core.Tiles;
@@ -27,7 +26,6 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private readonly List<Tile> _allTiles;
     private readonly AppSettings _settings;
     private readonly Action _onTilesChanged;
-    private readonly Action _onSettingsChanged;
 
     private List<StoreAppViewModel> _allApps = new();
     private List<StoreSceneViewModel> _allScenes = new();
@@ -67,7 +65,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-    public StoreWindow(List<Tile> allTiles, AppSettings settings, Action onTilesChanged, Action onSettingsChanged)
+    public StoreWindow(List<Tile> allTiles, AppSettings settings, Action onTilesChanged)
     {
         InitializeComponent();
         DataContext = this;
@@ -75,7 +73,6 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         _allTiles = allTiles;
         _settings = settings;
         _onTilesChanged = onTilesChanged;
-        _onSettingsChanged = onSettingsChanged;
 
         Loaded += StoreWindow_Loaded;
     }
@@ -99,7 +96,9 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             : $"{_allApps.Count} apps available";
 
         // Fetched directly over HTTP (StoreSceneSync), not through the app-catalog clone above -
-        // Scenes are a deliberately separate, on-demand download.
+        // Scenes are a deliberately separate, on-demand download. Downloading is all the Store
+        // does with them - Applying one as the wallpaper happens in Settings' Appearance tab,
+        // same split as "install" (Store) vs. "configure" (Settings) everywhere else.
         _allScenes = (await StoreSceneSync.FetchCatalogAsync()).Scenes
             .Select(s => new StoreSceneViewModel { Scene = s })
             .ToList();
@@ -107,7 +106,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         foreach (var scene in _allScenes)
         {
             SetSceneThumbnail(scene);
-            RefreshSceneIsCurrent(scene);
+            scene.IsDownloaded = StoreSceneSync.IsDownloaded(scene.Scene.EntryFile);
         }
 
         Categories.Clear();
@@ -211,9 +210,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     /// <summary>Scenes' own thumbnail, loaded straight from raw.githubusercontent.com (PNGs
     /// don't hit the text/plain-forcing behavior .html files do - see StoreSceneSync) - WPF's
     /// BitmapImage downloads a remote UriSource on its own in the background, no manual fetch
-    /// needed. A broken/missing thumbnail URL just never completes rather than showing the
-    /// InitialLetter fallback - an acceptable gap for a small, fully GridShell-controlled set of
-    /// scenes.</summary>
+    /// needed.</summary>
     private static void SetSceneThumbnail(StoreSceneViewModel scene)
     {
         var bitmap = new BitmapImage();
@@ -222,16 +219,6 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         bitmap.UriSource = new Uri(StoreSceneSync.GetThumbnailUrl(scene.Scene.Id), UriKind.Absolute);
         bitmap.EndInit();
         scene.Thumbnail = bitmap;
-    }
-
-    /// <summary>Compares against the path a download WOULD land at (StoreSceneSync.
-    /// GetLocalCachePath), not whether it's actually been downloaded yet - so a scene already
-    /// applied in a previous session still shows as current without needing to re-fetch it just
-    /// to check.</summary>
-    private void RefreshSceneIsCurrent(StoreSceneViewModel scene)
-    {
-        var expectedPath = StoreSceneSync.GetLocalCachePath(scene.Scene.EntryFile);
-        scene.IsCurrent = string.Equals(_settings.WallpaperUrl, expectedPath, StringComparison.OrdinalIgnoreCase);
     }
 
     private void ApplyFilter()
@@ -270,20 +257,19 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilter();
 
-    /// <summary>Applying a Scene is just pointing AppSettings.WallpaperUrl at its local synced
-    /// .html file - the same field/mechanism Settings' own "Appearance" tab already uses for a
-    /// custom wallpaper, so WallpaperWindow (running in the separate taskbar process) needs no
-    /// changes at all, just the same live-reload notification Settings already sends it.</summary>
-    private async void ApplySceneButton_Click(object sender, RoutedEventArgs e)
+    /// <summary>Downloads a scene's entry HTML into the local cache - that's all the Store does
+    /// with it. Applying it as the wallpaper happens in Settings' Appearance tab, which only
+    /// lists scenes already downloaded here.</summary>
+    private async void DownloadSceneButton_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.CommandParameter is not StoreSceneViewModel scene)
         {
             return;
         }
 
-        scene.IsApplying = true;
+        scene.IsDownloading = true;
         var entryPath = await StoreSceneSync.DownloadEntryAsync(scene.Scene.EntryFile);
-        scene.IsApplying = false;
+        scene.IsDownloading = false;
 
         if (entryPath is null)
         {
@@ -292,14 +278,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        _settings.WallpaperUrl = entryPath;
-        _onSettingsChanged();
-        SettingsChangedMessage.NotifyTaskbar();
-
-        foreach (var s in _allScenes)
-        {
-            RefreshSceneIsCurrent(s);
-        }
+        scene.IsDownloaded = true;
     }
 
     private async void InstallButton_Click(object sender, RoutedEventArgs e)

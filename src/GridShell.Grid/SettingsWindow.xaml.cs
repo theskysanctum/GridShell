@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using GridShell.Core;
 using GridShell.Core.GameLibraries;
 using GridShell.Core.Interop;
@@ -14,6 +15,7 @@ using GridShell.Core.Interop.Audio;
 using GridShell.Core.Interop.Bluetooth;
 using GridShell.Core.Interop.Display;
 using GridShell.Core.Interop.WiFi;
+using GridShell.Core.Store;
 using GridShell.Core.Tiles;
 using GridShell.Core.Updates;
 using Vanara.PInvoke;
@@ -53,6 +55,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private static readonly string WatchdogExePath = SiblingExePath.Resolve("GridShell.Watchdog", "GridShell.Watchdog.exe");
 
     public ObservableCollection<DetectedBrowser> Browsers { get; } = new();
+    public ObservableCollection<StoreSceneViewModel> Scenes { get; } = new();
 
     private static readonly string[] PresetAccentColors =
         { "#4A90D9", "#D9534F", "#5CB85C", "#F0AD4E", "#9B59B6", "#1ABC9C" };
@@ -817,6 +820,71 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
+    // --- Scenes: pre-made animated wallpapers, picked from among ones already downloaded in
+    // the Store (StoreSceneSync) - Settings only ever reads/applies them, never downloads. -----
+
+    /// <summary>Fetches store-catalog/scenes.json directly over HTTP (no git clone) just for
+    /// names/descriptions/thumbnails, then keeps only the scenes StoreSceneSync.IsDownloaded
+    /// says are actually sitting in the local cache already - downloading happens in the Store,
+    /// not here.</summary>
+    private async Task LoadScenesAsync()
+    {
+        var scenes = (await StoreSceneSync.FetchCatalogAsync()).Scenes
+            .Where(s => StoreSceneSync.IsDownloaded(s.EntryFile))
+            .Select(s => new StoreSceneViewModel { Scene = s })
+            .ToList();
+
+        foreach (var scene in scenes)
+        {
+            SetSceneThumbnail(scene);
+            RefreshSceneIsCurrent(scene);
+        }
+
+        Scenes.Clear();
+        foreach (var scene in scenes)
+        {
+            Scenes.Add(scene);
+        }
+    }
+
+    /// <summary>Loaded straight from raw.githubusercontent.com (PNGs don't hit the
+    /// text/plain-forcing behavior .html files do - see StoreSceneSync) - WPF's BitmapImage
+    /// downloads a remote UriSource on its own in the background, no manual fetch needed.</summary>
+    private static void SetSceneThumbnail(StoreSceneViewModel scene)
+    {
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.UriSource = new Uri(StoreSceneSync.GetThumbnailUrl(scene.Scene.Id), UriKind.Absolute);
+        bitmap.EndInit();
+        scene.Thumbnail = bitmap;
+    }
+
+    private void RefreshSceneIsCurrent(StoreSceneViewModel scene)
+    {
+        var expectedPath = StoreSceneSync.GetLocalCachePath(scene.Scene.EntryFile);
+        scene.IsCurrent = string.Equals(_settings.WallpaperUrl, expectedPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Every scene listed here is already downloaded (LoadScenesAsync only ever adds
+    /// ones StoreSceneSync.IsDownloaded confirmed), so Applying is just setting the bound
+    /// WallpaperUrl property - same persist/live-reload path as typing a path into the wallpaper
+    /// box or browsing to a file, no network/await needed.</summary>
+    private void ApplySceneButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not StoreSceneViewModel scene)
+        {
+            return;
+        }
+
+        WallpaperUrl = StoreSceneSync.GetLocalCachePath(scene.Scene.EntryFile);
+
+        foreach (var s in Scenes)
+        {
+            RefreshSceneIsCurrent(s);
+        }
+    }
+
     public AppTheme Theme
     {
         get => _theme;
@@ -1068,6 +1136,8 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
         _wallpaperMuted = _settings.WallpaperMuted;
         OnPropertyChanged(nameof(WallpaperMuted));
+
+        _ = LoadScenesAsync();
 
         _tileSize = _settings.TileSize;
         OnPropertyChanged(nameof(TileSize));

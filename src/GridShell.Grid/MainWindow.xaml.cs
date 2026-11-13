@@ -433,11 +433,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 TileStore.Save(_allTiles);
                 ApplyFilter();
-            },
-            onSettingsChanged: () =>
-            {
-                AppSettingsStore.Save(_settings);
-                ApplySettings();
             })
         {
             Owner = this,

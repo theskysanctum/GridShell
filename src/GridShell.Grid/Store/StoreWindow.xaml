@@ -252,8 +252,9 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Scenes: animated wallpapers, not StoreApps - a thumbnail/Apply card grid instead
-                 of the Apps list's icon/Install row, same two-pane shell either way. -->
+            <!-- Scenes: animated wallpapers, not StoreApps - a thumbnail/Download card grid
+                 instead of the Apps list's icon/Install row. Download only - Applying one as the
+                 wallpaper happens in Settings' Appearance tab. -->
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           Visibility="{Binding IsScenesCategory, Converter={StaticResource BoolToVisibility}}">
@@ -287,19 +288,23 @@
                                                    Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,3,0,10" />
 
                                         <Border Style="{StaticResource StatusBadgeStyle}" HorizontalAlignment="Left"
-                                                Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibility}}">
+                                                Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibility}}">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
                                                            Margin="0,0,4,0" Foreground="{DynamicResource AccentBrush}" />
-                                                <TextBlock Text="Current Wallpaper" FontSize="11.5"
+                                                <TextBlock Text="Downloaded" FontSize="11.5"
                                                            Foreground="{DynamicResource AccentBrush}" />
                                             </StackPanel>
                                         </Border>
 
                                         <Button Style="{StaticResource InstallButtonStyle}" HorizontalAlignment="Left"
-                                                Click="ApplySceneButton_Click" CommandParameter="{Binding}"
-                                                Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibilityInverse}}">
-                                            <TextBlock Text="{Binding ApplyButtonText}" FontSize="12" Foreground="White" />
+                                                Click="DownloadSceneButton_Click" CommandParameter="{Binding}"
+                                                Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibilityInverse}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xf090;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                           Margin="0,0,4,0" Foreground="White" />
+                                                <TextBlock Text="{Binding DownloadButtonText}" FontSize="12" Foreground="White" />
+                                            </StackPanel>
                                         </Button>
                                     </StackPanel>
                                 </StackPanel>

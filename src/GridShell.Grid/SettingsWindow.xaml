@@ -20,6 +20,31 @@
         <local:CountToVisibilityConverter x:Key="CountToVisibility" />
         <local:CountToVisibilityInverseConverter x:Key="CountToVisibilityInverse" />
 
+        <Style x:Key="SceneApplyButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{DynamicResource AccentBrush}" CornerRadius="16"
+                                Padding="14,7" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SceneCurrentBadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
     </Window.Resources>
     <Grid Margin="16">
         <TabControl Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0">
@@ -264,6 +289,69 @@
                     </Grid>
 
                     <CheckBox Content="Mute wallpaper audio" IsChecked="{Binding WallpaperMuted}" />
+
+                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,24,0,16" />
+
+                    <TextBlock Text="Scenes" FontWeight="Bold" Margin="0,0,0,4" />
+                    <TextBlock Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
+                               TextWrapping="Wrap" Margin="0,0,0,8"
+                               Text="Pre-made animated wallpapers you've downloaded from the Store - download more there, then pick one to apply here." />
+
+                    <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,0,0,8"
+                               Text="No Scenes downloaded yet - open the Store and download one from its Scenes category first."
+                               Visibility="{Binding Scenes.Count, Converter={StaticResource CountToVisibilityInverse}}" />
+
+                    <ItemsControl ItemsSource="{Binding Scenes}"
+                                  Visibility="{Binding Scenes.Count, Converter={StaticResource CountToVisibility}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="12" Width="220" Margin="0,0,10,10"
+                                        Background="{DynamicResource SurfaceBackgroundBrush}"
+                                        BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
+                                        ClipToBounds="True">
+                                    <StackPanel>
+                                        <Grid Height="120">
+                                            <Border Background="{DynamicResource AccentBrush}"
+                                                    Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                <TextBlock Text="{Binding InitialLetter}" FontSize="24" FontWeight="Bold"
+                                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                                   Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibility}}" />
+                                        </Grid>
+
+                                        <StackPanel Margin="10,8,10,10">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12.5"
+                                                       Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                                            <TextBlock Text="{Binding Description}" FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,2,0,8" />
+
+                                            <Border Style="{StaticResource SceneCurrentBadgeStyle}" HorizontalAlignment="Left"
+                                                    Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibility}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                               Margin="0,0,4,0" Foreground="{DynamicResource AccentBrush}" />
+                                                    <TextBlock Text="Current Wallpaper" FontSize="11"
+                                                               Foreground="{DynamicResource AccentBrush}" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <Button Style="{StaticResource SceneApplyButtonStyle}" HorizontalAlignment="Left"
+                                                    Click="ApplySceneButton_Click" CommandParameter="{Binding}"
+                                                    Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                <TextBlock Text="Apply" FontSize="11.5" Foreground="White" />
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </TabItem>
 
