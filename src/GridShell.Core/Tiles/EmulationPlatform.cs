@@ -41,6 +41,14 @@ public static class EmulationPlatforms
         new EmulationPlatform("namco22", "Namco System 22", "Arcade", new[] { ".zip", ".7z" }),
         new EmulationPlatform("namco2x6", "Namco System 2x6", "Arcade", new[] { ".zip", ".7z" }),
         new EmulationPlatform("triforce", "Nintendo/Sega/Namco Triforce", "Arcade", new[] { ".zip", ".7z", ".gcm", ".iso" }),
+
+        // Added for a game-catalog source covering OpenBOR (a Beats of Rage fan-game engine)
+        // and TeknoParrot (a frontend for PC-hardware-based arcade games) - neither is part of
+        // Batocera's own systems list this file is otherwise built from, and TeknoParrot games
+        // in particular are usually a full install rather than a single ROM file, but both are
+        // included here since a real game-catalog source already organizes by these names.
+        new EmulationPlatform("openbor", "OpenBOR", "Arcade", new[] { ".zip", ".7z" }),
+        new EmulationPlatform("teknoparrot", "TeknoParrot", "Arcade", new[] { ".zip", ".7z" }),
         new EmulationPlatform("atomiswave", "Sega Atomiswave", "Arcade", new[] { ".zip", ".7z", ".chd" }),
         new EmulationPlatform("chihiro", "Sega Chihiro", "Arcade", new[] { ".zip", ".7z", ".gdi", ".chd" }),
         new EmulationPlatform("hikaru", "Sega Hikaru", "Arcade", new[] { ".zip", ".7z" }),
@@ -186,10 +194,22 @@ public static class EmulationPlatforms
         new EmulationPlatform("c64", "Commodore 64", "Home Computer", new[] { ".d64", ".t64", ".prg", ".zip", ".7z" }),
         new EmulationPlatform("amiga1200", "Commodore Amiga 1200", "Home Computer", new[] { ".adf", ".zip", ".7z" }),
         new EmulationPlatform("amiga500", "Commodore Amiga 500", "Home Computer", new[] { ".adf", ".zip", ".7z" }),
+
+        // Added for a game-catalog source covering general OCS/ECS-chipset-era Amiga software,
+        // not specific to the 500/1200 models those two already cover - same extensions/category.
+        new EmulationPlatform("amigaocsecs", "Commodore Amiga (OCS/ECS)", "Home Computer", new[] { ".adf", ".zip", ".7z" }),
+
         new EmulationPlatform("pet", "Commodore PET", "Home Computer", new[] { ".prg", ".d64", ".zip", ".7z" }),
         new EmulationPlatform("cplus4", "Commodore Plus/4", "Home Computer", new[] { ".d64", ".zip", ".7z" }),
         new EmulationPlatform("c20", "Commodore VIC-20", "Home Computer", new[] { ".prg", ".d64", ".zip", ".7z" }),
         new EmulationPlatform("pdp1", "DEC PDP-1", "Home Computer", new[] { ".zip", ".7z" }),
+
+        // Added for a game-catalog source covering DOS/x86 PC games - not previously in this
+        // list at all (this file's own header deliberately excludes "Port, Flatpak &
+        // Miscellaneous" systems like DOS as not fitting the single-file-per-game ROM model,
+        // but DOSBox-style packages still reduce to one archive per game in practice).
+        new EmulationPlatform("dos", "DOS (x86)", "Home Computer", new[] { ".zip", ".7z" }),
+
         new EmulationPlatform("dragon64", "Dragon 64", "Home Computer", new[] { ".cas", ".dsk", ".zip", ".7z" }),
         new EmulationPlatform("cgenie", "EACA Colour Genie", "Home Computer", new[] { ".zip", ".7z" }),
         new EmulationPlatform("bk", "Elektronika BK", "Home Computer", new[] { ".zip", ".7z" }),
