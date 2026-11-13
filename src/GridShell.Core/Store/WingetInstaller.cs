@@ -47,11 +47,26 @@ public static class WingetInstaller
 
     /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
     /// InstallAsync uses - lets the Store reflect real install state when it opens, not just
-    /// whatever happened during the current app session.</summary>
-    public static async Task<bool> IsInstalledAsync(string wingetId)
+    /// whatever happened during the current app session.
+    ///
+    /// winget's own "installed" answer can be stale on its own, independent of the Windows
+    /// registry entirely - confirmed live: after manually deleting an app's registry entry,
+    /// `winget list` kept reporting it installed anyway, traced to winget's own local
+    /// correlation cache (LocalState\Microsoft.Winget.Source_8wekyb3d8bbwe\installed.db) still
+    /// holding a stale match by ProductCode, which `winget source update` doesn't refresh and
+    /// which survives even deleting that cache file outright. Cross-checking against
+    /// InstalledAppLocator - the same real registry/exe lookup the rest of the Store already
+    /// trusts - catches that: winget saying yes isn't believed unless a real exe actually
+    /// resolves too.</summary>
+    public static async Task<bool> IsInstalledAsync(StoreApp app)
     {
-        var listResult = await RunAsync("list", $"--id {wingetId} -e --accept-source-agreements");
-        return listResult is { ExitCode: 0 };
+        var listResult = await RunAsync("list", $"--id {app.WingetId} -e --accept-source-agreements");
+        if (listResult is not { ExitCode: 0 })
+        {
+            return false;
+        }
+
+        return InstalledAppLocator.FindMainExe(app.Name) is not null;
     }
 
     public static async Task<InstallResult> InstallAsync(StoreApp app)

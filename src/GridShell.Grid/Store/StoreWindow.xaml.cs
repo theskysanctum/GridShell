@@ -156,7 +156,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                 {
                     "github" => GitHubReleaseInstaller.IsInstalled(app.App.Id),
                     "package" => PackageInstaller.IsInstalled(app.App.Id),
-                    _ => await WingetInstaller.IsInstalledAsync(app.App.WingetId),
+                    _ => await WingetInstaller.IsInstalledAsync(app.App),
                 };
                 app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
 
