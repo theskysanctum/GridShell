@@ -268,6 +268,13 @@
       "wingetId": "Stremio.Stremio",
       "category": "Media",
       "description": "Stremio is also a media center but with more of a focus on streaming."
+    },
+    {
+      "id": "telegram.telegramdesktop",
+      "name": "Telegram Desktop",
+      "wingetId": "Telegram.TelegramDesktop",
+      "category": "Communication",
+      "description": "Telegram is a privacy based communications app."
     }
   ]
 }
