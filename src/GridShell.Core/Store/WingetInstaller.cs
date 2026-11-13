@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using GridShell.Core.Interop;
 
 namespace GridShell.Core.Store;
 
@@ -175,6 +176,13 @@ public static class WingetInstaller
             {
                 return null;
             }
+
+            // winget.exe itself has no window of its own (CreateNoWindow above), but
+            // `install`/`uninstall` can spawn the actual vendor installer/uninstaller
+            // underneath - MSI, InstallShield, NSIS, anything - which isn't always fully
+            // silent. Hides that whole descendant tree from GridShell's own taskbar for as
+            // long as this winget invocation runs, regardless of what it turns out to be.
+            using var suppress = InstallerProcessSuppressor.Suppress(process.Id);
 
             var output = await process.StandardOutput.ReadToEndAsync();
             var error = await process.StandardError.ReadToEndAsync();
