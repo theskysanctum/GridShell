@@ -17,8 +17,8 @@ namespace GridShell.Core.Store;
 /// download for a scene is that one small HTML file, not the whole repo.</summary>
 public static class StoreSceneSync
 {
-    private const string RawBaseUrl = "https://raw.githubusercontent.com/theskysanctum/gridshell/master/store-catalog/scenes/";
-    private const string CatalogUrl = "https://raw.githubusercontent.com/theskysanctum/gridshell/master/store-catalog/scenes.json";
+    private const string RawBaseUrl = "https://raw.githubusercontent.com/theskysanctum/gridshell-store/main/store-catalog/scenes/";
+    private const string CatalogUrl = "https://raw.githubusercontent.com/theskysanctum/gridshell-store/main/store-catalog/scenes.json";
 
     private static readonly string CacheDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GridShell", "ScenesCache");

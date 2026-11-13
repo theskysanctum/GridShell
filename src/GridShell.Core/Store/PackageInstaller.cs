@@ -19,7 +19,7 @@ namespace GridShell.Core.Store;
 /// convention as GitHubReleaseInstaller.</summary>
 public static class PackageInstaller
 {
-    private const string RawBaseUrl = "https://raw.githubusercontent.com/theskysanctum/gridshell/master/store-catalog/packages/";
+    private const string RawBaseUrl = "https://raw.githubusercontent.com/theskysanctum/gridshell-store/main/store-catalog/packages/";
 
     private static readonly HttpClient Http = CreateClient();
 

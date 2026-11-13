@@ -6,17 +6,19 @@ using LibGit2Sharp;
 
 namespace GridShell.Core.Store;
 
-/// <summary>Keeps a local clone of GridShell's own repo around just to read
+/// <summary>Keeps a local clone of GridShell's own dedicated store repo around just to read
 /// store-catalog/catalog.json from it - lets the curated app list be updated by pushing to that
-/// one file, with no GridShell release needed. WinGet/GitHubReleaseInstaller/PackageInstaller
-/// actually install software; this just supplies what to list. Scenes and "package"-method
-/// installer files (see StoreSceneSync/PackageInstaller) deliberately don't go through this
-/// clone - they're fetched directly over plain HTTP instead, on demand, so a Store open never
-/// pulls down a multi-MB installer archive just to show its Install button.</summary>
+/// one file, with no GridShell release needed. A separate repo from GridShell's own source
+/// (theskysanctum/gridshell-store, not theskysanctum/gridshell) - this clone used to pull the
+/// whole GridShell source repo just for this one file and its icons, which meant every Store
+/// open re-downloaded that repo's entire history too. WinGet/GitHubReleaseInstaller/
+/// PackageInstaller actually install software; this just supplies what to list. Scenes and
+/// "package"-method installer files (see StoreSceneSync/PackageInstaller) deliberately don't go
+/// through this clone - they're fetched directly over plain HTTP instead, on demand, so a Store
+/// open never pulls down a multi-MB installer archive just to show its Install button.</summary>
 public static class StoreCatalogSync
 {
-    private const string RepoUrl = "https://github.com/theskysanctum/gridshell.git";
-    private const string Branch = "master";
+    private const string RepoUrl = "https://github.com/theskysanctum/gridshell-store.git";
     private const string CatalogRelativePath = "store-catalog/catalog.json";
     private const string IconsRelativeDir = "store-catalog/icons";
 
