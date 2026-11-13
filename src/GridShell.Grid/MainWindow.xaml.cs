@@ -369,8 +369,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        var before = new HashSet<HWND>(WindowEnumerator.EnumerateEligibleWindows());
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exePath) { UseShellExecute = true });
         HideGrid(restorePreviousFocus: false);
+
+        // None of Steam/Heroic/itch remember "always start maximized" on their own - same
+        // "wait for its window, then force it" pattern TileLauncher already uses for the same
+        // reason (a freshly launched process doesn't reliably get focus, let alone a specific
+        // window state, on its own).
+        _ = Task.Run(() =>
+        {
+            for (var attempt = 0; attempt < 50; attempt++)
+            {
+                Thread.Sleep(100);
+                var newWindow = WindowEnumerator.EnumerateEligibleWindows().FirstOrDefault(h => !before.Contains(h));
+                if (!newWindow.IsNull)
+                {
+                    WindowEnumerator.ActivateMaximized(newWindow);
+                    return;
+                }
+            }
+        });
     }
 
     private void ApplySettings()
