@@ -254,6 +254,13 @@
       "wingetId": "Brave.Brave",
       "category": "Browsers",
       "description": "The Official Brave Web Browser. It's ad-free with built-in VPN and Tor."
+    },
+    {
+      "id": "xbmcfoundation.kodi",
+      "name": "Kodi Media Center",
+      "wingetId": "XBMCFoundation.Kodi"
+      "category": "Media",
+      "description": "World famous media center with addons and able to scrape metadata for your muisc, movies, tv shows, and much more."
     }
   ]
 }
