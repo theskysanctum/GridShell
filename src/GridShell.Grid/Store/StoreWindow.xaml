@@ -321,7 +321,7 @@
         <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,10"
                 BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
             <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"
-                       Text="Installs via winget (Windows Package Manager). The catalog updates itself from GridShell's own repo, independent of app releases.   •   Esc: close" />
+                       Text="Esc: close" />
         </Border>
     </Grid>
 </Window>
