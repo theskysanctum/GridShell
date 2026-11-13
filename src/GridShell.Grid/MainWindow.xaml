@@ -320,7 +320,8 @@
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="16" />
                 </Button>
                 <Button x:Name="AddTileButton" Padding="8,6" Margin="8,0,0,0" Click="AddTileButton_Click" Style="{StaticResource ModernButtonStyle}"
-                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Add">
+                        Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Add"
+                        Visibility="{Binding IsWebTabActive, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="&#xe145;" FontFamily="{StaticResource IconFont}"
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="16" />
                 </Button>
