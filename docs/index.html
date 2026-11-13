@@ -3,160 +3,169 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GridShell: controller-first desktop shell for Windows</title>
-<meta name="description" content="GridShell replaces the Windows Start Menu and taskbar with a fullscreen launcher grid, file manager, download manager, and emulation workflow built for controllers and couch setups.">
+<title>GridShell • controller-first Windows shell</title>
+<meta name="description" content="GridShell is a controller-first Windows shell with a fullscreen launcher, dual-pane file explorer, download manager, and emulation tooling built for living-room PCs.">
 <link rel="canonical" href="https://theskysanctum.com/gridshell/">
-<meta property="og:title" content="GridShell: controller-first desktop shell for Windows">
-<meta property="og:description" content="A fullscreen launcher grid, dual-pane file explorer, taskbar sidebar, download manager, and emulation toolkit for Windows, built for controllers.">
+<meta property="og:title" content="GridShell • controller-first Windows shell">
+<meta property="og:description" content="A fullscreen launcher, taskbar replacement, file explorer, download manager, and emulation toolkit for Windows.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://theskysanctum.com/gridshell/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-:root{--bg:#0F1115;--panel:#171A21;--panel2:#1D212A;--line:#2A2F3A;--text:#EEF1F6;--mute:#A3ABBA;--accent:#FFC53D;--link:#7DB7FF}
+:root{--bg:#0A0D12;--bg2:#111821;--panel:#151C27;--panel2:#1B2431;--line:#2A3443;--text:#EDF3FF;--muted:#9AA6BA;--textsoft:#CFD9EC;--accent:#FFD166;--accent2:#7BDFF2;--green:#6BE5A5;--purple:#A78BFA;--red:#FF7C7C;--link:#7DB7FF}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;background:var(--bg);scroll-padding-top:4.5rem}
-body{margin:0;background:var(--bg);color:var(--text);font:400 1.0625rem/1.65 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif}
+html{scroll-behavior:smooth;background:var(--bg);scroll-padding-top:4.75rem}
+body{margin:0;background:
+radial-gradient(1200px 900px at 20% -20%, rgba(125,183,255,.10), transparent 52%),
+radial-gradient(900px 700px at 100% 0%, rgba(255,209,102,.12), transparent 45%),
+var(--bg);color:var(--text);font:400 1.0625rem/1.7 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif}
 a{color:var(--link)}
-code{font:.92em Consolas,"Courier New",monospace;background:var(--panel2);padding:.1rem .35rem}
+code{font:.92em Consolas,"Courier New",monospace;background:var(--panel2);padding:.12rem .35rem;border-radius:.3rem}
 :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+img{max-width:100%}
 .wrap{width:min(100% - 2.5rem,66rem);margin-inline:auto}
-.bar{position:sticky;top:0;z-index:5;background:rgba(15,17,21,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-.bar .wrap{display:flex;gap:.3rem 1.5rem;flex-wrap:wrap;align-items:center;padding:.7rem 0}
-.bar .brand{display:flex;align-items:center;gap:.6rem;margin-right:auto;color:var(--text);text-decoration:none;font-weight:700;font-size:1.1rem}
+.bar{position:sticky;top:0;z-index:50;background:rgba(10,13,18,.88);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+.bar .wrap{display:flex;gap:.3rem 1.5rem;flex-wrap:wrap;align-items:center;padding:.8rem 0}
+.bar .brand{display:flex;align-items:center;gap:.65rem;margin-right:auto;color:var(--text);text-decoration:none;font-weight:700;font-size:1.1rem;letter-spacing:-.02em}
 .bar .brand img{width:26px;height:26px;display:block}
-.bar nav{display:flex;gap:.2rem 1.3rem;flex-wrap:wrap;align-items:center}
-.bar nav a{color:var(--text);font-weight:600;text-decoration:none;padding:.3rem 0;border-bottom:3px solid transparent}
-.bar nav a:hover{border-color:var(--accent)}
-.bar nav a.dl{background:var(--accent);color:#14161B;padding:.35rem .9rem;border:0}
-.bar nav a.dl:hover{filter:brightness(1.1)}
-.hero .wrap{display:grid;grid-template-columns:1fr 1.25fr;gap:2.5rem 3.5rem;align-items:center;padding:4.5rem 0 4rem}
-h1{margin:0;font:600 clamp(2.3rem,5.2vw,3.5rem)/1 "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.035em}
-.hero p.sub{margin:1.3rem 0 0;font-size:1.2rem;color:var(--mute);max-width:30rem}
-.acts{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.8rem}
-.btn{display:inline-block;padding:.85rem 1.4rem;font-weight:700;text-decoration:none;border:2px solid var(--text);color:var(--text)}
-.btn.main{background:var(--accent);border-color:var(--accent);color:#14161B}
-.btn:hover{filter:brightness(1.1)}
-.facts{margin:1.4rem 0 0;padding:0;list-style:none;display:flex;gap:.3rem 1.2rem;flex-wrap:wrap;color:var(--mute);font-size:.95rem}
-.facts li::before{content:"";display:inline-block;width:.5rem;height:.5rem;background:var(--accent);margin-right:.5rem}
-.screen{border:1px solid var(--line);background:#0A0C10;box-shadow:0 24px 60px -20px rgba(0,0,0,.8);overflow:hidden}
-.screen .body{display:grid;grid-template-columns:3.6rem 1fr;min-height:19.5rem}
-.side{border-right:1px solid var(--line);background:#14161b;padding:.6rem;display:flex;flex-direction:column;align-items:center;gap:.5rem}
-.side .launcher{width:2rem;height:2rem;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.side .pin{width:2rem;height:2rem;border-radius:.4rem;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff}
+.bar nav{display:flex;gap:.2rem 1.4rem;flex-wrap:wrap;align-items:center}
+.bar nav a{color:var(--textsoft);font-weight:600;text-decoration:none;padding:.35rem 0;border-bottom:3px solid transparent;transition:border-color .2s ease, color .2s ease}
+.bar nav a:hover{border-color:var(--accent);color:var(--text)}
+.bar nav a.dl{background:linear-gradient(180deg,#FFD166,#F5B73A);color:#181b1e;border:0;padding:.5rem .95rem;border-radius:.8rem;font-weight:800;box-shadow:0 10px 30px rgba(255,209,102,.25)}
+.bar nav a.dl:hover{filter:brightness(1.03)}
+.hero .wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:2.5rem 3.5rem;align-items:center;padding:4.6rem 0 3.8rem}
+.kicker{display:inline-block;padding:.35rem .65rem;border-radius:999px;background:rgba(125,183,255,.1);color:var(--link);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(125,183,255,.25)}
+h1{margin:1rem 0 0;font:700 clamp(2.5rem,5vw,4rem)/1 "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.058em}
+.hero p.sub{margin:1.2rem 0 0;font-size:1.15rem;max-width:31rem;color:var(--muted)}
+.acts{display:flex;gap:.85rem;flex-wrap:wrap;margin-top:1.8rem}
+.btn{display:inline-block;padding:.92rem 1.3rem;font-weight:800;text-decoration:none;border-radius:.9rem;transition:transform .15s ease, filter .2s ease}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
+.btn.main{background:linear-gradient(180deg,#FFD166,#F2B844);color:#171b20;border:1px solid rgba(255,209,102,.6);box-shadow:0 16px 38px rgba(255,209,102,.18)}
+.btn.alt{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.02);color:var(--text)}
+.ul-rail{display:flex;gap:1rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.95rem}
+.ul-rail li{display:flex;align-items:center;gap:.55rem}
+.ul-rail li::before{content:"";display:inline-block;width:.6rem;height:.6rem;border-radius:50%;background:linear-gradient(180deg,var(--accent),#E39B1F);box-shadow:0 0 0 4px rgba(255,209,102,.08)}
+.screen{position:relative;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,#0d1117,#080b10);border-radius:1.2rem;box-shadow:0 28px 70px rgba(0,0,0,.48);overflow:hidden}
+.screen::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg, rgba(255,255,255,.02), transparent 22%, transparent 78%, rgba(255,255,255,.02));pointer-events:none}
+.screen .body{display:grid;grid-template-columns:3.75rem 1fr;min-height:21rem}
+.side{border-right:1px solid rgba(255,255,255,.06);background:rgba(16,20,26,.95);padding:.7rem .52rem;display:flex;flex-direction:column;align-items:center;gap:.55rem}
+.side .launcher{width:2.1rem;height:2.1rem;border-radius:0.6rem;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-size:1.15rem}
+.side .pin{width:2.1rem;height:2.1rem;border-radius:.7rem;display:flex;align-items:center;justify-content:center;font-size:0.95rem;color:#fff}
 .side .spacer{flex:1}
-.side .batt{font-size:.62rem;color:var(--mute);text-align:center;line-height:1.3}
-.panel-top{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.6rem;padding:.65rem .8rem}
-.tabs{display:flex;gap:.4rem}
-.pill{padding:.3rem .8rem;font-size:.72rem;font-weight:700;background:var(--panel2);color:var(--mute);white-space:nowrap}
-.pill.on{background:var(--accent);color:#14161B}
-.pill.add{background:transparent;color:var(--mute);padding:.3rem .5rem}
-.search{justify-self:center;padding:.3rem 1.4rem;background:var(--panel2);color:var(--mute);font-size:.72rem;white-space:nowrap}
-.tools{display:flex;gap:.5rem;justify-self:end}
-.tool-btn{width:1.7rem;height:1.7rem;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--mute)}
-.main{position:relative}
-.mosaic{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:4.6rem;gap:.5rem;padding:0 .8rem .8rem}
-.corner{position:absolute;right:.8rem;bottom:.6rem;display:flex;gap:.5rem;align-items:center}
-.corner-btn{width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff}
-.corner-btn.power{background:var(--panel2);color:var(--mute)}
-.t{border-radius:.35rem;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;font-weight:600;font-size:.62rem;color:#fff;outline:2px solid transparent}
-.t.on{outline-color:var(--accent)}
-.t i{width:1.6rem;height:1.6rem;border-radius:.4rem;display:block}
-.c1{background:#1E6FD9}.c2{background:#0E9594}.c3{background:#3C9A4B}.c4{background:#D9731A}.c5{background:#7B52C9}.c6{background:#C8453B}.c7{background:#3F5266}.c8{background:#B0943A}
-.cap{margin:.6rem 0 0;color:var(--mute);font-size:.85rem}
-section{padding:4rem 0;border-top:1px solid var(--line)}
-section.alt{background:var(--panel)}
-.head{max-width:40rem;margin-bottom:2.2rem}
-h2{margin:0 0 .6rem;font:600 2rem/1.15 "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.02em}
-.head p{margin:0;color:var(--mute)}
+.side .batt{font-size:.62rem;color:var(--muted);text-align:center;line-height:1.3}
+.panel-top{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.65rem;padding:.7rem .8rem .65rem}
+.tabs{display:flex;gap:.38rem;flex-wrap:wrap}
+.pill{padding:.28rem .7rem;border-radius:.6rem;font-size:.72rem;font-weight:700;background:rgba(255,255,255,.04);color:var(--muted);white-space:nowrap}
+.pill.on{background:var(--accent);color:#171b20}
+.pill.add{background:transparent;color:var(--muted);padding-left:.45rem;padding-right:.45rem}
+.search{justify-self:center;padding:.3rem 1.2rem;border-radius:.6rem;background:rgba(255,255,255,.04);color:var(--muted);font-size:.72rem;white-space:nowrap}
+.tools{display:flex;gap:.45rem;justify-self:end}
+.tool-btn{width:1.7rem;height:1.7rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:.82rem;color:var(--muted);background:rgba(255,255,255,.02)}
+.main{position:relative;background:linear-gradient(180deg, rgba(18,24,31,.9), rgba(13,17,22,.9))}
+.mosaic{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:4.5rem;gap:.52rem;padding:0 .78rem .8rem}
+.t{border-radius:.6rem;background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.42rem;font-weight:700;font-size:.62rem;color:#fff;outline:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.t.on{outline-color:var(--accent);box-shadow:0 0 0 1px rgba(255,209,102,.22)}
+.t i{width:1.65rem;height:1.65rem;border-radius:.5rem;display:block}
+.c1{background:#2375E6}.c2{background:#2BB3A7}.c3{background:#3EAB60}.c4{background:#D67F24}.c5{background:#7B5FE7}.c6{background:#DF5E50}.c7{background:#5A7287}.c8{background:#A18E40}
+.cap{margin:.9rem 0 0;color:var(--muted);font-size:.85rem}
+section{padding:4.1rem 0;border-top:1px solid rgba(255,255,255,.06)}
+section.alt{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0))}
+.head{max-width:42rem;margin-bottom:2.1rem}
+h2{margin:0 0 .7rem;font:600 clamp(1.85rem,4vw,2.7rem)/1.12 "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.036em}
+.head p{margin:0;color:var(--muted)}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.3rem 0 0}
+.kpi .box{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.05);padding:1rem 1.05rem;border-radius:1rem}
+.kpi b{display:block;font-size:1.7rem;letter-spacing:-.04em;margin-bottom:.2rem}
+.kpi span{display:block;color:var(--muted);font-size:.9rem}
 .catgrid{display:grid;grid-template-columns:1fr 1fr;gap:2.2rem 3rem}
-.cat h3{margin:0 0 .8rem;font-size:1.05rem;color:var(--accent)}
-.cat ul{margin:0;padding:0;list-style:none;display:grid;gap:.55rem}
-.cat li{color:var(--mute);font-size:.95rem;line-height:1.5;padding-left:1rem;position:relative}
-.cat li::before{content:"";position:absolute;left:0;top:.6em;width:.4rem;height:.4rem;background:var(--accent)}
-.cat li b{color:var(--text);font-weight:600}
+.cat h3{margin:0 0 .85rem;font-size:1.04rem;color:var(--accent);font-weight:800;letter-spacing:.02em}
+.cat ul{margin:0;padding:0;list-style:none;display:grid;gap:.6rem}
+.cat li{color:var(--muted);font-size:.95rem;line-height:1.5;padding-left:1rem;position:relative}
+.cat li::before{content:"";position:absolute;left:0;top:.7em;width:.4rem;height:.4rem;border-radius:50%;background:var(--accent)}
+.cat li b{color:var(--text);font-weight:700}
 .steps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;counter-reset:s}
-.steps li{counter-increment:s;border:1px solid var(--line);background:var(--bg);padding:1.4rem 1.5rem}
-.steps li::before{content:counter(s);display:block;width:2rem;height:2rem;background:var(--accent);color:#14161B;font-weight:800;text-align:center;line-height:2rem;margin-bottom:.8rem}
-.steps b{display:block;margin-bottom:.3rem}
-.steps span{color:var(--mute)}
+.steps li{counter-increment:s;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015);border-radius:1rem;padding:1.4rem 1.4rem 1.2rem}
+.steps li::before{content:counter(s);display:flex;align-items:center;justify-content:center;width:2rem;height:2rem;background:linear-gradient(180deg,#FFD166,#F2B844);color:#1A1D20;border-radius:.6rem;font-weight:800;margin-bottom:.9rem}
+.steps b{display:block;margin-bottom:.35rem}
+.steps span{color:var(--muted)}
 .req{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem 3rem;margin:1.8rem 0 0;max-width:44rem}
-.req div{border-top:1px solid var(--line);padding:.6rem 0;display:flex;justify-content:space-between;gap:1rem}
-.req dt{color:var(--mute)}.req dd{margin:0;font-weight:600;text-align:right}
+.req div{border-top:1px solid rgba(255,255,255,.06);padding:.72rem 0;display:flex;justify-content:space-between;gap:1rem}
+.req dt{color:var(--muted)}
+.req dd{margin:0;font-weight:700;text-align:right;color:var(--text)}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
-.mode{border:1px solid var(--line);background:var(--panel);padding:1.5rem}
-.mode h3{margin:0 0 .5rem;font-size:1.2rem}
-.mode p{margin:0;color:var(--mute)}
-.tag{display:inline-block;margin-left:.5rem;font-size:.75rem;font-weight:700;padding:.1rem .5rem;vertical-align:middle;background:#1F3B2A;color:#7BDBA1}
-.tag.warn{background:#3F2620;color:#F0997F}
+.mode{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015);padding:1.5rem;border-radius:1rem}
+.mode h3{margin:0 0 .5rem;font-size:1.2rem;letter-spacing:-.02em}
+.mode p{margin:0;color:var(--muted)}
+.tag{display:inline-block;margin-left:.5rem;font-size:.72rem;font-weight:800;padding:.18rem .55rem;border-radius:999px;vertical-align:middle;background:rgba(107,229,165,.16);color:#A8F0C9;border:1px solid rgba(107,229,165,.25)}
+.tag.warn{background:rgba(255,124,124,.15);color:#FFC1C1;border-color:rgba(255,124,124,.26)}
 .faq{max-width:46rem}
-.faq details{border-top:1px solid var(--line)}
-.faq details:last-child{border-bottom:1px solid var(--line)}
-.faq summary{cursor:pointer;list-style:none;padding:1.1rem 2rem 1.1rem 0;font-weight:700;font-size:1.1rem;position:relative}
+.faq details{border-top:1px solid rgba(255,255,255,.06)}
+.faq details:last-child{border-bottom:1px solid rgba(255,255,255,.06)}
+.faq summary{cursor:pointer;list-style:none;padding:1.05rem 2rem 1.05rem 0;font-weight:700;font-size:1.05rem;position:relative;color:var(--text)}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";position:absolute;right:.2rem;top:.95rem;font-size:1.5rem;line-height:1;color:var(--accent)}
+.faq summary::after{content:"+";position:absolute;right:.2rem;top:.82rem;font-size:1.4rem;line-height:1;color:var(--accent)}
 .faq details[open] summary::after{content:"\2212"}
-.faq details p{margin:0 0 1.2rem;color:var(--mute);max-width:40rem}
-pre{margin:1rem 0 0;padding:1rem 1.2rem;background:var(--panel);border:1px solid var(--line);overflow-x:auto;font:.92rem/1.5 Consolas,"Courier New",monospace}
-.build p{margin:0 0 1rem;max-width:40rem;color:var(--mute)}
-footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--mute);font-size:.95rem}
-footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
+.faq details p{margin:0 0 1.2rem;color:var(--muted);max-width:40rem}
+pre{margin:1rem 0 0;padding:1rem 1.2rem;background:rgba(255,255,255,.015);border:1px solid rgba(255,255,255,.06);border-radius:.9rem;overflow-x:auto;font:.92rem/1.5 Consolas,"Courier New",monospace}
+.build p{margin:0 0 1rem;max-width:40rem;color:var(--muted)}
+footer{border-top:1px solid rgba(255,255,255,.06);padding:2rem 0 3rem;color:var(--muted);font-size:.95rem}
+footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 .shots{display:grid;grid-template-columns:1fr 1fr;gap:2.2rem 2.5rem}
-.shot figcaption{margin-top:.7rem;color:var(--mute);font-size:.85rem}
-.shot figcaption b{color:var(--text);font-weight:600}
-.frame{position:relative;aspect-ratio:16/9;border:1px solid var(--line);background:#0A0C10;box-shadow:0 20px 50px -24px rgba(0,0,0,.8);overflow:hidden;display:grid;grid-template-columns:3.3rem 1fr;min-height:0}
+.shot figcaption{margin-top:.8rem;color:var(--muted);font-size:.85rem}
+.shot figcaption b{color:var(--text);font-weight:700}
+.frame{position:relative;aspect-ratio:16/9;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,#0d1117,#070b11);border-radius:1rem;box-shadow:0 18px 42px rgba(0,0,0,.32);overflow:hidden;display:grid;grid-template-columns:3.3rem 1fr;min-height:0}
 .frame.tall{aspect-ratio:16/11}
 .frame .side{grid-column:1}
-.frame .main{grid-column:2;display:flex;flex-direction:column;min-height:0}
+.frame .main{grid-column:2;display:flex;flex-direction:column;min-height:0;background:linear-gradient(180deg, rgba(18,24,31,.9), rgba(13,17,22,.9))}
 .wtiles{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:4.2rem;gap:.45rem;padding:0 .7rem .7rem;overflow:hidden}
-.wt{border-radius:.3rem;background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;font-weight:600;font-size:.6rem;color:#fff}
-.wt i{width:1.5rem;height:1.5rem;border-radius:50%;display:block}
-.gamehead{grid-column:1/-1;color:var(--mute);font-size:.6rem;font-weight:700;margin:.3rem 0 0;text-transform:uppercase;letter-spacing:.04em}
+.wt{border-radius:.6rem;background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;font-weight:700;font-size:.6rem;color:#fff}
+.wt i{width:1.5rem;height:1.5rem;border-radius:.5rem;display:block}
+.gamehead{grid-column:1/-1;color:var(--muted);font-size:.58rem;font-weight:800;margin:.35rem 0 0;text-transform:uppercase;letter-spacing:.05em}
 .gtiles{display:grid;grid-template-columns:repeat(6,1fr);gap:.45rem;padding:0 .7rem .7rem;overflow:hidden;align-content:start}
-.gt{position:relative;border-radius:.3rem;aspect-ratio:140/196;overflow:hidden;display:flex;align-items:flex-end;outline:2px solid transparent}
+.gt{position:relative;border-radius:.6rem;aspect-ratio:140/196;overflow:hidden;display:flex;align-items:flex-end;outline:2px solid transparent}
 .gt.on{outline-color:var(--accent)}
-.gt span{position:relative;z-index:1;color:#fff;font-size:.56rem;font-weight:700;padding:.3rem;text-align:center;width:100%;background:linear-gradient(to top,rgba(0,0,0,.85),transparent)}
+.gt span{position:relative;z-index:1;color:#fff;font-size:.56rem;font-weight:700;padding:.32rem;text-align:center;width:100%;background:linear-gradient(to top,rgba(0,0,0,.82),transparent)}
 .fmpanes{flex:1;display:grid;grid-template-columns:1fr 2px 1fr;min-height:0}
 .fmpane{display:flex;flex-direction:column;min-height:0;position:relative}
 .fmpane.active{box-shadow:inset 0 0 0 2px var(--accent)}
-.fmtool{display:flex;align-items:center;gap:.3rem;padding:.4rem;border-bottom:1px solid var(--line);color:var(--mute)}
-.fmtool b{color:var(--text);font-weight:400;font-size:.6rem;margin-left:.2rem}
-.fmhead{display:grid;grid-template-columns:1fr 3.5rem 4.5rem;padding:.3rem .5rem;color:var(--mute);border-bottom:1px solid var(--line);font-size:.58rem}
+.fmtool{display:flex;align-items:center;gap:.3rem;padding:.42rem;border-bottom:1px solid rgba(255,255,255,.06);color:var(--muted)}
+.fmtool b{color:var(--text);font-weight:600;font-size:.6rem;margin-left:.2rem}
+.fmhead{display:grid;grid-template-columns:1fr 3.5rem 4.5rem;padding:.3rem .5rem;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.06);font-size:.58rem}
 .fmrow{display:grid;grid-template-columns:1fr 3.5rem 4.5rem;padding:.28rem .5rem;font-size:.6rem;align-items:center}
-.fmrow.on{background:var(--accent);color:#14161B}
+.fmrow.on{background:var(--accent);color:#151a22}
 .fmrow i{display:inline-block;width:.7rem;height:.7rem;border-radius:.15rem;margin-right:.4rem;vertical-align:middle}
-.fmsplit{background:var(--line)}
-.fmstatus{border-top:1px solid var(--line);padding:.3rem .6rem;color:var(--mute);font-size:.56rem}
+.fmsplit{background:rgba(255,255,255,.06)}
+.fmstatus{border-top:1px solid rgba(255,255,255,.06);padding:.3rem .6rem;color:var(--muted);font-size:.56rem}
 .dlbar{display:flex;gap:.4rem;padding:.6rem}
-.dlinput{flex:1;background:var(--panel2);color:var(--mute);padding:.3rem .6rem;border-radius:.2rem}
-.dlbtn{background:var(--accent);color:#14161B;font-weight:700;padding:.3rem .8rem;border-radius:.2rem}
-.dlstatus{padding:0 .6rem .4rem;color:var(--mute);font-size:.58rem}
-.dlhead{display:grid;grid-template-columns:1fr 3.5rem 3rem 2.6rem 4rem;padding:.3rem .6rem;color:var(--mute);border-bottom:1px solid var(--line);font-size:.58rem}
-.dlrow{display:grid;grid-template-columns:1fr 3.5rem 3rem 2.6rem 4rem;padding:.4rem .6rem;align-items:center;border-bottom:1px solid var(--panel2);font-size:.6rem}
-.dlprog{height:.4rem;background:var(--panel2);border-radius:.2rem;overflow:hidden}
-.dlprog i{display:block;height:100%;background:var(--accent)}
-.dim{position:absolute;inset:0;background:rgba(10,12,16,.55)}
-.dialog{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;background:var(--panel);border:1px solid var(--line);box-shadow:0 20px 40px rgba(0,0,0,.6);padding:.8rem}
-.dialog h4{margin:0 0 .5rem;font-size:.72rem}
-.dialog .note{color:var(--mute);font-size:.56rem;margin:0 0 .6rem}
-.cmrow{display:flex;align-items:center;gap:.4rem;padding:.4rem;background:var(--bg);margin-bottom:.35rem}
+.dlinput{flex:1;background:rgba(255,255,255,.04);color:var(--muted);padding:.35rem .6rem;border-radius:.45rem;border:1px solid rgba(255,255,255,.04)}
+.dlbtn{background:linear-gradient(180deg,#FFD166,#F2B844);color:#171b20;font-weight:800;padding:.35rem .8rem;border-radius:.45rem}
+.dlstatus{padding:0 .6rem .4rem;color:var(--muted);font-size:.58rem}
+.dlhead{display:grid;grid-template-columns:1fr 3.5rem 3rem 2.6rem 4rem;padding:.3rem .6rem;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.06);font-size:.58rem}
+.dlrow{display:grid;grid-template-columns:1fr 3.5rem 3rem 2.6rem 4rem;padding:.4rem .6rem;align-items:center;border-bottom:1px solid rgba(255,255,255,.04);font-size:.6rem}
+.dlprog{height:.4rem;background:rgba(255,255,255,.04);border-radius:.2rem;overflow:hidden}
+.dlprog i{display:block;height:100%;background:linear-gradient(90deg,#FFD166,#F2B844)}
+.dim{position:absolute;inset:0;background:rgba(8,12,17,.55)}
+.dialog{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;background:rgba(21,28,39,.98);border:1px solid rgba(255,255,255,.06);border-radius:1rem;box-shadow:0 18px 44px rgba(0,0,0,.48);padding:.8rem}
+.dialog h4{margin:0 0 .5rem;font-size:.72rem;letter-spacing:.02em}
+.dialog .note{color:var(--muted);font-size:.56rem;margin:0 0 .6rem;line-height:1.5}
+.cmrow{display:flex;align-items:center;gap:.4rem;padding:.42rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:.55rem;margin-bottom:.35rem}
 .cmrow .name{flex:1}
 .cmrow .name b{display:block;font-size:.62rem}
-.cmrow .name span{color:var(--mute);font-size:.54rem}
-.cmbtn{background:var(--panel2);padding:.2rem .5rem;font-size:.54rem;white-space:nowrap}
-.stabs{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;font-size:.54rem}
-.stab{padding:.2rem .5rem;background:var(--bg);color:var(--mute)}
-.stab.on{background:var(--accent);color:#14161B}
+.cmrow .name span{color:var(--muted);font-size:.54rem}
+.cmbtn{background:rgba(255,255,255,.04);padding:.22rem .5rem;border-radius:.4rem;font-size:.54rem;white-space:nowrap}
+.stabs{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.65rem;font-size:.54rem}
+.stab{padding:.22rem .5rem;background:rgba(255,255,255,.03);color:var(--muted);border-radius:.4rem}
+.stab.on{background:var(--accent);color:#171b20}
 .srow{margin-bottom:.55rem}
-.srow label{display:block;color:var(--mute);font-size:.56rem;margin-bottom:.25rem}
-.sselect{background:var(--bg);padding:.25rem .5rem;font-size:.6rem;display:inline-block;min-width:6rem}
+.srow label{display:block;color:var(--muted);font-size:.56rem;margin-bottom:.25rem}
+.sselect{background:rgba(255,255,255,.02);padding:.25rem .5rem;border-radius:.4rem;font-size:.6rem;display:inline-block;min-width:6rem}
 .swatches{display:flex;gap:.3rem}
 .swatch{width:1.1rem;height:1.1rem;border-radius:50%}
 .swatch.on{outline:2px solid #fff;outline-offset:1px}
-@media (max-width:60rem){.feat{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:52rem){.hero .wrap{grid-template-columns:1fr;padding:3rem 0}.feat,.modes,.steps,.req,.catgrid,.shots{grid-template-columns:1fr}.bar nav a:not(.dl){display:none}}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.t{transition:none}}
+@media (max-width:60rem){.hero .wrap{grid-template-columns:1fr}.kpi{grid-template-columns:1fr}.feat,.modes,.steps,.req,.catgrid,.shots{grid-template-columns:1fr}.bar nav a:not(.dl){display:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.bar nav a{transition:none}}
 </style>
 </head>
 <body>
@@ -174,13 +183,18 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 
 <header class="hero"><div class="wrap">
 <div>
-<h1>Your Windows desktop, built for a controller.</h1>
-<p class="sub">GridShell replaces the Start Menu and taskbar with a full-screen launcher grid. It also includes a dual-pane file explorer, download manager, emulation tooling, and a built-in taskbar/sidebar workflow for modern couch-PC setups.</p>
+<div class="kicker">Windows shell</div>
+<h1>Your Windows desktop, built for the couch.</h1>
+<p class="sub">GridShell replaces the Start Menu and taskbar with a fullscreen, controller-first launcher. It also includes a dual-pane file explorer, download manager, emulator tooling, and a proper taskbar/sidebar workflow for a living-room PC.</p>
 <div class="acts">
 <a class="btn main" href="https://github.com/theskysanctum/gridshell/releases/latest/download/GridShell-Setup.exe">Download for Windows</a>
-<a class="btn" href="#features">See what it does</a>
+<a class="btn alt" href="#features">See what it does</a>
 </div>
-<ul class="facts"><li>Open source</li><li>Controller-first</li><li>Works next to Windows</li></ul>
+<ul class="ul-rail">
+<li>Open source</li>
+<li>Controller-first</li>
+<li>Works alongside Windows</li>
+</ul>
 </div>
 <div>
 <div class="screen" aria-hidden="true">
@@ -222,17 +236,17 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="t"><i class="c8"></i>WinSCP</div>
 <div class="t"><i class="c3"></i>XnView</div>
 </div>
-<div class="corner">
-<div class="corner-btn c5">◆</div>
-<div class="corner-btn c7">◆</div>
-<div class="corner-btn c4">◆</div>
-<div class="corner-btn c6">◆</div>
-<div class="corner-btn power">⏻</div>
+<div class="corner" style="position:absolute;right:.8rem;bottom:.64rem;display:flex;gap:.5rem;align-items:center;">
+<div class="corner-btn c5" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c7" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c4" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c6" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn power" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;background:rgba(255,255,255,.04)">⏻</div>
 </div>
 </div>
 </div>
 </div>
-<p class="cap">A launcher-first Windows shell built for couch play, keyboard, and controller input.</p>
+<p class="cap">A fullscreen launcher for apps, games, files, and downloads—designed to feel natural from the couch.</p>
 </div>
 </div></header>
 
@@ -241,11 +255,15 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <h2>Everything you reach for, in one place</h2>
 <p>GridShell is built around a full-screen launcher, but it also includes the file tools, downloads, and emulation workflows you need for a complete Windows setup.</p>
 </div>
-<div class="catgrid">
-
+<div class="kpi">
+<div class="box"><b>190+</b><span>platform mappings for RetroArch and standalone emulators</span></div>
+<div class="box"><b>3</b><span>ways to launch: apps, web, and games</span></div>
+<div class="box"><b>2</b><span>run modes: alongside Windows or as your shell</span></div>
+</div>
+<div class="catgrid" style="margin-top:2.2rem;">
 <div class="cat"><h3>Launcher grid</h3><ul>
-<li><b>Apps, Web, and Games tabs</b> — a fullscreen tile grid that works with a D-pad, stick, keyboard, or mouse.</li>
-<li><b>Fast search</b> — type once and filter the grid without hunting for menus.</li>
+<li><b>Apps, Web, and Games tabs</b> — a fullscreen tile grid designed for a D-pad, stick, keyboard, or mouse.</li>
+<li><b>Search-first workflow</b> — type once to filter the grid without hunting through menus.</li>
 <li><b>Custom tiles</b> — add, rename, change icons, or remove shortcuts; games can fetch cover art automatically.</li>
 <li><b>Installed-game detection</b> — Steam, Epic Games, and GOG libraries are scanned and surfaced as tiles.</li>
 <li><b>Quick storefront launchers</b> — Steam, Epic, GOG, and itch can launch directly from the grid.</li>
@@ -254,29 +272,29 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="cat"><h3>Controller and shell</h3><ul>
 <li><b>Controller-first navigation</b> — broad support for Xbox, PlayStation, and Nintendo controllers.</li>
 <li><b>On-screen keyboard</b> — type anywhere in Windows with a controller alone.</li>
-<li><b>Taskbar sidebar</b> — window list, clock, and battery information, while reserving real desktop space.</li>
-<li><b>Two run modes</b> — side-by-side with Windows, or as the full shell with a watchdog fallback.</li>
+<li><b>Taskbar sidebar</b> — window list, clock, and battery information without giving up desktop space.</li>
+<li><b>Two run modes</b> — run alongside Windows or replace Explorer with a watchdog fallback.</li>
 </ul></div>
 
 <div class="cat"><h3>File Explorer</h3><ul>
 <li><b>Dual-pane browsing</b> — navigate two independent panes with mouse, keyboard, or controller.</li>
-<li><b>File operations</b> — copy, cut, paste, rename, delete, and new folder from the action menu.</li>
+<li><b>File operations</b> — copy, cut, paste, rename, delete, and new folder from one action menu.</li>
 <li><b>Archive support</b> — extract and compress to Zip and 7z using installed tools.</li>
-<li><b>Disc image tools</b> — convert CHD and extract Xbox ISOs for emulation workflows.</li>
+<li><b>Disc-image tools</b> — convert CHD and extract Xbox ISOs for emulation workflows.</li>
 </ul></div>
 
-<div class="cat"><h3>Download Manager</h3><ul>
-<li><b>Paste a link or magnet</b> — drop direct downloads or torrents into the queue immediately.</li>
+<div class="cat"><h3>Downloads</h3><ul>
+<li><b>Paste a link or magnet</b> — send direct downloads or torrents into the queue immediately.</li>
 <li><b>Real-Debrid</b> — optional support for hoster unrestricting and magnet resolution.</li>
-<li><b>Bundled aria2 daemon</b> — fast multi-connection transfers for large files.</li>
+<li><b>Bundled aria2</b> — fast multi-connection transfers for large files.</li>
 <li><b>Browser capture</b> — route browser downloads straight into GridShell.</li>
 </ul></div>
 
 <div class="cat"><h3>Emulation</h3><ul>
-<li><b>190+ platform mappings</b> — each system maps to RetroArch or the best standalone emulator.</li>
+<li><b>Platform mappings</b> — each system maps to RetroArch or a best standalone emulator.</li>
 <li><b>RetroAchievements</b> — sign in once and apply it across supported emulators.</li>
-<li><b>ROM organization</b> — scan default and custom ROM folders with per-platform organization.</li>
-<li><b>Full-screen launching</b> — emulators are configured to open directly into fullscreen.</li>
+<li><b>ROM organization</b> — scan default and custom ROM folders with per-platform layouts.</li>
+<li><b>Fullscreen launch</b> — emulators are configured to open directly into full-screen mode.</li>
 </ul></div>
 
 <div class="cat"><h3>Appearance and settings</h3><ul>
@@ -289,27 +307,25 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="cat"><h3>Networking and devices</h3><ul>
 <li><b>Wi-Fi</b> — scan, connect, and manage saved networks from the shell.</li>
 <li><b>Bluetooth</b> — pair and unpair devices and manage simple legacy PIN pairing.</li>
-<li><b>Audio and display</b> — adjust output/input devices, volume, monitor selection, resolution, and brightness.</li>
-<li><b>Controller tuning</b> — remap buttons, check LEDs, rumble, gyro, touchpad settings, and adaptive trigger support.</li>
+<li><b>Audio and display</b> — adjust output/input devices, monitor selection, resolution, and brightness.</li>
+<li><b>Controller tuning</b> — remap buttons, check LEDs, gyro, touchpad settings, and adaptive trigger support.</li>
 </ul></div>
 
 <div class="cat"><h3>Safety and flexibility</h3><ul>
 <li><b>Kiosk Mode</b> — lock the shell down with a PIN for a child-friendly or public-facing PC.</li>
 <li><b>Power menu</b> — lock, sign out, sleep, restart, or shutdown directly from the grid.</li>
-<li><b>Easy to undo</b> — close the app, disable the shell, and your normal desktop comes back immediately.</li>
+<li><b>Easy to undo</b> — close the app or disable shell mode and your normal desktop comes back immediately.</li>
 <li><b>Watchdog protection</b> — if it is registered as the shell, it can fall back to Explorer after repeated failures.</li>
 </ul></div>
-
 </div>
 </div></section>
 
 <section id="screens" class="alt"><div class="wrap">
 <div class="head">
 <h2>See it in action</h2>
-<p>GridShell is designed to feel like a traditional launcher first, while still exposing full Windows functionality exactly when you need it.</p>
+<p>GridShell is designed to feel like a traditional launcher first, while still exposing the full Windows toolchain the moment you need it.</p>
 </div>
 <div class="shots">
-
 <figure class="shot"><div class="frame" aria-hidden="true">
 <div class="side">
 <div class="launcher">▦</div>
@@ -326,10 +342,16 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="wt"><i class="c6"></i>YouTube</div><div class="wt"><i class="c1"></i>Gmail</div><div class="wt"><i class="c4"></i>Reddit</div>
 <div class="wt"><i class="c7"></i>Twitch</div><div class="wt"><i class="c3"></i>Netflix</div><div class="wt"><i class="c2"></i>Spotify</div>
 </div>
-<div class="corner"><div class="corner-btn c5">◆</div><div class="corner-btn c7">◆</div><div class="corner-btn c4">◆</div><div class="corner-btn c6">◆</div><div class="corner-btn power">⏻</div></div>
+<div class="corner" style="position:absolute;right:.8rem;bottom:.6rem;display:flex;gap:.5rem;align-items:center;">
+<div class="corner-btn c5" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c7" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c4" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c6" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn power" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;background:rgba(255,255,255,.04)">⏻</div>
 </div>
 </div>
-<figcaption><b>Web tab</b> — the same launcher layout can surface apps, websites, and utilities right next to each other.</figcaption></figure>
+</div>
+<figcaption><b>Web tab</b> — the same launcher can surface apps, websites, and utilities right next to each other.</figcaption></figure>
 
 <figure class="shot"><div class="frame" aria-hidden="true">
 <div class="side">
@@ -353,7 +375,13 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <div class="gt" style="background:#7B52C9"><span>Zelda: TOTK</span></div>
 <div class="gt" style="background:#0E9594"><span>Metroid Dread</span></div>
 </div>
-<div class="corner"><div class="corner-btn c5">◆</div><div class="corner-btn c7">◆</div><div class="corner-btn c4">◆</div><div class="corner-btn c6">◆</div><div class="corner-btn power">⏻</div></div>
+<div class="corner" style="position:absolute;right:.8rem;bottom:.6rem;display:flex;gap:.5rem;align-items:center;">
+<div class="corner-btn c5" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c7" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c4" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn c6" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
+<div class="corner-btn power" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;background:rgba(255,255,255,.04)">⏻</div>
+</div>
 </div>
 </div>
 <figcaption><b>Games tab</b> — detected PC and emulated libraries sit side-by-side in a single launcher flow.</figcaption></figure>
@@ -400,7 +428,6 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 </div>
 </div>
 <figcaption><b>Download Manager</b> — drop a direct link or magnet and let GridShell handle the rest.</figcaption></figure>
-
 </div>
 </div></section>
 
@@ -410,7 +437,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <p>The installer is self-contained. You don't have to install .NET first to get running.</p>
 </div>
 <ol class="steps">
-<li><b>Download the installer</b><span>Grab the latest <code>GridShell-Setup</code> from the GitHub releases page.</span></li>
+<li><b>Download the installer</b><span>Grab the latest <code>GridShell-Setup</code> build from the GitHub releases page.</span></li>
 <li><b>Run it</b><span>It installs to <code>C:\GridShell</code> and asks for admin permissions so shell integration can work correctly.</span></li>
 <li><b>Pick up a controller</b><span>Launch the app and use the D-pad or stick to move between tiles, then press face buttons to open things.</span></li>
 </ol>
@@ -425,10 +452,10 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap}
 <section id="run" class="alt"><div class="wrap">
 <div class="head">
 <h2>Two ways to run it</h2>
-<p>Start in safe mode to keep your Windows setup untouched. Switch to full shell mode only when you’re ready.</p>
+<p>Start in safe mode to keep your Windows setup untouched. Switch to full shell mode only when you're ready.</p>
 </div>
 <div class="modes">
-<div class="mode"><h3>Next to Windows <span class="tag">Safe</span></h3><p>Run <code>GridShell.exe</code>. It hides the real taskbar while it is active, and restores Explorer immediately when you close it or choose “Restore Explorer.”</p></div>
+<div class="mode"><h3>Next to Windows <span class="tag">Safe</span></h3><p>Run <code>GridShell.exe</code>. It hides the real taskbar while it is active, and restores Explorer immediately when you close it or choose "Restore Explorer."</p></div>
 <div class="mode"><h3>As your Windows shell <span class="tag warn">Careful</span></h3><p>Replace <code>explorer.exe</code> at login. A watchdog relaunches GridShell if it crashes and falls back to Explorer after repeated failures. Use this in a VM or secondary account first.</p></div>
 </div>
 </div></section>
