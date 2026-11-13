@@ -46,46 +46,60 @@ public static class InstallerProcessSuppressor
     {
         var owned = new List<int> { rootPid };
 
-        while (!token.IsCancellationRequested)
+        // The cleanup below has to run no matter how this loop exits - including a WMI
+        // failure mode narrower than ManagementException. Confirmed exactly this bug live:
+        // an exception escaping the loop (anything the inner catch didn't name) skipped
+        // cleanup entirely, permanently leaving rootPid (and whatever descendants had
+        // already been found) in SuppressedPids - and since Windows recycles PIDs, a later,
+        // completely unrelated process reusing that PID would silently inherit the
+        // suppression forever, with no way to tell from the outside. A try/finally makes
+        // cleanup unconditional instead of just hoping every failure mode gets named.
+        try
         {
-            try
+            while (!token.IsCancellationRequested)
             {
-                using var searcher = new ManagementObjectSearcher(
-                    $"SELECT ProcessId, ParentProcessId FROM Win32_Process WHERE ParentProcessId IN ({string.Join(",", owned)})");
-
-                foreach (ManagementBaseObject result in searcher.Get())
+                try
                 {
-                    var childPid = Convert.ToInt32(result["ProcessId"]);
-                    if (!owned.Contains(childPid))
+                    using var searcher = new ManagementObjectSearcher(
+                        $"SELECT ProcessId, ParentProcessId FROM Win32_Process WHERE ParentProcessId IN ({string.Join(",", owned)})");
+
+                    foreach (ManagementBaseObject result in searcher.Get())
                     {
-                        owned.Add(childPid);
-                        lock (Gate)
+                        var childPid = Convert.ToInt32(result["ProcessId"]);
+                        if (!owned.Contains(childPid))
                         {
-                            SuppressedPids.Add(childPid);
+                            owned.Add(childPid);
+                            lock (Gate)
+                            {
+                                SuppressedPids.Add(childPid);
+                            }
                         }
                     }
                 }
-            }
-            catch (ManagementException)
-            {
-                // WMI unavailable/restricted - this operation just goes unsuppressed rather
-                // than failing the install/uninstall itself over a taskbar cosmetic.
-            }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    // WMI unavailable/restricted/transiently failing - skip this tick, retry
+                    // next poll rather than failing the install/uninstall itself over a
+                    // taskbar cosmetic.
+                }
 
-            try
-            {
-                await Task.Delay(150, token);
-            }
-            catch (TaskCanceledException)
-            {
+                try
+                {
+                    await Task.Delay(150, token);
+                }
+                catch (TaskCanceledException)
+                {
+                }
             }
         }
-
-        lock (Gate)
+        finally
         {
-            foreach (var pid in owned)
+            lock (Gate)
             {
-                SuppressedPids.Remove(pid);
+                foreach (var pid in owned)
+                {
+                    SuppressedPids.Remove(pid);
+                }
             }
         }
     }
