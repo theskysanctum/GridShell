@@ -11,6 +11,11 @@ obj/
 ## Installer build output
 installer/Output/
 
+## Redistributables the installer bundles (VC++/DirectX runtimes) - too large to live in this
+## repo's history, since StoreCatalogSync does a full clone of it on every Store open. Hosted
+## on this project's own "redist-assets" GitHub Release instead; fetch-redist.ps1 pulls them.
+installer/redist/
+
 ## Local publish staging output (used to feed the installer)
 publish/
 

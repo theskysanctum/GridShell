@@ -47,9 +47,10 @@ Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 ; The self-contained publish covers .NET itself, but LibGit2Sharp's and SDL3's native DLLs
 ; are still built against the Visual C++ runtime, which Windows doesn't ship by default -
-; bundled here so nothing needs tracking down by hand on a fresh machine. Committed directly
-; so the installer builds from a plain checkout with no extra fetch step (fetch-redist.ps1
-; re-pulls it if Microsoft ever ships a newer release).
+; bundled here so nothing needs tracking down by hand on a fresh machine. Not committed to
+; this repo - StoreCatalogSync clones it fresh on every Store open, and these binaries are
+; too large for that to stay cheap. Pulled instead from this project's own "redist-assets"
+; GitHub Release (see fetch-redist.ps1), which `git clone` never touches.
 Source: "redist\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 ; Several of the Store's own emulators (and older games generally) still link against the
 ; legacy DirectX 9 D3DX/XInput/XAudio2 DLLs that ship in this redistributable rather than in

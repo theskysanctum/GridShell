@@ -72,7 +72,16 @@ public static class StoreCatalogSync
             TryDeleteBestEffort(staleBackup);
         }
 
-        Repository.Clone(RepoUrl, LocalPath);
+        // Depth 1 - only the current tip, no history - since this clone only ever reads the
+        // current catalog.json and icons, never anything from history. Matters for real: a
+        // large binary that was ever committed to this repo (even if later removed) stays in
+        // every full clone's history forever, and this repo has carried installer
+        // redistributables before - a shallow clone stays cheap regardless of what history
+        // accumulates.
+        Repository.Clone(RepoUrl, LocalPath, new CloneOptions
+        {
+            FetchOptions = { Depth = 1 },
+        });
     }
 
     private static void TryDeleteBestEffort(string path)
