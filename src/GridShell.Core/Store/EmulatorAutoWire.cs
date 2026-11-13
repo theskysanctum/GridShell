@@ -1,3 +1,4 @@
+using System.IO;
 using GridShell.Core.Settings;
 using GridShell.Core.Tiles;
 
@@ -19,10 +20,15 @@ public static class EmulatorAutoWire
 
         // GitHub-release installs (GitHubReleaseInstaller) extract straight into a fixed folder
         // of GridShell's own choosing and never touch the Uninstall registry - look there
-        // directly instead of the registry scan winget-installed apps need.
+        // directly instead of the registry scan winget-installed apps need. The registry scan
+        // itself can still come back empty for a real winget install - confirmed live: 7-Zip's
+        // own MSI leaves both InstallLocation and DisplayIcon blank in its Uninstall entry - so
+        // this falls back to the exact folder WingetInstaller's own --location flag requested,
+        // which winget actually installs to regardless of what it reports back to the registry.
         var exePath = app.InstallMethod == "github"
             ? InstalledAppLocator.FindBestExeInDirectory(GitHubReleaseInstaller.InstallRoot(app.Id), app.Name)
-            : InstalledAppLocator.FindMainExe(app.Name);
+            : InstalledAppLocator.FindMainExe(app.Name)
+              ?? InstalledAppLocator.FindBestExeInDirectory(Path.Combine(WingetInstaller.InstallRoot, app.Id), app.Name);
         if (exePath is null)
         {
             return;
