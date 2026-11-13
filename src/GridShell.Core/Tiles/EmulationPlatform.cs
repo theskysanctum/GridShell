@@ -93,6 +93,7 @@ public static class EmulationPlatforms
         new EmulationPlatform("virtualboy", "Nintendo Virtual Boy", "Home Console", new[] { ".vb", ".zip", ".7z" }),
         new EmulationPlatform("wii", "Nintendo Wii", "Home Console", new[] { ".iso", ".rvz", ".wbfs", ".ciso" }),
         new EmulationPlatform("wiiu", "Nintendo Wii U", "Home Console", new[] { ".wud", ".wux", ".rpx" }),
+        new EmulationPlatform("switch", "Nintendo Switch", "Home Console", new[] { ".nsp", ".xci" }),
         new EmulationPlatform("multivision", "Othello Multivision", "Home Console", new[] { ".bin", ".zip", ".7z" }),
         new EmulationPlatform("pcengine", "PC Engine / TurboGrafx-16", "Home Console", new[] { ".pce", ".zip", ".7z" }),
         new EmulationPlatform("pcenginecd", "PC Engine CD / TurboGrafx-CD", "Home Console", new[] { ".cue", ".bin", ".chd", ".zip", ".7z" }),

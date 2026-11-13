@@ -26,6 +26,14 @@ public sealed class StoreApp
     [JsonPropertyName("githubRepo")]
     public string? GithubRepo { get; set; }
 
+    /// <summary>Only set when InstallMethod is "github" and the repo doesn't actually live on
+    /// github.com - e.g. Eden (git.eden-emu.dev), a Forgejo instance exposing the same
+    /// GitHub-shaped releases API (/api/v1/repos/{owner}/{repo}/releases/latest, same assets[]
+    /// shape with name/browser_download_url) since it was repeatedly pushed off GitHub by Nintendo
+    /// DMCA pressure. Defaults to GitHub's own API base when omitted.</summary>
+    [JsonPropertyName("apiBaseUrl")]
+    public string ApiBaseUrl { get; set; } = "https://api.github.com";
+
     [JsonPropertyName("category")]
     public string Category { get; set; } = "";
 

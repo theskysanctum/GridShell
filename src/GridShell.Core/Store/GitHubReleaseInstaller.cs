@@ -31,7 +31,10 @@ public static class GitHubReleaseInstaller
     {
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("GridShell-Store", "1.0"));
-        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        // Plain application/json rather than GitHub's own versioned vnd.github+json media type -
+        // this client also talks to Forgejo instances (see StoreApp.ApiBaseUrl) exposing the same
+        // GitHub-shaped API, which don't recognize GitHub's media type.
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return client;
     }
 
@@ -49,7 +52,7 @@ public static class GitHubReleaseInstaller
 
         try
         {
-            var json = await Http.GetStringAsync($"https://api.github.com/repos/{app.GithubRepo}/releases/latest");
+            var json = await Http.GetStringAsync($"{app.ApiBaseUrl}/repos/{app.GithubRepo}/releases/latest");
             using var doc = JsonDocument.Parse(json);
 
             var assets = doc.RootElement.GetProperty("assets").EnumerateArray()
@@ -105,13 +108,18 @@ public static class GitHubReleaseInstaller
     }
 
     /// <summary>Picks the best 64-bit, non-debug Windows archive (.zip or .7z) among a release's
-    /// assets. Verified against three real, differently-shaped cases rather than one: Supermodel
+    /// assets. Verified against several real, differently-shaped cases rather than one: Supermodel
     /// ships exactly one Windows zip per release with no arch/config markers at all (passes
     /// straight through), Visual Pinball X ships 4+ zip variants per release (Release/Debug
-    /// x86/x64, and the exact naming scheme has changed between releases), and RPCS3's binaries
-    /// repo ships a single .7z plus a .sha256 checksum sidecar file (the extension filter alone
-    /// excludes the checksum) - excluding "debug"/"x86"/"linux"/"macos" and preferring a name
-    /// that still says "win" correctly narrows every case seen down to the one right asset.</summary>
+    /// x86/x64, and the exact naming scheme has changed between releases), RPCS3's binaries repo
+    /// ships a single .7z plus a .sha256 checksum sidecar file (the extension filter alone
+    /// excludes the checksum), and Eden ships Windows/Android/Linux/macOS builds side by side plus
+    /// several incompatible Windows CPU targets (amd64, Steam-Deck-style "rog-ally" Zen4-only, and
+    /// Snapdragon arm64) with standard/PGO compiler-optimization variants of each - excluding
+    /// "debug"/"x86"/"linux"/"macos"/"arm64"/"rog-ally"/"android", preferring a name that still
+    /// says "win", and within that preferring a name saying "pgo" (Eden's own release notes call
+    /// the PGO build the recommended one) correctly narrows every case seen down to the one right
+    /// asset.</summary>
     private static (string Name, string Url)? SelectWindowsArchiveAsset(List<(string Name, string Url)> assets)
     {
         var archives = assets.Where(a =>
@@ -122,15 +130,19 @@ public static class GitHubReleaseInstaller
             !a.Name.Contains("debug", StringComparison.OrdinalIgnoreCase) &&
             !a.Name.Contains("linux", StringComparison.OrdinalIgnoreCase) &&
             !a.Name.Contains("macos", StringComparison.OrdinalIgnoreCase) &&
+            !a.Name.Contains("android", StringComparison.OrdinalIgnoreCase) &&
+            !a.Name.Contains("arm64", StringComparison.OrdinalIgnoreCase) &&
+            !a.Name.Contains("rog-ally", StringComparison.OrdinalIgnoreCase) &&
             !a.Name.Contains("x86", StringComparison.OrdinalIgnoreCase)).ToList();
 
         var preferringWin = candidates.Where(a => a.Name.Contains("win", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (preferringWin.Count > 0)
+        if (preferringWin.Count == 0)
         {
-            return preferringWin[0];
+            return candidates.Count > 0 ? candidates[0] : null;
         }
 
-        return candidates.Count > 0 ? candidates[0] : null;
+        var preferringPgo = preferringWin.Where(a => a.Name.Contains("pgo", StringComparison.OrdinalIgnoreCase)).ToList();
+        return preferringPgo.Count > 0 ? preferringPgo[0] : preferringWin[0];
     }
 
     /// <summary>Shells out to the bundled 7za.exe (7-Zip's official standalone console build,
