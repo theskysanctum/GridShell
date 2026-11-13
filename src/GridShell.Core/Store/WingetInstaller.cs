@@ -14,6 +14,15 @@ public enum InstallOutcome
 
 public sealed record InstallResult(InstallOutcome Outcome, string Message);
 
+public enum UninstallOutcome
+{
+    Uninstalled,
+    Failed,
+    WingetNotFound,
+}
+
+public sealed record UninstallResult(UninstallOutcome Outcome, string Message);
+
 /// <summary>Shells out to winget.exe (Windows Package Manager) rather than any COM/WinRT API -
 /// confirmed on a real machine (this one): `winget list --id &lt;id&gt; -e` exits 0 when already
 /// installed and 20 when not (undocumented by Microsoft; both empirically verified here, not
@@ -99,6 +108,57 @@ public static class WingetInstaller
         return installResult.Value.ExitCode == 0
             ? new InstallResult(InstallOutcome.Installed, "Installed.")
             : new InstallResult(InstallOutcome.Failed, LastMeaningfulLine(installResult.Value.Output));
+    }
+
+    /// <summary>Checks InstalledAppLocator first, same as IsInstalledAsync - if no real exe
+    /// resolves, this is a ghost entry (deleted outside GridShell between the Store last
+    /// refreshing and this click), and winget's own uninstall has nothing real to call: trying
+    /// anyway was confirmed live to fail with a COM error (0x800401f5, "Application not
+    /// found") that makes Windows itself pop the default browser open with a "search the web
+    /// for this app" prompt - a window GridShell, as a shell replacement, can never let
+    /// through. A ghost gets its Uninstall registry entry deleted directly instead - no UI of
+    /// its own even when denied (a machine-wide entry needs admin rights GridShell doesn't run
+    /// with).
+    ///
+    /// For a real install, shells out to `winget uninstall`, then best-effort deletes whatever
+    /// --location folder InstallAsync used - winget's own uninstaller doesn't reliably clean
+    /// that up for every installer technology.</summary>
+    public static async Task<UninstallResult> UninstallAsync(StoreApp app)
+    {
+        if (InstalledAppLocator.FindMainExe(app.Name) is null)
+        {
+            return InstalledAppLocator.TryDeleteOrphanedUninstallEntry(app.Name)
+                ? new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.")
+                : new UninstallResult(UninstallOutcome.Failed,
+                    "Couldn't clean up its leftover registry entry - this usually needs admin rights. Try running GridShell as Administrator, or clean it up manually.");
+        }
+
+        var result = await RunAsync("uninstall",
+            $"--id {app.WingetId} -e --silent --accept-source-agreements --disable-interactivity");
+        if (result is null)
+        {
+            return new UninstallResult(UninstallOutcome.WingetNotFound,
+                "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
+        }
+
+        if (result.Value.ExitCode != 0)
+        {
+            return new UninstallResult(UninstallOutcome.Failed, LastMeaningfulLine(result.Value.Output));
+        }
+
+        var location = Path.Combine(InstallRoot, app.Id);
+        if (Directory.Exists(location))
+        {
+            try
+            {
+                Directory.Delete(location, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+
+        return new UninstallResult(UninstallOutcome.Uninstalled, "Uninstalled.");
     }
 
     private static async Task<(int ExitCode, string Output)?> RunAsync(string command, string arguments)

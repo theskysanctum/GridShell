@@ -70,6 +70,60 @@ public static class InstalledAppLocator
         return null;
     }
 
+    /// <summary>Deletes the Uninstall registry entry matching displayNameContains, if any -
+    /// used when there's no real uninstaller left to call (the app is a "ghost": winget still
+    /// lists it, but FindMainExe already came back null for it). A straight registry delete has
+    /// no UI of its own, unlike winget's own uninstall command, whose failure path for a ghost
+    /// entry (a COM error, confirmed live: 0x800401f5 "Application not found") was confirmed
+    /// live to make Windows itself pop the default browser open with a "search the web for this
+    /// app" prompt - a stray, taskbar-visible window GridShell, as a shell replacement, can
+    /// never let happen. Returns false (rather than throwing) both when nothing matched and
+    /// when deleting it was denied - a machine-wide entry needs admin rights GridShell doesn't
+    /// run with - so the caller can report an ordinary failure either way.</summary>
+    public static bool TryDeleteOrphanedUninstallEntry(string displayNameContains)
+    {
+        var hives = new[] { Registry.CurrentUser, Registry.LocalMachine };
+        var uninstallKeyPaths = new[]
+        {
+            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        };
+
+        foreach (var hive in hives)
+        {
+            foreach (var keyPath in uninstallKeyPaths)
+            {
+                using var uninstallKey = hive.OpenSubKey(keyPath, writable: true);
+                if (uninstallKey is null)
+                {
+                    continue;
+                }
+
+                foreach (var subKeyName in uninstallKey.GetSubKeyNames())
+                {
+                    using var subKey = uninstallKey.OpenSubKey(subKeyName);
+                    var displayName = subKey?.GetValue("DisplayName") as string;
+                    if (displayName is null || !displayName.Contains(displayNameContains, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        uninstallKey.DeleteSubKeyTree(subKeyName);
+                        return true;
+                    }
+                    catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Same heuristic as the registry-driven lookup above, but against a folder
     /// GridShell itself extracted an app into (GitHubReleaseInstaller) rather than one found via
     /// the Uninstall registry - those installs never register there, since there's no real

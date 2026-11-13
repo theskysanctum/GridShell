@@ -311,6 +311,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         }
         else
         {
+            new ToastWindow($"{app.Name} installed.", TimeSpan.FromSeconds(5)).Show();
             EmulatorAutoWire.TryWire(app.App);
 
             // RetroArch itself has no fixed platformSlugs (EmulatorAutoWire's one-exe-one-
@@ -326,6 +327,45 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                 _ = IconLoader.LoadIconAsync(newAppTile, _settings);
                 _onTilesChanged();
             }
+        }
+    }
+
+    /// <summary>Removes the matching Apps-tab tile (found before uninstalling, while its exe
+    /// still exists to resolve against) and hands off to whichever installer actually put the
+    /// app on disk - winget for a real package, a plain folder delete for github/package
+    /// installs that have no real installer to call.</summary>
+    private async void UninstallButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not StoreAppViewModel app)
+        {
+            return;
+        }
+
+        var wiredTile = StoreTileAutoWire.FindWiredTile(app.App, _allTiles);
+        app.State = StoreAppState.Uninstalling;
+
+        var result = app.App.InstallMethod switch
+        {
+            "github" => GitHubReleaseInstaller.Uninstall(app.App.Id),
+            "package" => PackageInstaller.Uninstall(app.App.Id),
+            _ => await WingetInstaller.UninstallAsync(app.App),
+        };
+
+        if (result.Outcome == UninstallOutcome.Uninstalled)
+        {
+            app.State = StoreAppState.NotInstalled;
+            new ToastWindow($"{app.Name} uninstalled.", TimeSpan.FromSeconds(5)).Show();
+
+            if (wiredTile is not null)
+            {
+                _allTiles.Remove(wiredTile);
+                _onTilesChanged();
+            }
+        }
+        else
+        {
+            app.State = StoreAppState.Failed;
+            app.ErrorMessage = result.Message;
         }
     }
 
