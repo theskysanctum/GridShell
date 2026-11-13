@@ -1,6 +1,6 @@
-# Fetches the redistributables GridShell.iss bundles into the installer - run this once before
-# building the installer (installer\redist\ is gitignored, not committed, since it's just
-# Microsoft's own unchanging download, not anything GridShell's repo needs to carry).
+# Re-fetches the redistributables GridShell.iss bundles into the installer (installer\redist\
+# VC_redist.x64.exe is committed directly - run this only to pull a newer release from
+# Microsoft, then commit the updated file).
 $ErrorActionPreference = "Stop"
 $redistDir = Join-Path $PSScriptRoot "redist"
 New-Item -ItemType Directory -Force -Path $redistDir | Out-Null

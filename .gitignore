@@ -11,10 +11,6 @@ obj/
 ## Installer build output
 installer/Output/
 
-## Downloaded redistributables the installer bundles (VC++ runtime, etc.) - fetched fresh
-## rather than committed, since they're large and Microsoft's own download never changes shape
-installer/redist/
-
 ## Local publish staging output (used to feed the installer)
 publish/
 
