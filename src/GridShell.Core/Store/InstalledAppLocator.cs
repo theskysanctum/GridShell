@@ -56,14 +56,10 @@ public static class InstalledAppLocator
                     // Some installs (confirmed live: RetroArch's winget package) leave
                     // InstallLocation blank but still point DisplayIcon straight at the main
                     // exe - a real, common enough convention to fall back to rather than
-                    // missing the app entirely. But not every installer points DisplayIcon at
-                    // the main exe - confirmed live: Steam's own registry entry points DisplayIcon
-                    // directly at uninstall.exe - so this needs the same skip-fragment filter
-                    // BestExeIn already applies, not a blind trust of whatever's there.
+                    // missing the app entirely.
                     if (subKey?.GetValue("DisplayIcon") as string is { } displayIcon
                         && displayIcon.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                        && File.Exists(displayIcon)
-                        && !IsLikelyNotMainExe(displayIcon))
+                        && File.Exists(displayIcon))
                     {
                         return displayIcon;
                     }
@@ -101,7 +97,8 @@ public static class InstalledAppLocator
         try
         {
             var candidates = Directory.EnumerateFiles(installLocation, "*.exe", SearchOption.AllDirectories)
-                .Where(path => !IsLikelyNotMainExe(path))
+                .Where(path => !SkipNameFragments.Any(fragment =>
+                    Path.GetFileName(path).Contains(fragment, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
 
             if (nameHint is not null)
@@ -130,7 +127,4 @@ public static class InstalledAppLocator
 
     private static string NormalizeForNameMatch(string value) =>
         new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
-
-    private static bool IsLikelyNotMainExe(string path) =>
-        SkipNameFragments.Any(fragment => Path.GetFileName(path).Contains(fragment, StringComparison.OrdinalIgnoreCase));
 }
