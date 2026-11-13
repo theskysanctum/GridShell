@@ -116,9 +116,10 @@
     {
       "id": "dolphinemulator.dolphin",
       "name": "Dolphin",
-      "wingetId": "DolphinEmulator.Dolphin",
+      "installMethod": "package",
+      "packageFile": "dolphin-2609b-x64.7z",
       "category": "Emulation",
-      "description": "Nintendo GameCube and Wii emulator.",
+      "description": "Nintendo GameCube and Wii emulator. Bundled directly, not via winget - winget's own package only ships a stale v5.0 build whose download mirror is broken, and Dolphin publishes no GitHub releases at all.",
       "platformSlugs": ["gamecube", "wii"]
     },
     {

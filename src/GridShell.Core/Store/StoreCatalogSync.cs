@@ -8,11 +8,11 @@ namespace GridShell.Core.Store;
 
 /// <summary>Keeps a local clone of GridShell's own repo around just to read
 /// store-catalog/catalog.json from it - lets the curated app list be updated by pushing to that
-/// one file, with no GridShell release needed. WinGet (see WingetInstaller) is the only thing
-/// that actually installs software; this just supplies what to list. Scenes (see
-/// StoreSceneSync) deliberately don't go through this clone - they're fetched directly over
-/// plain HTTP instead, so Scenes stay a genuinely separate, on-demand download rather than
-/// riding along with every app-catalog sync.</summary>
+/// one file, with no GridShell release needed. WinGet/GitHubReleaseInstaller/PackageInstaller
+/// actually install software; this just supplies what to list. Scenes and "package"-method
+/// installer files (see StoreSceneSync/PackageInstaller) deliberately don't go through this
+/// clone - they're fetched directly over plain HTTP instead, on demand, so a Store open never
+/// pulls down a multi-MB installer archive just to show its Install button.</summary>
 public static class StoreCatalogSync
 {
     private const string RepoUrl = "https://github.com/theskysanctum/gridshell.git";

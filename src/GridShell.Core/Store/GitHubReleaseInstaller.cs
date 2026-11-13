@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -83,7 +82,7 @@ public static class GitHubReleaseInstaller
 
                 if (isSevenZip)
                 {
-                    var extractResult = await ExtractSevenZipAsync(archivePath, installRoot);
+                    var extractResult = await SevenZipExtractor.ExtractAsync(archivePath, installRoot);
                     if (extractResult is not null)
                     {
                         return new InstallResult(InstallOutcome.Failed, extractResult);
@@ -145,38 +144,4 @@ public static class GitHubReleaseInstaller
         return preferringPgo.Count > 0 ? preferringPgo[0] : preferringWin[0];
     }
 
-    /// <summary>Shells out to the bundled 7za.exe (7-Zip's official standalone console build,
-    /// from ip7z/7zip's own GitHub releases - verified live to run standalone with no companion
-    /// DLL, and to extract .7z correctly) since .NET has no built-in .7z support. Same
-    /// Tools-folder/AppContext.BaseDirectory convention as every other bundled CLI tool in this
-    /// app (chdman, extract-xiso, aria2c - see Aria2Daemon; also now ArchiveOperations' only
-    /// archiver). Returns null on success, an error message otherwise.</summary>
-    private static async Task<string?> ExtractSevenZipAsync(string archivePath, string destinationDir)
-    {
-        var toolPath = Path.Combine(AppContext.BaseDirectory, "Tools", "7za.exe");
-        if (!File.Exists(toolPath))
-        {
-            return "7za.exe (bundled 7-Zip extractor) is missing from this install.";
-        }
-
-        var startInfo = new ProcessStartInfo(toolPath, $"x \"{archivePath}\" -o\"{destinationDir}\" -y")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        using var process = Process.Start(startInfo);
-        if (process is null)
-        {
-            return "Couldn't start 7zr.exe.";
-        }
-
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-
-        return process.ExitCode == 0 ? null : (string.IsNullOrWhiteSpace(error) ? output : error);
-    }
 }

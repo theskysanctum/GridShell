@@ -152,9 +152,12 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             try
             {
                 app.State = StoreAppState.Checking;
-                var installed = app.App.InstallMethod == "github"
-                    ? GitHubReleaseInstaller.IsInstalled(app.App.Id)
-                    : await WingetInstaller.IsInstalledAsync(app.App.WingetId);
+                var installed = app.App.InstallMethod switch
+                {
+                    "github" => GitHubReleaseInstaller.IsInstalled(app.App.Id),
+                    "package" => PackageInstaller.IsInstalled(app.App.Id),
+                    _ => await WingetInstaller.IsInstalledAsync(app.App.WingetId),
+                };
                 app.State = installed ? StoreAppState.Installed : StoreAppState.NotInstalled;
 
                 if (installed)
@@ -289,9 +292,12 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         }
 
         app.State = StoreAppState.Installing;
-        var result = app.App.InstallMethod == "github"
-            ? await GitHubReleaseInstaller.InstallAsync(app.App)
-            : await WingetInstaller.InstallAsync(app.App);
+        var result = app.App.InstallMethod switch
+        {
+            "github" => await GitHubReleaseInstaller.InstallAsync(app.App),
+            "package" => await PackageInstaller.InstallAsync(app.App),
+            _ => await WingetInstaller.InstallAsync(app.App),
+        };
 
         app.State = result.Outcome switch
         {

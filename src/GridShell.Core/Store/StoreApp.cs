@@ -13,12 +13,14 @@ public sealed class StoreApp
     [JsonPropertyName("wingetId")]
     public string WingetId { get; set; } = "";
 
-    /// <summary>"winget" (default) or "github" - github entries have no WingetId, and are
-    /// installed instead by GitHubReleaseInstaller downloading and extracting the latest
+    /// <summary>"winget" (default), "github", or "package" - github entries have no WingetId,
+    /// and are installed instead by GitHubReleaseInstaller downloading and extracting the latest
     /// release's Windows archive (.zip or .7z) from GithubRepo. Used for emulators with no
     /// winget package but a real downloadable GitHub release (RPCS3's own repo has neither, but
     /// its companion RPCS3/rpcs3-binaries-win repo does - see GitHubReleaseInstaller's
-    /// remarks).</summary>
+    /// remarks). "package" is for one that has neither (e.g. Dolphin - winget's own package is
+    /// broken, and Dolphin publishes no GitHub releases at all) - PackageInstaller extracts
+    /// PackageFile straight out of this same synced repo clone instead.</summary>
     [JsonPropertyName("installMethod")]
     public string InstallMethod { get; set; } = "winget";
 
@@ -33,6 +35,11 @@ public sealed class StoreApp
     /// DMCA pressure. Defaults to GitHub's own API base when omitted.</summary>
     [JsonPropertyName("apiBaseUrl")]
     public string ApiBaseUrl { get; set; } = "https://api.github.com";
+
+    /// <summary>Filename under store-catalog/packages/ in the repo - only set when
+    /// InstallMethod is "package".</summary>
+    [JsonPropertyName("packageFile")]
+    public string? PackageFile { get; set; }
 
     [JsonPropertyName("category")]
     public string Category { get; set; } = "";
