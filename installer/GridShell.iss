@@ -45,12 +45,23 @@ Source: "..\publish\GridShell.Grid\*"; DestDir: "{app}\src\GridShell.Grid\bin\Re
 Source: "..\publish\GridShell.Watchdog\*"; DestDir: "{app}\src\GridShell.Watchdog\bin\Release\net10.0-windows10.0.19041.0\win-x64"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+; The self-contained publish covers .NET itself, but LibGit2Sharp's and SDL3's native DLLs
+; are still built against the Visual C++ runtime, which Windows doesn't ship by default -
+; bundled here so nothing needs tracking down by hand on a fresh machine. Fetched fresh into
+; installer\redist\ (see fetch-redist.ps1) rather than committed - it's Microsoft's own
+; unchanging download, not something GridShell's repo needs to carry.
+Source: "redist\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppRelDir}\{#MyAppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 
 [Run]
+; The VC++ redist installer is idempotent and quick to no-op if an equal-or-newer runtime is
+; already present, so this always runs it rather than trying to detect the installed version
+; itself - simpler and just as correct. /quiet suppresses its own UI; waituntilterminated
+; keeps GridShell's own install from finishing (and offering to launch) until this is done.
+Filename: "{tmp}\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Visual C++ runtime..."; Flags: waituntilterminated
 Filename: "{app}\{#MyAppRelDir}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
