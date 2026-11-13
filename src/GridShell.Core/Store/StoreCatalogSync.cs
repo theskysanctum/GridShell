@@ -105,7 +105,19 @@ public static class StoreCatalogSync
             return new StoreCatalogFile();
         }
 
-        var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<StoreCatalogFile>(json) ?? new StoreCatalogFile();
+        try
+        {
+            var json = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<StoreCatalogFile>(json) ?? new StoreCatalogFile();
+        }
+        catch (JsonException)
+        {
+            // A syntax error in catalog.json (confirmed live: a bad hand-edit pushed to the
+            // repo) used to propagate straight out of StoreWindow_Loaded's async void handler -
+            // uncaught there, that's fatal to the whole process, not just a broken Store window.
+            // Same "empty catalog rather than crash" fallback Sync()'s own catch already uses for
+            // a failed clone.
+            return new StoreCatalogFile();
+        }
     }
 }

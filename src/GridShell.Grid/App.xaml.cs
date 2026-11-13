@@ -53,6 +53,18 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        // A bad catalog.json (confirmed live: a hand-edit with a JSON syntax error) used to
+        // propagate an uncaught JsonException straight out of StoreWindow_Loaded's async void
+        // handler and take down this entire process, not just the Store window - WPF has no
+        // crash recovery of its own for an unhandled exception on the dispatcher thread. Logs
+        // and keeps the process alive instead; the window that triggered it is left in whatever
+        // state it was in, same as any other caught error elsewhere in this app.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            UnhandledExceptionLogger.LogAndNotify(args.Exception);
+            args.Handled = true;
+        };
+
         _singleInstanceMutex = new Mutex(true, "GridShell.Grid.SingleInstance", out var createdNew);
         if (!createdNew)
         {

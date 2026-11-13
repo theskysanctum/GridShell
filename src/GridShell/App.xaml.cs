@@ -52,6 +52,16 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        // This process owns the real taskbar's hidden state and the sidebar/wallpaper for the
+        // whole session - an uncaught exception here is worse than in GridShell.Grid, since
+        // crashing it would also leave the real Explorer taskbar hidden with nothing in its
+        // place. Same catch-and-log rather than crash as GridShell.Grid's own App.xaml.cs.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            UnhandledExceptionLogger.LogAndNotify(args.Exception);
+            args.Handled = true;
+        };
+
         ControllerAutoApply.Start();
 
         ApplyTheme();
