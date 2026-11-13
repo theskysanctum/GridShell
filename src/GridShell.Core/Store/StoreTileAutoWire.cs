@@ -10,20 +10,23 @@ namespace GridShell.Core.Store;
 /// duplicates a tile that already points at the same exe - repeat installs/opens of the Store
 /// are idempotent. Emulators (Category "Emulation") are deliberately excluded - they belong to
 /// Game Manager's own world (EmulatorAutoWire wires them for actual game-launching, and Game
-/// Manager's Launch button already opens one directly), not the Apps tab.</summary>
+/// Manager's Launch button already opens one directly), not the Apps tab. Game-store launchers
+/// (Category "Gaming" - Steam, Epic, GOG, itch) are excluded too: GameLibraryScanner already
+/// pulls their installed games straight into the Games tab, so the launcher itself showing up
+/// as an App tile too is redundant, not useful.</summary>
 public static class StoreTileAutoWire
 {
     /// <summary>Returns the Tile if something changed that needs an icon reload - either a
     /// brand new tile, or an existing one that just picked up a bundled Store icon it didn't
     /// have before (see StoreIconCache) - or null if nothing changed (no resolvable exe yet, the
-    /// app is an emulator, or a matching tile already has its icon settled). The caller is
-    /// expected to kick off IconLoader.LoadIconAsync itself, same as every other place a Tile is
-    /// created, since IconLoader needs a live AppSettings for IGDB/favicon lookups that this
-    /// class, living in GridShell.Core.Store rather than the UI layer, has no reason to depend
-    /// on.</summary>
+    /// app is an emulator or game-store launcher, or a matching tile already has its icon
+    /// settled). The caller is expected to kick off IconLoader.LoadIconAsync itself, same as
+    /// every other place a Tile is created, since IconLoader needs a live AppSettings for
+    /// IGDB/favicon lookups that this class, living in GridShell.Core.Store rather than the UI
+    /// layer, has no reason to depend on.</summary>
     public static Tile? TryWire(StoreApp app, List<Tile> allTiles)
     {
-        if (app.Category == "Emulation")
+        if (app.Category is "Emulation" or "Gaming")
         {
             return null;
         }
