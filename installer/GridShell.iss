@@ -51,6 +51,11 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 ; so the installer builds from a plain checkout with no extra fetch step (fetch-redist.ps1
 ; re-pulls it if Microsoft ever ships a newer release).
 Source: "redist\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+; Several of the Store's own emulators (and older games generally) still link against the
+; legacy DirectX 9 D3DX/XInput/XAudio2 DLLs that ship in this redistributable rather than in
+; Windows itself - same "don't make the user go hunting for it" reasoning as the VC++ runtime
+; above.
+Source: "redist\directx_redist.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppRelDir}\{#MyAppExeName}"
@@ -62,6 +67,11 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 ; itself - simpler and just as correct. /quiet suppresses its own UI; waituntilterminated
 ; keeps GridShell's own install from finishing (and offering to launch) until this is done.
 Filename: "{tmp}\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Visual C++ runtime..."; Flags: waituntilterminated
+; The DirectX redist is a self-extracting CAB, not a normal installer - it has to be extracted
+; to a folder first (/Q /T:<dir>, silently, no setup run yet), then DXSETUP.exe run from
+; there to actually install it. Two [Run] steps, same as any other two-stage install.
+Filename: "{tmp}\directx_redist.exe"; Parameters: "/Q /T:""{tmp}\dxredist"""; StatusMsg: "Extracting DirectX runtime..."; Flags: waituntilterminated
+Filename: "{tmp}\dxredist\DXSETUP.exe"; Parameters: "/silent"; StatusMsg: "Installing DirectX runtime..."; Flags: waituntilterminated
 Filename: "{app}\{#MyAppRelDir}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
