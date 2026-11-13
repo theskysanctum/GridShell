@@ -160,12 +160,16 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
                 if (installed)
                 {
+                    Tile? newTile;
                     lock (tilesLock)
                     {
-                        if (StoreTileAutoWire.TryWire(app.App, _allTiles))
-                        {
-                            tilesChanged = true;
-                        }
+                        newTile = StoreTileAutoWire.TryWire(app.App, _allTiles);
+                    }
+
+                    if (newTile is not null)
+                    {
+                        tilesChanged = true;
+                        _ = IconLoader.LoadIconAsync(newTile, _settings);
                     }
                 }
             }
@@ -330,8 +334,9 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
                 await RetroArchCoreAutoWire.TryWireAllAsync();
             }
 
-            if (StoreTileAutoWire.TryWire(app.App, _allTiles))
+            if (StoreTileAutoWire.TryWire(app.App, _allTiles) is { } newAppTile)
             {
+                _ = IconLoader.LoadIconAsync(newAppTile, _settings);
                 _onTilesChanged();
             }
         }
