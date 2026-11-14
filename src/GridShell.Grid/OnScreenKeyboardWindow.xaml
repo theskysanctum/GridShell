@@ -85,7 +85,7 @@
     <!-- Opacity sits on a background-only layer behind the content, not on the content itself -
          putting it on the same Border as the keys/text would fade those too, not just the
          backdrop. -->
-    <Border CornerRadius="14" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="2">
+    <Border CornerRadius="14" BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="2">
         <Grid>
             <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.75" CornerRadius="12" />
             <StackPanel Margin="16">

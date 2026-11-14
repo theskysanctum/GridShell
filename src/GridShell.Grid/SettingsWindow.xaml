@@ -47,7 +47,7 @@
                                      Visibility="{Binding IsDownloadingUpdate, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
                     <CheckBox Content="Start with Windows"
                               IsChecked="{Binding AutostartEnabled}"
@@ -57,7 +57,7 @@
                     <ComboBox ItemsSource="{Binding Browsers}" SelectedItem="{Binding SelectedDefaultBrowser}"
                               DisplayMemberPath="Name" Margin="0,0,0,16" />
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,24,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,24,0,16" />
 
                     <CheckBox Content="Use GridShell as the Windows shell (replaces Explorer)"
                               IsChecked="{Binding UseGridShellAsSystemShell}"
@@ -66,7 +66,7 @@
                                TextWrapping="Wrap" Margin="0,0,0,16"
                                Text="Machine-wide: affects every account on this PC and Safe Mode, not just yours. Takes effect on your next login, not immediately, and needs an admin (UAC) prompt to confirm." />
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
                     <Button Content="{Binding KioskModeButtonText}" Padding="10,6" HorizontalAlignment="Left" Margin="0,0,0,4"
                             Click="KioskModeButton_Click" />
@@ -74,7 +74,7 @@
                                TextWrapping="Wrap" Margin="0,0,0,16"
                                Text="Locks tiles and wallpaper/appearance, and blocks the power menu and exiting GridShell. A PIN you set now is required to turn it back off." />
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
                     <Button Content="Report a Bug" Padding="10,6" HorizontalAlignment="Left" Margin="0,0,0,16"
                             Click="ReportBugButton_Click" />
@@ -115,7 +115,7 @@
                                             ToolTip="{Binding Hex}">
                                         <Button.Style>
                                             <Style TargetType="Button">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
                                                 <Setter Property="BorderThickness" Value="1" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
@@ -191,7 +191,7 @@
                                         ToolTip="{Binding Name}">
                                     <Button.Style>
                                         <Style TargetType="Button">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
                                             <Setter Property="BorderThickness" Value="1" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
@@ -238,7 +238,7 @@
                         </Button>
                     </Grid>
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,24,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,24,0,16" />
 
                     <TextBlock Text="Scenes" FontWeight="Bold" Margin="0,0,0,4" />
                     <TextBlock Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
@@ -266,7 +266,7 @@
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="Card" CornerRadius="12" Width="220"
                                                     Background="{DynamicResource SurfaceBackgroundBrush}"
-                                                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
+                                                    BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="1"
                                                     ClipToBounds="True">
                                                 <StackPanel>
                                                     <Grid Height="120">
@@ -334,7 +334,7 @@
                         <Button Content="Clear session" Padding="8,4" Click="ArchiveOrgClearButton_Click" />
                     </StackPanel>
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,8,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,8,0,16" />
 
                     <TextBlock Text="Download folder" FontWeight="Bold" Margin="0,0,0,4" />
                     <Grid Margin="0,0,0,16">
@@ -353,7 +353,7 @@
                         </Button>
                     </Grid>
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
                     <TextBlock Text="Browser integration" FontWeight="Bold" Margin="0,0,0,4" />
                     <TextBlock Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
@@ -389,7 +389,7 @@
                                   VerticalAlignment="Center" />
                     </Grid>
 
-                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+                    <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
                     <TextBlock Text="Input" FontWeight="Bold" Margin="0,0,0,8" />
                     <TextBlock Text="Device" Margin="0,0,0,4" />

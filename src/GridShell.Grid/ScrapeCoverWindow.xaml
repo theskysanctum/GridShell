@@ -59,7 +59,7 @@
                      Visibility="{Binding IsSearching, Converter={StaticResource BoolToVisibilityInverse}}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,0,0,1" Padding="4,8">
+                        <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,0,0,1" Padding="4,8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />

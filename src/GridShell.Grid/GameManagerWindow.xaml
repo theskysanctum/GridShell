@@ -120,7 +120,7 @@
                         <PasswordBox x:Name="IgdbClientSecretBox" Padding="4" Margin="0,0,0,8"
                                      PasswordChanged="IgdbClientSecretBox_PasswordChanged" />
 
-                        <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,12" />
+                        <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,12" />
 
                         <TextBlock Text="Installed games &amp; ROMs" FontWeight="Bold" Margin="0,0,0,4" />
                         <TextBlock Text="Adds a tile for every game already installed via Steam, Epic Games, or GOG Galaxy, plus every ROM found under a configured platform's ROM folder(s) below. itch.io isn't supported - its own integration guidelines require talking to a background daemon rather than reading its files directly."
@@ -200,7 +200,7 @@
                         </Grid>
                     </StackPanel>
 
-                    <Border Grid.Row="2" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,12" />
+                    <Border Grid.Row="2" BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,12" />
 
                     <StackPanel Grid.Row="3" Margin="0,0,0,12">
                         <Grid Margin="0,0,0,6">
@@ -241,7 +241,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,12,0,12" />
+                        <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,12,0,12" />
 
                         <TextBlock Text="Game links repo" FontWeight="Bold" Margin="0,0,0,4" />
                         <TextBlock Text="A git repo with one &lt;platform-slug&gt;.json file per platform at its root (each a list of [name, download url, size]) - lets the Store's Games category list and download real games straight into that platform's ROM folder."
@@ -292,7 +292,7 @@
                         </ListBox.GroupStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,0,0,1" Padding="4,8">
+                                <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,0,0,1" Padding="4,8">
                                     <StackPanel>
                                         <Grid Margin="0,0,0,4">
                                             <Grid.ColumnDefinitions>

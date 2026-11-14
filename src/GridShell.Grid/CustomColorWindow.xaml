@@ -34,7 +34,7 @@
                      Text="{Binding HexText, UpdateSourceTrigger=PropertyChanged}"
                      KeyDown="HexBox_KeyDown" />
             <Border Grid.Column="1" Width="28" Height="28" Margin="8,0,0,0"
-                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
+                    BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="1"
                     Background="{Binding PreviewBrush}" />
         </Grid>
 

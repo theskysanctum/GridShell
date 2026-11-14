@@ -246,7 +246,7 @@
              it). Overdrawn 1px past every edge so layout rounding never lands exactly on the
              real edge and exposes the window's true (non-alpha-blended) transparent backdrop
              as a hairline. -->
-        <Border x:Name="ScrimBorder" Background="Black" Opacity="0.45" Margin="-1" />
+        <Border x:Name="ScrimBorder" Background="Black" Opacity="0" Margin="-1" />
 
         <!-- The actual grid nearly fills the screen. Its own background is a separate sibling
              Border at reduced opacity (same trick the old
@@ -255,6 +255,9 @@
         <Border x:Name="ModalPanel" Margin="32" CornerRadius="16"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 Effect="{StaticResource CardShadow}">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="ModalPanelSlideTransform" />
+            </Border.RenderTransform>
             <Grid>
                 <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.94" CornerRadius="16" />
 
@@ -388,7 +391,7 @@
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
                             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
                             <Setter Property="BorderThickness" Value="1" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsAppsTabActive}" Value="True">
@@ -404,7 +407,7 @@
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
                             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
                             <Setter Property="BorderThickness" Value="1" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsWebTabActive}" Value="True">
@@ -420,7 +423,7 @@
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
                             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
                             <Setter Property="BorderThickness" Value="1" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsGamesTabActive}" Value="True">

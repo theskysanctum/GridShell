@@ -284,16 +284,8 @@ public partial class App : System.Windows.Application
         ThemePalette.Apply(Resources, settings.Theme);
 
         var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.AccentColor)!;
-        Resources["AccentBrush"] = new System.Windows.Media.SolidColorBrush(color);
-        Resources["AccentSecondaryColor"] = ThemePalette.DarkenAccent(color, 0.48);
-        var taskbarBorderBrush = new System.Windows.Media.LinearGradientBrush
-        {
-            StartPoint = new System.Windows.Point(0, 0),
-            EndPoint = new System.Windows.Point(1, 1),
-        };
-        taskbarBorderBrush.GradientStops.Add(new System.Windows.Media.GradientStop(ThemePalette.DarkenAccent(color, 0.88), 0));
-        taskbarBorderBrush.GradientStops.Add(new System.Windows.Media.GradientStop(ThemePalette.DarkenAccent(color, 0.82), 1));
-        Resources["TaskbarWindowBorderBrush"] = taskbarBorderBrush;
+        ThemePalette.ApplyAccent(Resources, color);
+        Resources["TaskbarWindowBorderBrush"] = Resources["AccentOutlineBrush"];
 
         // Same app-level DynamicResource pattern as AccentBrush - every window references
         // {DynamicResource AppFontFamily} instead of a hardcoded font.

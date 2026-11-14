@@ -10,5 +10,13 @@
         <!-- Shared app-wide so every window (not just MainWindow) can use it — ApplySettings()
              overwrites this with the user's saved color once settings are loaded. -->
         <SolidColorBrush x:Key="AccentBrush" Color="#4A90D9" />
+        <LinearGradientBrush x:Key="AccentOutlineBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#417EBE" Offset="0" />
+            <GradientStop Color="#3C76B1" Offset="1" />
+        </LinearGradientBrush>
+        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
     </Application.Resources>
 </Application>

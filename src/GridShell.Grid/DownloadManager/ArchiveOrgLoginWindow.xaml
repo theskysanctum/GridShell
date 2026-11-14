@@ -24,7 +24,7 @@
                        Text="Sign in normally in this window, then click Use this session to pull the active Archive.org cookies into GridShell. This only captures cookies for archive.org and does not share them with other domains." />
         </StackPanel>
 
-        <Border Grid.Row="1" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1" CornerRadius="8">
+        <Border Grid.Row="1" BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="1" CornerRadius="8">
             <wv2:WebView2 x:Name="WebView" />
         </Border>
 

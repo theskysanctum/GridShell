@@ -148,7 +148,7 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource PanelBorderBrush}"
+        <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource AccentOutlineBrush}"
                 Margin="10,0" Padding="0,12,0,16">
             <StackPanel>
                 <Button Width="40" Height="40" Margin="0,0,0,8" HorizontalAlignment="Center"

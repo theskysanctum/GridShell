@@ -94,11 +94,13 @@ public partial class App : System.Windows.Application
         // Applied before the first window is created so it never renders with the wrong
         // theme even briefly. ThemeMode (WPF's own Fluent light/dark) and ThemePalette (our
         // own custom-colored surfaces) are two separate systems that both need setting.
-        var theme = AppSettingsStore.Load().Theme;
+        var settings = AppSettingsStore.Load();
 #pragma warning disable WPF0001 // ThemeMode is experimental, but XAML already used it statically before this
-        ThemeMode = theme == AppTheme.Light ? ThemeMode.Light : ThemeMode.Dark;
+        ThemeMode = settings.Theme == AppTheme.Light ? ThemeMode.Light : ThemeMode.Dark;
 #pragma warning restore WPF0001
-        ThemePalette.Apply(Resources, theme);
+        ThemePalette.Apply(Resources, settings.Theme);
+        var accent = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.AccentColor)!;
+        ThemePalette.ApplyAccent(Resources, accent);
 
         DownloadBridge.DownloadReceived += request =>
             Dispatcher.Invoke(() => ShowDownloadManager().AddDownload(request.Url, request.Filename));

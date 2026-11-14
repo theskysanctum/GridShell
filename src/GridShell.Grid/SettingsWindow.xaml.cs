@@ -1123,6 +1123,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             {
                 _settings.AccentColor = chosenHex;
                 _onSettingsChanged();
+                NotifyTaskbarSettingsChanged();
                 RefreshAccentSwatches();
             }
 
@@ -1131,6 +1132,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
         _settings.AccentColor = swatch.Hex;
         _onSettingsChanged();
+        NotifyTaskbarSettingsChanged();
         RefreshAccentSwatches();
     }
 

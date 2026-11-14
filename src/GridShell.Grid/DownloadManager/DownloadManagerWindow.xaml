@@ -99,7 +99,7 @@
             </ListView.View>
         </ListView>
 
-        <Border Grid.Row="5" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
+        <Border Grid.Row="5" BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Padding="8,4">
             <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"
                        Text="D-pad/R-stick: select   •   Cross/A: open containing folder   •   Square/X: cancel/remove   •   Esc: close" />
         </Border>

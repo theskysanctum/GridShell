@@ -62,6 +62,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private string? _selectedPlatform;
     private bool _isCompactLayout;
+    private bool _isClosing;
     private double _mainContentTopOffset = 72;
 
     public GridLength PlatformPaneWidth { get; private set; } = new(200);
@@ -296,12 +297,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     /// toggling instant, since it's not a fresh process launch.</summary>
     public void ShowGrid()
     {
+        if (IsVisible)
+        {
+            return;
+        }
+
         // Re-applying right before showing covers any display change that happened since the
         // window was last positioned, regardless of whether WM_DISPLAYCHANGE/WM_DPICHANGED fired
         // while it still had no HWND to receive them on.
         ApplyScreenGeometryNative();
 
         _previousForegroundWindow = GetForegroundWindow();
+
+        var slideDistance = GetGridSlideDistance();
+        ModalPanelSlideTransform.BeginAnimation(TranslateTransform.XProperty, null);
+        ScrimBorder.BeginAnimation(UIElement.OpacityProperty, null);
+        ModalPanelSlideTransform.X = -slideDistance;
+        ScrimBorder.Opacity = 0;
 
         Show();
         Activate();
@@ -317,6 +329,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOACTIVATE);
         _osk.BringAboveOthers();
 
+        ModalPanelSlideTransform.BeginAnimation(
+            TranslateTransform.XProperty,
+            new DoubleAnimation(-slideDistance, 0, TimeSpan.FromMilliseconds(320))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            });
+        ScrimBorder.BeginAnimation(
+            UIElement.OpacityProperty,
+            new DoubleAnimation(0, 0.45, TimeSpan.FromMilliseconds(280))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            });
+
         FocusActiveList();
         _controller.Start();
         // Re-checks every time the grid opens, not just once at startup - confirmed live: a
@@ -328,13 +353,45 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void HideGrid(bool restorePreviousFocus = true)
     {
-        _controller.Stop();
-        Hide();
-        if (restorePreviousFocus && !_previousForegroundWindow.IsNull)
+        if (!IsVisible || _isClosing)
         {
-            SetForegroundWindow(_previousForegroundWindow);
+            return;
         }
+
+        _controller.Stop();
+        _isClosing = true;
+
+        var slideDistance = GetGridSlideDistance();
+        var slideOut = new DoubleAnimation(ModalPanelSlideTransform.X, -slideDistance, TimeSpan.FromMilliseconds(260))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
+        };
+        slideOut.Completed += (_, _) =>
+        {
+            ModalPanelSlideTransform.BeginAnimation(TranslateTransform.XProperty, null);
+            ModalPanelSlideTransform.X = -slideDistance;
+            ScrimBorder.BeginAnimation(UIElement.OpacityProperty, null);
+            ScrimBorder.Opacity = 0;
+            Hide();
+            _isClosing = false;
+
+            if (restorePreviousFocus && !_previousForegroundWindow.IsNull)
+            {
+                SetForegroundWindow(_previousForegroundWindow);
+            }
+        };
+
+        ModalPanelSlideTransform.BeginAnimation(TranslateTransform.XProperty, slideOut);
+        ScrimBorder.BeginAnimation(
+            UIElement.OpacityProperty,
+            new DoubleAnimation(ScrimBorder.Opacity, 0, TimeSpan.FromMilliseconds(240))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
+            });
     }
+
+    private double GetGridSlideDistance() =>
+        Math.Max(RootGrid.ActualWidth, Math.Max(Width, SystemParameters.PrimaryScreenWidth));
 
     private void ToggleVisibility()
     {
@@ -429,9 +486,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.AccentColor)!;
-            // Application-level (not this window's own Resources) so other windows — the
-            // on-screen keyboard, and anything else added later — can use it too.
-            Application.Current.Resources["AccentBrush"] = new SolidColorBrush(color);
+            ThemePalette.ApplyAccent(Application.Current.Resources, color);
 
             var selectionBrush = new LinearGradientBrush
             {
