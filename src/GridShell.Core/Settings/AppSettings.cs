@@ -44,6 +44,12 @@ public class AppSettings
     /// download manager to unrestrict hoster links and manage torrents.</summary>
     public string? RealDebridApiToken { get; set; }
 
+    /// <summary>Raw HTTP cookie header value for downloads that require login/session cookies,
+    /// such as archive.org lending links. Paste the cookie string exactly as browser devtools
+    /// show it, e.g. "logged-in-sig=...; PHPSESSID=..."; the app applies it as a Cookie header
+    /// for both the direct download path and aria2's RPC addUri call.</summary>
+    public string? DownloadCookies { get; set; }
+
     /// <summary>Where the download manager saves finished downloads - defaults to the user's
     /// Windows Downloads folder when null.</summary>
     public string? DownloadManagerFolder { get; set; }
@@ -75,7 +81,7 @@ public class AppSettings
     /// <summary>Locks down editing tiles/wallpaper-appearance and exiting GridShell
     /// (Settings' Exit button, the power menu) - a PIN set via KioskPinWindow, hashed by
     /// PinHasher, is required to turn this back off. Intended for handing the PC to a kid
-    /// without worrying about things getting changed or GridShell itself getting closed.</summary>
+    /// without worrying about things getting changed or GridShell itself gets closed.</summary>
     public bool KioskModeEnabled { get; set; }
 
     /// <summary>"&lt;saltBase64&gt;:&lt;hashBase64&gt;" via PinHasher - null whenever
