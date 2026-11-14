@@ -19,6 +19,12 @@ public enum DownloadState
 public class DownloadItem : INotifyPropertyChanged
 {
     public required string SourceInput { get; init; }
+
+    /// <summary>Other URLs for the exact same file (see GameLinkEntry's own remarks on the Store
+    /// Games category's mirror links) - tried in order after SourceInput if a candidate fails,
+    /// rather than failing the whole item over one dead/blocked mirror.</summary>
+    public List<string> FallbackUrls { get; init; } = new();
+
     public readonly CancellationTokenSource Cts = new();
 
     private string _name = "";

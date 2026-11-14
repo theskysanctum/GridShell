@@ -134,6 +134,17 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         _onSettingsChanged();
     }
 
+    public string? GameLinksRepoUrl
+    {
+        get => _settings.GameLinksRepoUrl;
+        set
+        {
+            _settings.GameLinksRepoUrl = string.IsNullOrWhiteSpace(value) ? null : value;
+            OnPropertyChanged();
+            _onSettingsChanged();
+        }
+    }
+
     public ObservableCollection<Tile> GameTiles { get; } = new();
 
     private void RefreshGameTiles()

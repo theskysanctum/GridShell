@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -9,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using GridShell.Core.GameLibraries;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
 using GridShell.Core.Store;
@@ -25,6 +27,7 @@ namespace GridShell;
 public partial class StoreWindow : Window, INotifyPropertyChanged
 {
     private const string ScenesCategoryLabel = "Scenes";
+    private const string GamesCategoryLabel = "Games";
 
     private readonly List<Tile> _allTiles;
     private readonly AppSettings _settings;
@@ -32,12 +35,15 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
     private List<StoreAppViewModel> _allApps = new();
     private List<StoreSceneViewModel> _allScenes = new();
+    private bool _gamesRepoSynced;
 
     public ObservableCollection<StoreAppViewModel> Apps { get; } = new();
     public ObservableCollection<StoreSceneViewModel> Scenes { get; } = new();
     public ObservableCollection<string> Categories { get; } = new();
 
     public bool IsScenesCategory => SelectedCategory == ScenesCategoryLabel;
+    public bool IsGamesCategory => SelectedCategory == GamesCategoryLabel;
+    public bool IsAppsCategory => !IsScenesCategory && !IsGamesCategory;
 
     private string _selectedCategory = "";
     public string SelectedCategory
@@ -48,9 +54,50 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             _selectedCategory = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsScenesCategory));
+            OnPropertyChanged(nameof(IsGamesCategory));
+            OnPropertyChanged(nameof(IsAppsCategory));
             ApplyFilter();
+
+            if (IsGamesCategory)
+            {
+                _ = EnsureGamesRepoLoadedAsync();
+            }
         }
     }
+
+    /// <summary>Only platforms with an emulator already configured (Game Manager > Emulation) -
+    /// same filter the Download Manager's own "save as a game ROM" picker uses, since a game
+    /// for a platform with no emulator set up can't be launched yet regardless of where it's
+    /// saved.</summary>
+    public ObservableCollection<EmulationPlatform> GamePlatforms { get; } = new();
+
+    private EmulationPlatform? _selectedGamePlatform;
+    public EmulationPlatform? SelectedGamePlatform
+    {
+        get => _selectedGamePlatform;
+        set
+        {
+            _selectedGamePlatform = value;
+            OnPropertyChanged();
+            RefreshGameLinkEntries();
+        }
+    }
+
+    public ObservableCollection<GameLinkEntryViewModel> GameLinkEntries { get; } = new();
+
+    private string _gamesRepoStatusText = "";
+    public string GamesRepoStatusText
+    {
+        get => _gamesRepoStatusText;
+        set
+        {
+            _gamesRepoStatusText = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasGamesRepoStatusText));
+        }
+    }
+
+    public bool HasGamesRepoStatusText => GamesRepoStatusText.Length > 0;
 
     private string _catalogStatusText = "Loading catalog...";
     public string CatalogStatusText
@@ -152,12 +199,151 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
         // No catch-all "All Apps" entry - land on the first real category instead, now that
         // Categories actually has entries for the ListBox's SelectedItem binding to match against.
-        if (Categories.Count > 0)
+        var defaultCategory = Categories.Count > 0 ? Categories[0] : null;
+
+        // Games is pinned at the very top of the rail regardless - unlike Scenes (only added
+        // when there's something to show), it's shown even with no repo configured yet, since
+        // setting one up is a status message inside the pane itself, not a reason to hide it.
+        Categories.Insert(0, GamesCategoryLabel);
+
+        if (defaultCategory is not null)
         {
-            SelectedCategory = Categories[0];
+            SelectedCategory = defaultCategory;
         }
 
         _ = RefreshInstalledStateAsync();
+    }
+
+    /// <summary>Populates GamePlatforms the first time the Games category is shown (never
+    /// changes after that within one Store session - a platform's emulator is configured in
+    /// Game Manager, not here), then syncs the configured repo once per Store session and loads
+    /// the currently-selected platform's entries.</summary>
+    private async Task EnsureGamesRepoLoadedAsync()
+    {
+        if (GamePlatforms.Count == 0)
+        {
+            foreach (var platform in EmulationPlatforms.All)
+            {
+                if (_settings.EmulatorConfigs.TryGetValue(platform.Slug, out var config) &&
+                    !string.IsNullOrWhiteSpace(config.EmulatorPath))
+                {
+                    GamePlatforms.Add(platform);
+                }
+            }
+
+            SelectedGamePlatform = GamePlatforms.FirstOrDefault();
+        }
+
+        if (_gamesRepoSynced)
+        {
+            return;
+        }
+
+        _gamesRepoSynced = true;
+
+        if (string.IsNullOrWhiteSpace(_settings.GameLinksRepoUrl))
+        {
+            GamesRepoStatusText = GamePlatforms.Count == 0
+                ? "No platform has an emulator configured yet - set one up in Game Manager first."
+                : "Set a game links repo in Game Manager > Emulators, then reopen the Store.";
+            return;
+        }
+
+        GamesRepoStatusText = "Loading game links repo...";
+        var ok = await GameLinksRepoSync.SyncAsync(_settings.GameLinksRepoUrl);
+        GamesRepoStatusText = ok
+            ? ""
+            : "Couldn't sync the game links repo - check the URL (Game Manager > Emulators) and your internet connection.";
+
+        RefreshGameLinkEntries();
+    }
+
+    private void RefreshGameLinkEntries()
+    {
+        GameLinkEntries.Clear();
+        if (SelectedGamePlatform is not { } platform)
+        {
+            return;
+        }
+
+        var entries = GameLinksRepoSync.GetEntries(platform.Slug)
+            .Select(e => new GameLinkEntryViewModel { Entry = e })
+            .ToList();
+
+        foreach (var entry in entries)
+        {
+            GameLinkEntries.Add(entry);
+        }
+
+        _ = LoadGameLinkCoversAsync(entries);
+    }
+
+    /// <summary>Same IGDB lookup/cache IconLoader already uses for real Game tiles' cover art
+    /// (IgdbCoverService, keyed by name) - these entries aren't Tiles yet (nothing's been
+    /// downloaded), so this fetches directly instead of going through IconLoader.</summary>
+    private async Task LoadGameLinkCoversAsync(List<GameLinkEntryViewModel> entries)
+    {
+        if (_settings is not { IgdbClientId: { Length: > 0 } clientId, IgdbClientSecret: { Length: > 0 } clientSecret })
+        {
+            return;
+        }
+
+        using var throttle = new SemaphoreSlim(4);
+        var tasks = entries.Select(async entry =>
+        {
+            await throttle.WaitAsync();
+            try
+            {
+                var coverPath = await IgdbCoverService.GetCachedCoverPathAsync(entry.Name, clientId, clientSecret);
+                if (coverPath is not null)
+                {
+                    entry.Cover = await Task.Run(() => ImageLoader.LoadFromFile(coverPath));
+                }
+            }
+            finally
+            {
+                throttle.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
+    }
+
+    /// <summary>Queues a repo game link in the Download Manager, pointed straight at that
+    /// platform's default ROM folder - same destination-folder/auto-extract path the Download
+    /// Manager's own "save as a game ROM" picker already uses, so the result shows up through
+    /// Game Manager's normal "Scan for games &amp; ROMs" once it finishes.</summary>
+    private void GameLinkEntry_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        // Must resolve to the entry actually under the cursor, not whatever's currently
+        // selected - a double-click landing on empty grid space past the last entry would
+        // otherwise queue a stale selection instead of doing nothing, same reasoning as
+        // MainWindow's own TileList_MouseDoubleClick/FindAncestorTile.
+        if (FindAncestorGameLinkEntry((DependencyObject)e.OriginalSource) is not { } entry ||
+            SelectedGamePlatform is not { } platform)
+        {
+            return;
+        }
+
+        var destinationFolder = Path.Combine(EmulationPlatforms.RomsRootPath, platform.Slug);
+        ((App)Application.Current).ShowDownloadManager().AddDownload(entry.Entry.Mirrors, entry.Entry.Name, destinationFolder);
+        entry.IsQueued = true;
+        new ToastWindow($"Queued {entry.Name} - check the Download Manager.", TimeSpan.FromSeconds(5)).Show();
+    }
+
+    private static GameLinkEntryViewModel? FindAncestorGameLinkEntry(DependencyObject? source)
+    {
+        while (source is not null)
+        {
+            if (source is FrameworkElement { DataContext: GameLinkEntryViewModel entry })
+            {
+                return entry;
+            }
+
+            source = System.Windows.Media.VisualTreeHelper.GetParent(source);
+        }
+
+        return null;
     }
 
     /// <summary>Opening the Store previously always showed every app as not-installed, since

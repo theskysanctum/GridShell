@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -11,6 +13,8 @@ using GridShell.Core.Downloads;
 using GridShell.Core.Interop;
 using GridShell.Core.RealDebrid;
 using GridShell.Core.Settings;
+using GridShell.Core.Store;
+using GridShell.Core.Tiles;
 
 namespace GridShell;
 
@@ -49,6 +53,66 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>Only platforms with an emulator already configured (Game Manager > Emulation) -
+    /// same filter AddTileWindow's own "Emulated Game" tab uses, since a ROM for a platform with
+    /// no emulator set up can't be launched yet regardless of where it's saved.</summary>
+    public ObservableCollection<EmulationPlatform> RomPlatforms { get; } = new();
+
+    private bool _saveAsRom;
+    public bool SaveAsRom
+    {
+        get => _saveAsRom;
+        set
+        {
+            _saveAsRom = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private EmulationPlatform? _selectedRomPlatform;
+    public EmulationPlatform? SelectedRomPlatform
+    {
+        get => _selectedRomPlatform;
+        set
+        {
+            _selectedRomPlatform = value;
+            OnPropertyChanged();
+            RefreshRomFolderOptions();
+        }
+    }
+
+    /// <summary>The default ROMs root's own &lt;slug&gt; folder, then each configured extra ROM
+    /// folder's (Game Manager > Emulation > "Extra ROM folders") &lt;slug&gt; folder - same list
+    /// and order EmulatorPlatformRow.RomFolderPaths already shows per platform there, so "where
+    /// this lands" matches what Game Manager calls that folder.</summary>
+    public ObservableCollection<string> RomFolderOptions { get; } = new();
+
+    private string? _selectedRomFolder;
+    public string? SelectedRomFolder
+    {
+        get => _selectedRomFolder;
+        set
+        {
+            _selectedRomFolder = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void RefreshRomFolderOptions()
+    {
+        RomFolderOptions.Clear();
+        if (SelectedRomPlatform is { } platform)
+        {
+            var roots = new[] { EmulationPlatforms.RomsRootPath }.Concat(_settings.ExtraRomPaths);
+            foreach (var root in roots)
+            {
+                RomFolderOptions.Add(Path.Combine(root, platform.Slug));
+            }
+        }
+
+        SelectedRomFolder = RomFolderOptions.FirstOrDefault();
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
@@ -65,6 +129,15 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         Icon = GlyphIcon.Render('', new SolidColorBrush(Color.FromRgb(0x4A, 0x90, 0xD9)), Brushes.White);
 
         _settings = AppSettingsStore.Load();
+
+        foreach (var platform in EmulationPlatforms.All)
+        {
+            if (_settings.EmulatorConfigs.TryGetValue(platform.Slug, out var config) &&
+                !string.IsNullOrWhiteSpace(config.EmulatorPath))
+            {
+                RomPlatforms.Add(platform);
+            }
+        }
 
         // This window is a reused singleton for the process's whole lifetime (App.
         // ShowDownloadManager), same as MainWindow - a real Close() would destroy the Downloads
@@ -124,22 +197,46 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
 
         LinkInputBox.Text = "";
-        AddDownload(input, null);
+
+        // SaveAsRom/SelectedRomFolder reflect this add bar's own controls at the moment "Add"
+        // is clicked - read here, not later, so a different in-flight download's folder choice
+        // can't retroactively change where this one lands.
+        var romFolder = SaveAsRom ? SelectedRomFolder : null;
+        AddDownload(input, null, romFolder);
     }
 
-    public void AddDownload(string input, string? suggestedName)
+    public void AddDownload(string input, string? suggestedName) => AddDownload(input, suggestedName, null);
+
+    /// <summary>destinationFolder, when set, is a Game Manager ROM platform folder (see
+    /// RomFolderOptions) rather than the generic Download Manager folder - the file (or, for a
+    /// .zip/.7z, its extracted contents) lands there instead, so RomScanner picks it up as a
+    /// game the next time Game Manager's "Scan for installed games" runs, the same as a ROM
+    /// dropped there by hand.</summary>
+    public void AddDownload(string input, string? suggestedName, string? destinationFolder) =>
+        AddDownload(new List<string> { input }, suggestedName, destinationFolder);
+
+    /// <summary>mirrorUrls' first entry is tried first - the rest are only ever touched if it
+    /// fails (see ProcessLinkWithFallbackAsync), so this behaves exactly like the single-URL
+    /// overload above when there's only one.</summary>
+    public void AddDownload(List<string> mirrorUrls, string? suggestedName, string? destinationFolder)
     {
-        var item = new DownloadItem { SourceInput = input, Name = suggestedName ?? input };
+        var item = new DownloadItem
+        {
+            SourceInput = mirrorUrls[0],
+            FallbackUrls = mirrorUrls.Skip(1).ToList(),
+            Name = suggestedName ?? mirrorUrls[0],
+        };
         Downloads.Add(item);
         SelectedDownload = item;
-        _ = ProcessAsync(item);
+        _ = ProcessAsync(item, destinationFolder);
     }
 
-    private async Task ProcessAsync(DownloadItem item)
+    private async Task ProcessAsync(DownloadItem item, string? destinationFolder)
     {
-        var folder = string.IsNullOrWhiteSpace(_settings.DownloadManagerFolder)
+        var folder = destinationFolder ?? (string.IsNullOrWhiteSpace(_settings.DownloadManagerFolder)
             ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
-            : _settings.DownloadManagerFolder;
+            : _settings.DownloadManagerFolder);
+        var extractArchive = destinationFolder is not null;
 
         try
         {
@@ -147,11 +244,11 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
 
             if (item.SourceInput.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase))
             {
-                await ProcessMagnetAsync(item, folder);
+                await ProcessMagnetAsync(item, folder, extractArchive);
             }
             else
             {
-                await ProcessLinkAsync(item, folder);
+                await ProcessLinkWithFallbackAsync(item, folder, extractArchive);
             }
 
             item.State = DownloadState.Completed;
@@ -173,23 +270,62 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private async Task ProcessLinkAsync(DownloadItem item, string folder)
+    /// <summary>Tries sourceUrl, the first candidate in ProcessAsync's own mirror list (its own
+    /// own SourceInput on the very first attempt, then each of FallbackUrls in order) - any
+    /// candidate that fails outright (a 403 from a hoster that's since pulled the file, a dead
+    /// link, aria2/the direct fetch erroring out) just moves on to the next one rather than
+    /// failing the whole item, since every mirror is the exact same file (see GameLinkEntry's
+    /// own remarks). Resets progress between attempts so a partial transfer from a dead mirror
+    /// never bleeds into the next one's own progress bar. A genuine cancel (the user hit
+    /// Backspace/Delete) propagates immediately instead of "falling through" to a mirror the
+    /// user never asked to keep trying.</summary>
+    private async Task ProcessLinkWithFallbackAsync(DownloadItem item, string folder, bool extractArchive)
+    {
+        var candidates = new List<string> { item.SourceInput }.Concat(item.FallbackUrls).ToList();
+        Exception? lastError = null;
+
+        for (var i = 0; i < candidates.Count; i++)
+        {
+            try
+            {
+                await ProcessLinkAsync(item, folder, extractArchive, candidates[i]);
+                return;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException)
+            {
+                lastError = ex;
+                if (i < candidates.Count - 1)
+                {
+                    item.DownloadedBytes = 0;
+                    item.TotalBytes = 0;
+                }
+            }
+        }
+
+        throw lastError ?? new IOException("All mirrors failed.");
+    }
+
+    private async Task ProcessLinkAsync(DownloadItem item, string folder, bool extractArchive, string sourceUrl)
     {
         item.State = DownloadState.Resolving;
 
-        var downloadUrl = item.SourceInput;
+        var downloadUrl = sourceUrl;
 
-        // AddDownload already set item.Name to whatever the browser extension suggested; only
-        // fall back to guessing from the URL's path when there was no suggestion (item.Name
-        // still equals the raw pasted input).
+        // AddDownload already set item.Name to whatever the browser extension (or the Store's
+        // Games category) suggested; only fall back to guessing from the URL's path when there
+        // was no suggestion (item.Name still equals the item's own first/primary URL).
         var fileName = (item.Name != item.SourceInput ? item.Name : null)
-            ?? TryGetFileNameFromUrl(item.SourceInput)
+            ?? TryGetFileNameFromUrl(sourceUrl)
             ?? "download";
         long totalBytes = 0;
 
         if (!string.IsNullOrWhiteSpace(_settings.RealDebridApiToken))
         {
-            var unrestricted = await RealDebridClient.UnrestrictLinkAsync(_settings.RealDebridApiToken, item.SourceInput);
+            var unrestricted = await RealDebridClient.UnrestrictLinkAsync(_settings.RealDebridApiToken, sourceUrl);
             if (unrestricted is not null)
             {
                 downloadUrl = unrestricted.DownloadUrl;
@@ -203,10 +339,10 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         item.Name = fileName;
         item.TotalBytes = totalBytes;
         item.State = DownloadState.Downloading;
-        await DownloadFileAsync(item, downloadUrl, folder, fileName);
+        await DownloadFileAsync(item, downloadUrl, folder, fileName, extractArchive);
     }
 
-    private async Task ProcessMagnetAsync(DownloadItem item, string folder)
+    private async Task ProcessMagnetAsync(DownloadItem item, string folder, bool extractArchive)
     {
         if (string.IsNullOrWhiteSpace(_settings.RealDebridApiToken))
         {
@@ -273,14 +409,14 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
             }
 
             item.TotalBytes += unrestricted.Filesize;
-            await DownloadFileAsync(item, unrestricted.DownloadUrl, folder, unrestricted.Filename);
+            await DownloadFileAsync(item, unrestricted.DownloadUrl, folder, unrestricted.Filename, extractArchive);
         }
     }
 
     /// <summary>Downloads via the bundled aria2c (multi-connection, much faster for large
     /// files) when its RPC daemon is up; falls back to a plain single-connection download
     /// otherwise, so the feature still works if the bundled binary failed to start.</summary>
-    private async Task DownloadFileAsync(DownloadItem item, string url, string folder, string fileName)
+    private async Task DownloadFileAsync(DownloadItem item, string url, string folder, string fileName, bool extractArchive)
     {
         var sanitizedName = SanitizeFileName(fileName);
         var app = (App)Application.Current;
@@ -291,11 +427,65 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
             if (gid is not null)
             {
                 await TrackAria2DownloadAsync(item, app.Aria2, gid, folder, sanitizedName);
+                if (extractArchive)
+                {
+                    await ExtractIntoDestinationAsync(item, folder, sanitizedName);
+                }
+
                 return;
             }
         }
 
         await DownloadFileDirectAsync(item, url, folder, sanitizedName);
+        if (extractArchive)
+        {
+            await ExtractIntoDestinationAsync(item, folder, sanitizedName);
+        }
+    }
+
+    /// <summary>Only for a ROM-folder destination (see AddDownload's own remarks) - extracts a
+    /// downloaded .zip/.7z straight into the same slug folder it was downloaded to (not a
+    /// subfolder named after the archive) and deletes the archive, so RomScanner sees the loose
+    /// ROM file(s) rather than an archive it doesn't recognize as one of a platform's own
+    /// extensions. Anything that isn't a .zip/.7z (an .exe, or a ROM already matching the
+    /// platform's own extensions - several platforms accept a zipped ROM directly, see
+    /// EmulationPlatform's own remarks) is left exactly where it landed.</summary>
+    private async Task ExtractIntoDestinationAsync(DownloadItem item, string folder, string fileName)
+    {
+        var archivePath = Path.Combine(folder, fileName);
+        var extension = Path.GetExtension(fileName);
+        if (!extension.Equals(".zip", StringComparison.OrdinalIgnoreCase) &&
+            !extension.Equals(".7z", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        try
+        {
+            if (extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                ZipFile.ExtractToDirectory(archivePath, folder, overwriteFiles: true);
+            }
+            else
+            {
+                var error = await SevenZipExtractor.ExtractAsync(archivePath, folder);
+                if (error is not null)
+                {
+                    item.ErrorMessage = $"Downloaded, but couldn't extract: {error}";
+                    return;
+                }
+            }
+
+            File.Delete(archivePath);
+            item.SavedToPath = folder;
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
+        {
+            // Leaves the archive itself on disk and SavedToPath pointing at it - same
+            // "downloaded fine, something after that failed" shape ProcessAsync's own catch
+            // uses, just without failing the whole item since the download itself did succeed.
+            item.ErrorMessage = $"Downloaded, but couldn't extract: {ex.Message}";
+        }
     }
 
     private async Task TrackAria2DownloadAsync(DownloadItem item, Aria2Daemon aria2, string gid, string folder, string fileName)

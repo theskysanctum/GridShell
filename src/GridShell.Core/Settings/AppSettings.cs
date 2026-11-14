@@ -64,6 +64,14 @@ public class AppSettings
     /// default root.</summary>
     public List<string> ExtraRomPaths { get; set; } = new();
 
+    /// <summary>A git repo (any host LibGit2Sharp can clone - "owner/repo" on GitHub, or a full
+    /// URL) with one &lt;platform-slug&gt;.json file per EmulationPlatform sitting right at its
+    /// root - each a JSON array of [name, url, sizeDisplay] entries - see GameLinksRepoSync.
+    /// Lets the Store's "Games" category browse and download real game files, same
+    /// shallow-clone-on-open pattern StoreCatalogSync already uses for the app catalog, just
+    /// pointed at a repo the user picks rather than GridShell's own.</summary>
+    public string? GameLinksRepoUrl { get; set; }
+
     /// <summary>Locks down editing widgets/tiles/wallpaper-appearance and exiting GridShell
     /// (Settings' Exit button, the power menu) - a PIN set via KioskPinWindow, hashed by
     /// PinHasher, is required to turn this back off. Intended for handing the PC to a kid

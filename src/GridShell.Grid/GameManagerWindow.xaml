@@ -236,6 +236,16 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
+                        <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,12,0,12" />
+
+                        <TextBlock Text="Game links repo" FontWeight="Bold" Margin="0,0,0,4" />
+                        <TextBlock Text="A git repo with one &lt;platform-slug&gt;.json file per platform at its root (each a list of [name, download url, size]) - lets the Store's Games category list and download real games straight into that platform's ROM folder."
+                                   Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <TextBox Text="{Binding GameLinksRepoUrl, UpdateSourceTrigger=PropertyChanged}" Padding="4"
+                                 ToolTip="owner/repo, or a full git URL"
+                                 Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                 Background="{DynamicResource SurfaceBackgroundBrush}" />
                     </StackPanel>
 
                     <ListBox Grid.Row="4" ItemsSource="{Binding Source={StaticResource GroupedEmulatorPlatforms}}"

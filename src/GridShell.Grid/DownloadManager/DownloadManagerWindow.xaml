@@ -15,10 +15,13 @@
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <FontFamily x:Key="IconFont">../Fonts/#Material Symbols Outlined</FontFamily>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -44,13 +47,28 @@
             </Button>
         </Grid>
 
+        <!-- Save-as-ROM destination -->
+        <CheckBox Grid.Row="1" Margin="12,0,12,4" Content="Save as a game ROM instead of a plain download"
+                  IsChecked="{Binding SaveAsRom}" />
+        <Grid Grid.Row="2" Margin="12,0,12,8" Visibility="{Binding SaveAsRom, Converter={StaticResource BoolToVisibility}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ComboBox Grid.Column="0" Margin="0,0,8,0" Padding="6"
+                      ItemsSource="{Binding RomPlatforms}" SelectedItem="{Binding SelectedRomPlatform}"
+                      DisplayMemberPath="DisplayName" />
+            <ComboBox Grid.Column="1" Padding="6"
+                      ItemsSource="{Binding RomFolderOptions}" SelectedItem="{Binding SelectedRomFolder}" />
+        </Grid>
+
         <!-- Real-Debrid status -->
-        <TextBlock Grid.Row="1" Margin="12,0,12,8" FontSize="11"
+        <TextBlock Grid.Row="3" Margin="12,0,12,8" FontSize="11"
                    Foreground="{DynamicResource MutedForegroundBrush}"
                    Text="{Binding RealDebridStatusText}" />
 
         <!-- Queue -->
-        <ListView Grid.Row="2" x:Name="DownloadsListView" Margin="12,0,12,8"
+        <ListView Grid.Row="4" x:Name="DownloadsListView" Margin="12,0,12,8"
                   ItemsSource="{Binding Downloads}" SelectedItem="{Binding SelectedDownload}"
                   Background="Transparent" BorderThickness="0">
             <ListView.ItemContainerStyle>
@@ -81,7 +99,7 @@
             </ListView.View>
         </ListView>
 
-        <Border Grid.Row="3" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
+        <Border Grid.Row="5" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
             <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"
                        Text="D-pad/R-stick: select   •   Cross/A: open containing folder   •   Square/X: cancel/remove   •   Esc: close" />
         </Border>

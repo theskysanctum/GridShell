@@ -17,6 +17,7 @@
         <FontFamily x:Key="IconFont">../Fonts/#Material Symbols Outlined</FontFamily>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         <local:BoolToVisibilityInverseConverter x:Key="BoolToVisibilityInverse" />
+        <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.4" BlurRadius="16" ShadowDepth="3" Direction="270" />
 
         <!-- Shows the Tag text as a placeholder while the box is empty - the previous version
              set Tag="Search apps..." but nothing ever rendered it, since a plain TextBox has no
@@ -168,7 +169,7 @@
 
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
-                          Visibility="{Binding IsScenesCategory, Converter={StaticResource BoolToVisibilityInverse}}">
+                          Visibility="{Binding IsAppsCategory, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl ItemsSource="{Binding Apps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -314,6 +315,89 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+
+            <!-- Games: a repo-backed game library (GameLinksRepoSync), not StoreApps - its own
+                 two-pane layout nested inside the outer category rail's content column: platform
+                 names on the left, IGDB-covered box art in a 3-column grid on the right, same
+                 visual shape as MainWindow's own Games tab (GameTileTemplate). Double-click
+                 queues the download in the Download Manager, pointed at that platform's ROM
+                 folder. -->
+            <Grid Grid.Column="2" Visibility="{Binding IsGamesCategory, Converter={StaticResource BoolToVisibility}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ListBox Grid.Column="0" ItemsSource="{Binding GamePlatforms}" SelectedItem="{Binding SelectedGamePlatform}"
+                         DisplayMemberPath="DisplayName"
+                         ItemContainerStyle="{StaticResource CategoryItemStyle}"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+                <Grid Grid.Column="2">
+                    <TextBlock Text="{Binding GamesRepoStatusText}" FontSize="12" TextWrapping="Wrap"
+                               HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,8,0,0"
+                               Foreground="{DynamicResource MutedForegroundBrush}"
+                               Visibility="{Binding HasGamesRepoStatusText, Converter={StaticResource BoolToVisibility}}" />
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding GameLinkEntries}" MouseDoubleClick="GameLinkEntry_MouseDoubleClick">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="3" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="200" Height="260" Margin="0,0,10,10" CornerRadius="10"
+                                            Background="{DynamicResource SurfaceBackgroundBrush}"
+                                            Effect="{StaticResource CardShadow}">
+                                        <Grid>
+                                            <Border CornerRadius="10" Background="{DynamicResource AccentBrush}"
+                                                    Visibility="{Binding HasCover, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                <TextBlock Text="{Binding InitialLetter}" FontSize="28" FontWeight="Bold"
+                                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border CornerRadius="10" Visibility="{Binding HasCover, Converter={StaticResource BoolToVisibility}}">
+                                                <Border.Background>
+                                                    <ImageBrush ImageSource="{Binding Cover}" Stretch="UniformToFill" />
+                                                </Border.Background>
+                                            </Border>
+
+                                            <Border VerticalAlignment="Bottom" Padding="8,24,8,8" CornerRadius="0,0,10,10">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="Transparent" Offset="0" />
+                                                        <GradientStop Color="#D0000000" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12"
+                                                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                                               HorizontalAlignment="Center" TextAlignment="Center" />
+                                                    <TextBlock Foreground="White" FontSize="10" Opacity="0.75"
+                                                               HorizontalAlignment="Center" Margin="0,2,0,0">
+                                                        <Run Text="{Binding SizeDisplay}" />
+                                                        <Run Text=" " />
+                                                        <Run Text="{Binding MirrorCountDisplay}" />
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <Border CornerRadius="10,0,0,10" Background="{DynamicResource AccentBrush}"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Top" Padding="8,4"
+                                                    Visibility="{Binding IsQueued, Converter={StaticResource BoolToVisibility}}">
+                                                <TextBlock Text="Queued" FontSize="10" Foreground="White" />
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
         </Grid>
 
         <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,10"
