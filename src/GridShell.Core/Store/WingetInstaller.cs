@@ -80,7 +80,12 @@ public static class WingetInstaller
                 "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
         }
 
-        if (listResult.Value.ExitCode == 0)
+        // Same stale-correlation-cache check IsInstalledAsync already applies - winget's own
+        // local cache (installed.db) can keep reporting a match here even after the app was
+        // fully removed outside GridShell (confirmed live: Telegram, no registry entry or
+        // install folder left, winget list still returns it). Trusting listResult alone would
+        // wrongly block a real reinstall with "Already installed."
+        if (listResult.Value.ExitCode == 0 && InstalledAppLocator.FindMainExe(app.Name) is not null)
         {
             return new InstallResult(InstallOutcome.AlreadyInstalled, "Already installed.");
         }
