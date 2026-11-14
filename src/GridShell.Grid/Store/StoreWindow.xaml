@@ -378,9 +378,9 @@
                                                                HorizontalAlignment="Center" TextAlignment="Center" />
                                                     <TextBlock Foreground="White" FontSize="10" Opacity="0.75"
                                                                HorizontalAlignment="Center" Margin="0,2,0,0">
-                                                        <Run Text="{Binding SizeDisplay}" />
+                                                        <Run Text="{Binding SizeDisplay, Mode=OneWay}" />
                                                         <Run Text=" " />
-                                                        <Run Text="{Binding MirrorCountDisplay}" />
+                                                        <Run Text="{Binding MirrorCountDisplay, Mode=OneWay}" />
                                                     </TextBlock>
                                                 </StackPanel>
                                             </Border>
