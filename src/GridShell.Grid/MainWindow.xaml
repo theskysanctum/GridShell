@@ -269,6 +269,8 @@
                      ItemsSource="{Binding Platforms}"
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      SelectionChanged="PlatformList_SelectionChanged">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
