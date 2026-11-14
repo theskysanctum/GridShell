@@ -103,18 +103,15 @@
             </Setter>
         </Style>
 
-        <!-- Shared by both tile templates — a consistent, animated accent ring on selection. -->
+        <!-- Shared by both tile templates — a breathing accent ring on hover or selection. -->
         <Style x:Key="TileSelectionBorderStyle" TargetType="Border">
             <Setter Property="BorderThickness" Value="3" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                     <Setter Property="BorderBrush" Value="{DynamicResource TileSelectionBorderBrush}" />
                     <DataTrigger.EnterActions>
-                        <BeginStoryboard x:Name="TileSelectionBorderAnimation">
+                        <BeginStoryboard x:Name="TileHoverBorderAnimation">
                             <Storyboard>
                                 <DoubleAnimation Storyboard.TargetProperty="(Border.BorderBrush).(LinearGradientBrush.RelativeTransform).(RotateTransform.Angle)"
                                                  From="0" To="360" Duration="0:0:4"
@@ -126,9 +123,31 @@
                         </BeginStoryboard>
                     </DataTrigger.EnterActions>
                     <DataTrigger.ExitActions>
-                        <StopStoryboard BeginStoryboardName="TileSelectionBorderAnimation" />
+                        <StopStoryboard BeginStoryboardName="TileHoverBorderAnimation" />
                     </DataTrigger.ExitActions>
                 </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True" />
+                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="BorderBrush" Value="{DynamicResource TileSelectionBorderBrush}" />
+                    <MultiDataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="TileSelectionBorderAnimation">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(Border.BorderBrush).(LinearGradientBrush.RelativeTransform).(RotateTransform.Angle)"
+                                                 From="0" To="360" Duration="0:0:4"
+                                                 RepeatBehavior="Forever" />
+                                <DoubleAnimation Storyboard.TargetProperty="(Border.BorderBrush).(Brush.Opacity)"
+                                                 From="0.35" To="1" Duration="0:0:1.2"
+                                                 AutoReverse="True" RepeatBehavior="Forever" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </MultiDataTrigger.EnterActions>
+                    <MultiDataTrigger.ExitActions>
+                        <StopStoryboard BeginStoryboardName="TileSelectionBorderAnimation" />
+                    </MultiDataTrigger.ExitActions>
+                </MultiDataTrigger>
                 <!-- Website tiles alone get Rename/Change Icon/Remove here - App tiles have no
                      right-click menu at all. A GameTileTemplate Border's own local ContextMenu
                      attribute (GameTileContextMenu) always wins over this style setter, so Game
