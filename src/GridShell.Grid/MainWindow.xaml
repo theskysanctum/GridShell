@@ -336,7 +336,7 @@
                      ClipToBounds="True"
                      VerticalAlignment="Top"
                      MaxHeight="{DynamicResource GamesGridVisibleHeight}"
-                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.CanContentScroll="True"
                      VirtualizingPanel.IsVirtualizing="True"

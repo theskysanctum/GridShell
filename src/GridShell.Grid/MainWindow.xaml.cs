@@ -417,9 +417,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Resources["GameTileWidth"] = w;
         Resources["GameTileHeight"] = w * 1.4;
 
-        // Exactly 2 rows (6 tiles, GamesGrid's own UniformGrid is 3 columns) tall - GameTileTemplate's
+        // Exactly 1 row (3 tiles, GamesGrid's own UniformGrid is 3 columns) tall - GameTileTemplate's
         // own Border carries a uniform 8px Margin, so each row's real height is GameTileHeight + 16.
-        Resources["GamesGridVisibleHeight"] = (w * 1.4 + 16) * 2;
+        Resources["GamesGridVisibleHeight"] = w * 1.4 + 16;
 
         try
         {
