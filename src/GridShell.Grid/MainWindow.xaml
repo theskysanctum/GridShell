@@ -108,6 +108,9 @@
             <Setter Property="BorderThickness" Value="3" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                     <Setter Property="BorderBrush" Value="{DynamicResource TileSelectionBorderBrush}" />
                     <DataTrigger.EnterActions>
@@ -125,9 +128,6 @@
                     <DataTrigger.ExitActions>
                         <StopStoryboard BeginStoryboardName="TileSelectionBorderAnimation" />
                     </DataTrigger.ExitActions>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
                 </DataTrigger>
                 <!-- Website tiles alone get Rename/Change Icon/Remove here - App tiles have no
                      right-click menu at all. A GameTileTemplate Border's own local ContextMenu
@@ -282,17 +282,14 @@
                      ItemsSource="{Binding BrowserShortcutTiles}"
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
-                     ScrollViewer.CanContentScroll="True"
                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling"
                      ItemTemplate="{StaticResource RegularTileTemplate}"
                      ItemContainerStyle="{StaticResource TileContainerStyle}"
                      MouseDoubleClick="TileList_MouseDoubleClick">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                        <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>
@@ -302,17 +299,14 @@
                      ItemsSource="{Binding DefaultWebsiteTiles}"
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
-                     ScrollViewer.CanContentScroll="True"
                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling"
                      ItemTemplateSelector="{StaticResource TileTemplateSelector}"
                      ItemContainerStyle="{StaticResource TileContainerStyle}"
                      MouseDoubleClick="TileList_MouseDoubleClick">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                        <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>
@@ -325,16 +319,14 @@
                      ItemsSource="{Binding Tiles}"
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
-                     ScrollViewer.CanContentScroll="True"
                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                     VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ItemTemplateSelector="{StaticResource TileTemplateSelector}"
                      ItemContainerStyle="{StaticResource TileContainerStyle}"
                      MouseDoubleClick="TileList_MouseDoubleClick">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                        <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>
