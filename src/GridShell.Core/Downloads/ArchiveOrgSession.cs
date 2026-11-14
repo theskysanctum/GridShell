@@ -20,18 +20,17 @@ public static class ArchiveOrgSession
                uri.IdnHost.EndsWith(".archive.org", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static string? ToHeaderValue(ICoreWebView2CookieList? cookieList)
+    public static string? ToHeaderValue(IEnumerable<CoreWebView2Cookie>? cookies)
     {
-        if (cookieList is null)
+        if (cookies is null)
         {
             return null;
         }
 
         var values = new List<string>();
-        for (var i = 0; i < cookieList.GetCount(); i++)
+        foreach (var cookie in cookies)
         {
-            var cookie = cookieList.GetCookie(i);
-            if (cookie is null || !IsArchiveOrgDomain(cookie.Domain))
+            if (!IsArchiveOrgDomain(cookie.Domain))
             {
                 continue;
             }
