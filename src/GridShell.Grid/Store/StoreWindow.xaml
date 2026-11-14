@@ -341,7 +341,7 @@
                                Foreground="{DynamicResource MutedForegroundBrush}"
                                Visibility="{Binding HasGamesRepoStatusText, Converter={StaticResource BoolToVisibility}}" />
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding GameLinkEntries}" MouseDoubleClick="GameLinkEntry_MouseDoubleClick">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>

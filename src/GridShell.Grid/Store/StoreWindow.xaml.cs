@@ -260,6 +260,11 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
     private void RefreshGameLinkEntries()
     {
+        // Switching platforms otherwise leaves the grid scrolled wherever the previous
+        // platform's own list happened to be, which reads as "half of this platform's own
+        // list is missing" until the user notices and scrolls back up themselves.
+        GameLinkEntriesScrollViewer.ScrollToTop();
+
         GameLinkEntries.Clear();
         if (SelectedGamePlatform is not { } platform)
         {
@@ -325,7 +330,13 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        var destinationFolder = Path.Combine(EmulationPlatforms.RomsRootPath, platform.Slug);
+        var roots = new List<string> { EmulationPlatforms.RomsRootPath }.Concat(_settings.ExtraRomPaths);
+        var chooseFolder = new ChooseRomFolderWindow(entry.Name, platform.Slug, roots) { Owner = this };
+        if (chooseFolder.ShowDialog() != true || chooseFolder.SelectedFolder is not { } destinationFolder)
+        {
+            return;
+        }
+
         ((App)Application.Current).ShowDownloadManager().AddDownload(entry.Entry.Mirrors, entry.Entry.Name, destinationFolder);
         entry.IsQueued = true;
         new ToastWindow($"Queued {entry.Name} - check the Download Manager.", TimeSpan.FromSeconds(5)).Show();
