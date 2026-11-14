@@ -29,6 +29,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly List<Tile> _allTiles = new();
     private readonly AppSettings _settings = AppSettingsStore.Load();
     private readonly ControllerInput _controller = new();
+    private Tile? _defaultBrowserShortcut;
 
     // The keyboard's trigger (Y/Triangle) is global, handled in the always-running taskbar
     // process — this instance is just where it actually lives (already pre-warmed, themed),
@@ -459,6 +460,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // resource updates the whole process live.
         Application.Current.Resources["AppFontFamily"] = UiFontResolver.Resolve(_settings);
 
+        if (_defaultBrowserShortcut is not null)
+        {
+            _defaultBrowserShortcut.Icon = CreateBrowserGlyph();
+        }
+
         // Kiosk Mode's only unlock path is Settings (PIN-gated there) - these two surfaces get
         // disabled rather than PIN-prompted here, so there's exactly one place a kid could even
         // attempt to guess a PIN, not several.
@@ -617,6 +623,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         else
         {
             Tiles.Clear();
+            if (ActiveTab == GridTab.Apps && ShouldShowDefaultBrowserShortcut())
+            {
+                Tiles.Add(GetDefaultBrowserShortcut());
+            }
+
             foreach (var tile in matchList)
             {
                 Tiles.Add(tile);
@@ -630,6 +641,41 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // selection/focus state instead of drifting apart.
         FocusActiveList();
     }
+
+    private bool ShouldShowDefaultBrowserShortcut()
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            return true;
+        }
+
+        var executableName = System.IO.Path.GetFileNameWithoutExtension(_settings.DefaultBrowserExecutablePath ?? "");
+        return "Browser".Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+            || executableName.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private Tile GetDefaultBrowserShortcut()
+    {
+        if (_defaultBrowserShortcut is null)
+        {
+            _defaultBrowserShortcut = new Tile
+            {
+                Name = "Browser",
+                TargetPath = "",
+                Kind = TileKind.App,
+                IconSourcePath = "",
+                Icon = CreateBrowserGlyph(),
+            };
+        }
+
+        return _defaultBrowserShortcut;
+    }
+
+    private static System.Windows.Media.ImageSource CreateBrowserGlyph() =>
+        GlyphIcon.Render(
+            '\ue80b',
+            Brushes.Transparent,
+            Application.Current.Resources["PrimaryForegroundBrush"] as Brush ?? Brushes.White);
 
     /// <summary>Games tab's left pane: "PC" first (native, non-emulated games), then every
     /// other platform with at least one matching tile, alphabetically - rebuilt from the
@@ -1005,6 +1051,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ActivateTile(Tile tile)
     {
+        if (ReferenceEquals(tile, _defaultBrowserShortcut))
+        {
+            var browserPath = _settings.DefaultBrowserExecutablePath;
+            if (string.IsNullOrWhiteSpace(browserPath))
+            {
+                new ToastWindow("Choose a default browser in Settings first.", TimeSpan.FromSeconds(5), isWarning: true).Show();
+                return;
+            }
+
+            ActivateTile(new Tile
+            {
+                Name = "Browser",
+                TargetPath = browserPath,
+                Kind = TileKind.App,
+                IconSourcePath = browserPath,
+            });
+            return;
+        }
+
         if (TileLauncher.Launch(tile))
         {
             // Same spirit as Escape — once something's actually launched, the grid's done its
@@ -1130,7 +1195,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RemoveTile(Tile? tile)
     {
-        if (tile is null || _settings.KioskModeEnabled)
+        if (tile is null || ReferenceEquals(tile, _defaultBrowserShortcut) || _settings.KioskModeEnabled)
         {
             return;
         }
