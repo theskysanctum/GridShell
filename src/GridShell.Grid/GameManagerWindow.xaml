@@ -68,14 +68,12 @@
             </Setter>
         </Style>
 
-        <!-- Same as the old TileRowTemplate, plus a Scrape button - game tiles alone get IGDB
-             cover art, and IgdbCoverService's automatic best-match pick can be wrong (common
-             title, a remaster vs. the original, a region-specific release), so this lets the
-             user search and choose the actual right cover. -->
+        <!-- Game tiles can choose an exact cover from either configured scraper. -->
         <DataTemplate x:Key="GameTileRowTemplate">
             <Grid Margin="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
@@ -83,12 +81,14 @@
                            Foreground="{DynamicResource PrimaryForegroundBrush}" TextTrimming="CharacterEllipsis" />
                 <Button Grid.Column="1" Padding="8,4" Margin="4,0,0,0"
                         Click="ScrapeButton_Click" CommandParameter="{Binding}" ToolTip="Search IGDB and pick the right cover">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xef7a;" FontFamily="{StaticResource IconFont}" FontSize="14" Margin="0,0,4,0" />
-                        <TextBlock Text="Scrape" />
-                    </StackPanel>
+                    <TextBlock Text="IGDB" />
                 </Button>
-                <Button Grid.Column="2" Width="28" Margin="4,0,0,0"
+                <Button Grid.Column="2" Padding="8,4" Margin="4,0,0,0"
+                        Click="TheGamesDbScrapeButton_Click" CommandParameter="{Binding}"
+                        ToolTip="Search TheGamesDB and pick the right cover">
+                    <TextBlock Text="TheGamesDB" />
+                </Button>
+                <Button Grid.Column="3" Width="28" Margin="4,0,0,0"
                         Click="RemoveTileButton_Click" CommandParameter="{Binding}" ToolTip="Remove">
                     <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" FontSize="14" />
                 </Button>
@@ -119,6 +119,13 @@
                         <TextBlock Text="Client Secret" Margin="0,0,0,4" />
                         <PasswordBox x:Name="IgdbClientSecretBox" Padding="4" Margin="0,0,0,8"
                                      PasswordChanged="IgdbClientSecretBox_PasswordChanged" />
+
+                        <TextBlock Text="TheGamesDB cover art" FontWeight="Bold" Margin="0,4,0,4" />
+                        <TextBlock Text="Search TheGamesDB and choose the matching box art. Requires an API key."
+                                   Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <TextBlock Text="API Key" Margin="0,0,0,4" />
+                        <PasswordBox x:Name="TheGamesDbApiKeyBox" Padding="4" Margin="0,0,0,8"
+                                     PasswordChanged="TheGamesDbApiKeyBox_PasswordChanged" />
 
                         <Border BorderBrush="{DynamicResource AccentOutlineBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,12" />
 

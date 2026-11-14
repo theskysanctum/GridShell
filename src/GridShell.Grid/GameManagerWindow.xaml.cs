@@ -16,7 +16,7 @@ using AppSettings = GridShell.Core.Settings.AppSettings;
 
 namespace GridShell;
 
-/// <summary>Consolidates everything about games into one place - IGDB cover art, the
+/// <summary>Consolidates everything about games into one place - IGDB and TheGamesDB cover art, the
 /// Steam/Epic/GOG installed-game scanner, the game tile list, RetroAchievements, ROM folders,
 /// per-platform emulator configuration, and controller management (virtual Xbox360 pads via
 /// ViGEm + hiding the original HID device via HidHide) - moved here from Settings' old
@@ -60,6 +60,7 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         _igdbClientId = _settings.IgdbClientId ?? "";
         OnPropertyChanged(nameof(IgdbClientId));
         IgdbClientSecretBox.Password = _settings.IgdbClientSecret ?? "";
+        TheGamesDbApiKeyBox.Password = _settings.TheGamesDbApiKey ?? "";
 
         RefreshGameTiles();
 
@@ -131,6 +132,12 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
     private void IgdbClientSecretBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
         _settings.IgdbClientSecret = IgdbClientSecretBox.Password;
+        _onSettingsChanged();
+    }
+
+    private void TheGamesDbApiKeyBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        _settings.TheGamesDbApiKey = TheGamesDbApiKeyBox.Password;
         _onSettingsChanged();
     }
 
@@ -326,6 +333,34 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         }
 
         var dialog = new ScrapeCoverWindow(tile.Name, _settings.IgdbClientId, _settings.IgdbClientSecret) { Owner = this };
+        if (dialog.ShowDialog() != true || dialog.SelectedCoverPath is not { } coverPath)
+        {
+            return;
+        }
+
+        tile.CustomIconPath = coverPath;
+        _ = IconLoader.LoadIconAsync(tile, _settings);
+        _onTilesChanged();
+    }
+
+    private void TheGamesDbScrapeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.CommandParameter is not Tile tile)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_settings.TheGamesDbApiKey))
+        {
+            new ToastWindow("Set a TheGamesDB API key above first.", TimeSpan.FromSeconds(5)).Show();
+            return;
+        }
+
+        var dialog = ScrapeCoverWindow.ForTheGamesDb(
+            tile.Name,
+            _settings.TheGamesDbApiKey,
+            tile.PlatformGroupName);
+        dialog.Owner = this;
         if (dialog.ShowDialog() != true || dialog.SelectedCoverPath is not { } coverPath)
         {
             return;

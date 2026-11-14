@@ -21,6 +21,7 @@ public sealed class AppSettings
     public string? GameLinksRepoUrl { get; set; }
     public string? IgdbClientId { get; set; }
     public string? IgdbClientSecret { get; set; }
+    public string? TheGamesDbApiKey { get; set; }
     public string? RetroAchievementsUsername { get; set; }
     public string? RetroAchievementsToken { get; set; }
     public bool WinKeyHookEnabled { get; set; } = true;

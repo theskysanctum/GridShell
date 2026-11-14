@@ -34,14 +34,27 @@ public static class AppSettingsStore
             try
             {
                 using var document = JsonDocument.Parse(json);
-                if (document.RootElement.TryGetProperty(nameof(AppSettings.DownloadCookies), out var cookieElement))
+                foreach (var secretName in new[]
+                         {
+                             nameof(AppSettings.DownloadCookies),
+                             nameof(AppSettings.TheGamesDbApiKey),
+                         })
                 {
-                    var rawCookie = cookieElement.GetString();
-                    if (!string.IsNullOrWhiteSpace(rawCookie))
+                    if (document.RootElement.TryGetProperty(secretName, out var secretElement))
                     {
-                        settings.DownloadCookies = TryDecryptDownloadCookies(rawCookie, out var decrypted)
-                            ? decrypted
-                            : rawCookie;
+                        var rawSecret = secretElement.GetString();
+                        if (!string.IsNullOrWhiteSpace(rawSecret))
+                        {
+                            var secret = TryDecryptAtRest(rawSecret, out var decrypted) ? decrypted : rawSecret;
+                            if (secretName == nameof(AppSettings.DownloadCookies))
+                            {
+                                settings.DownloadCookies = secret;
+                            }
+                            else
+                            {
+                                settings.TheGamesDbApiKey = secret;
+                            }
+                        }
                     }
                 }
             }
@@ -67,15 +80,14 @@ public static class AppSettingsStore
     /// app over one missed settings save.</summary>
     public static void Save(AppSettings settings)
     {
-        // Save the raw DownloadCookies value encrypted at rest while keeping the rest of the
-        // settings file compact and backward-compatible with the existing JSON shape.
+        // Save API keys and download cookies encrypted at rest while keeping the existing settings JSON shape.
         var payload = new Dictionary<string, object?>();
         foreach (var property in typeof(AppSettings).GetProperties(BindingFlags.Instance | BindingFlags.Public))
         {
             var value = property.GetValue(settings);
-            if (property.Name == nameof(AppSettings.DownloadCookies))
+            if (property.Name is nameof(AppSettings.DownloadCookies) or nameof(AppSettings.TheGamesDbApiKey))
             {
-                payload[property.Name] = EncryptDownloadCookies(value as string);
+                payload[property.Name] = EncryptAtRest(value as string);
             }
             else
             {
@@ -105,7 +117,7 @@ public static class AppSettingsStore
         }
     }
 
-    private static string? EncryptDownloadCookies(string? value)
+    private static string? EncryptAtRest(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -128,7 +140,7 @@ public static class AppSettingsStore
         }
     }
 
-    private static bool TryDecryptDownloadCookies(string? value, out string? decrypted)
+    private static bool TryDecryptAtRest(string? value, out string? decrypted)
     {
         decrypted = null;
         if (string.IsNullOrWhiteSpace(value))

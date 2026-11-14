@@ -54,6 +54,10 @@
             <TextBlock Text="No matches - try a different search." HorizontalAlignment="Center" VerticalAlignment="Center"
                        Foreground="{DynamicResource MutedForegroundBrush}"
                        Visibility="{Binding ShowNoResults, Converter={StaticResource BoolToVisibility}}" />
+            <TextBlock Text="{Binding SearchErrorMessage}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Margin="24,0" TextWrapping="Wrap" TextAlignment="Center"
+                       Foreground="{DynamicResource ErrorForegroundBrush}"
+                       Visibility="{Binding ShowSearchError, Converter={StaticResource BoolToVisibility}}" />
             <ListBox ItemsSource="{Binding Candidates}" Background="{DynamicResource SurfaceBackgroundBrush}"
                      Foreground="{DynamicResource PrimaryForegroundBrush}" BorderThickness="0"
                      Visibility="{Binding IsSearching, Converter={StaticResource BoolToVisibilityInverse}}">

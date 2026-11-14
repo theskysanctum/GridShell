@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -12,7 +13,7 @@ namespace GridShell.Core.Tiles;
 /// pattern as FaviconService for websites.</summary>
 public static class IgdbCoverService
 {
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(8) };
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
     private static readonly string CacheDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -20,6 +21,8 @@ public static class IgdbCoverService
         "igdb-covers");
 
     private static string? _cachedAccessToken;
+    private static string? _cachedClientId;
+    private static string? _cachedClientSecret;
     private static DateTime _accessTokenExpiresAtUtc = DateTime.MinValue;
     private static readonly Dictionary<string, int?> PlatformIdCache = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, string?> ImageIdCache = new(StringComparer.OrdinalIgnoreCase);
@@ -113,7 +116,13 @@ public static class IgdbCoverService
 
     private static async Task<string?> GetAccessTokenAsync(string clientId, string clientSecret)
     {
-        if (_cachedAccessToken is not null && DateTime.UtcNow < _accessTokenExpiresAtUtc)
+        clientId = clientId.Trim();
+        clientSecret = clientSecret.Trim();
+
+        if (_cachedAccessToken is not null
+            && string.Equals(_cachedClientId, clientId, StringComparison.Ordinal)
+            && string.Equals(_cachedClientSecret, clientSecret, StringComparison.Ordinal)
+            && DateTime.UtcNow < _accessTokenExpiresAtUtc)
         {
             return _cachedAccessToken;
         }
@@ -124,7 +133,7 @@ public static class IgdbCoverService
         using var response = await Http.PostAsync(url, content: null);
         if (!response.IsSuccessStatusCode)
         {
-            return null;
+            throw new HttpRequestException("Twitch OAuth rejected the IGDB credentials.", null, response.StatusCode);
         }
 
         using var stream = await response.Content.ReadAsStreamAsync();
@@ -132,10 +141,16 @@ public static class IgdbCoverService
         var root = doc.RootElement;
         var accessToken = root.GetProperty("access_token").GetString();
         var expiresInSeconds = root.GetProperty("expires_in").GetInt32();
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            return null;
+        }
 
         // A minute of slack so a token that's about to expire mid-call doesn't get reused.
         _accessTokenExpiresAtUtc = DateTime.UtcNow.AddSeconds(expiresInSeconds - 60);
         _cachedAccessToken = accessToken;
+        _cachedClientId = clientId;
+        _cachedClientSecret = clientSecret;
         return accessToken;
     }
 
@@ -254,11 +269,22 @@ public static class IgdbCoverService
     /// original, a region-specific release, etc.).</summary>
     public sealed record IgdbCandidate(string Name, string ImageId, int? ReleaseYear);
 
-    public static async Task<List<IgdbCandidate>> SearchCandidatesAsync(string query, string clientId, string clientSecret)
+    public sealed record IgdbSearchResult(IReadOnlyList<IgdbCandidate> Candidates, string? ErrorMessage);
+
+    public static async Task<IgdbSearchResult> SearchCandidatesAsync(string query, string clientId, string clientSecret)
     {
-        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret) || string.IsNullOrWhiteSpace(query))
+        query = query.Trim();
+        clientId = clientId.Trim();
+        clientSecret = clientSecret.Trim();
+
+        if (string.IsNullOrWhiteSpace(query))
         {
-            return new List<IgdbCandidate>();
+            return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "Enter a game title to search.");
+        }
+
+        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+        {
+            return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "Enter your IGDB Client ID and Secret in Game Manager.");
         }
 
         try
@@ -266,7 +292,7 @@ public static class IgdbCoverService
             var token = await GetAccessTokenAsync(clientId, clientSecret);
             if (token is null)
             {
-                return new List<IgdbCandidate>();
+                return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "Twitch did not return an access token. Check your IGDB credentials.");
             }
 
             using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.igdb.com/v4/games");
@@ -281,7 +307,9 @@ public static class IgdbCoverService
             using var response = await Http.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                return new List<IgdbCandidate>();
+                return new IgdbSearchResult(
+                    Array.Empty<IgdbCandidate>(),
+                    $"IGDB rejected the request (HTTP {(int)response.StatusCode} {response.StatusCode}). Check your Client ID and Secret.");
             }
 
             using var stream = await response.Content.ReadAsStreamAsync();
@@ -304,11 +332,27 @@ public static class IgdbCoverService
                 candidates.Add(new IgdbCandidate(nameProp.GetString() ?? "", imageIdProp.GetString() ?? "", releaseYear));
             }
 
-            return candidates;
+            return new IgdbSearchResult(candidates, null);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or JsonException)
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
         {
-            return new List<IgdbCandidate>();
+            return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "Twitch rejected the IGDB credentials. Check the Client ID and Secret in Game Manager.");
+        }
+        catch (HttpRequestException)
+        {
+            return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "Couldn't connect to IGDB. Check your internet connection and try again.");
+        }
+        catch (TaskCanceledException)
+        {
+            return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "The IGDB lookup timed out. Please try again.");
+        }
+        catch (IOException)
+        {
+            return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "Couldn't read the IGDB response. Please try again.");
+        }
+        catch (JsonException)
+        {
+            return new IgdbSearchResult(Array.Empty<IgdbCandidate>(), "IGDB returned an invalid response. Please try again.");
         }
     }
 

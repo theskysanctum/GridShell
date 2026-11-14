@@ -11,14 +11,19 @@ using GridShell.Core.Tiles;
 
 namespace GridShell;
 
-/// <summary>Lets the user search IGDB directly and pick the actual right cover for a game tile,
-/// rather than trusting IgdbCoverService's automatic best-by-rating_count choice - useful for a
-/// game with a common/reused title, a remaster vs. the original, or a region-specific release
-/// that the automatic pick gets wrong.</summary>
+/// <summary>Lets the user search a cover-art provider and choose the matching result.</summary>
 public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
 {
-    private readonly string _clientId;
-    private readonly string _clientSecret;
+    private readonly SearchSource _searchSource;
+    private readonly string _credential;
+    private readonly string? _secondaryCredential;
+    private readonly string? _preferredPlatform;
+
+    private enum SearchSource
+    {
+        Igdb,
+        TheGamesDb,
+    }
 
     private string _query;
     public string Query
@@ -45,13 +50,31 @@ public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
                 _isSearching = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ShowNoResults));
+                OnPropertyChanged(nameof(ShowSearchError));
             }
         }
     }
 
     private bool _hasSearched;
 
-    public bool ShowNoResults => _hasSearched && !IsSearching && Candidates.Count == 0;
+    private string? _searchErrorMessage;
+    public string? SearchErrorMessage
+    {
+        get => _searchErrorMessage;
+        private set
+        {
+            if (_searchErrorMessage != value)
+            {
+                _searchErrorMessage = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ShowNoResults));
+                OnPropertyChanged(nameof(ShowSearchError));
+            }
+        }
+    }
+
+    public bool ShowNoResults => _hasSearched && !IsSearching && Candidates.Count == 0 && SearchErrorMessage is null;
+    public bool ShowSearchError => !IsSearching && SearchErrorMessage is not null;
 
     public ObservableCollection<CandidateRow> Candidates { get; } = new();
 
@@ -63,12 +86,28 @@ public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
     public ScrapeCoverWindow(string gameName, string clientId, string clientSecret)
+        : this(gameName, SearchSource.Igdb, clientId, clientSecret, null)
+    {
+    }
+
+    public static ScrapeCoverWindow ForTheGamesDb(string gameName, string apiKey, string? preferredPlatform) =>
+        new(gameName, SearchSource.TheGamesDb, apiKey, null, preferredPlatform);
+
+    private ScrapeCoverWindow(
+        string gameName,
+        SearchSource searchSource,
+        string credential,
+        string? secondaryCredential,
+        string? preferredPlatform)
     {
         _query = gameName;
-        _clientId = clientId;
-        _clientSecret = clientSecret;
+        _searchSource = searchSource;
+        _credential = credential;
+        _secondaryCredential = secondaryCredential;
+        _preferredPlatform = preferredPlatform;
 
         InitializeComponent();
+        Title = searchSource == SearchSource.Igdb ? "Search IGDB Covers" : "Search TheGamesDB Covers";
         DataContext = this;
         this.ExcludeFromTaskbar();
         this.RecenterOnDisplayChange();
@@ -84,13 +123,34 @@ public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
 
     private async Task RunSearchAsync()
     {
+        if (IsSearching)
+        {
+            return;
+        }
+
         IsSearching = true;
+        SearchErrorMessage = null;
         Candidates.Clear();
 
-        var results = await IgdbCoverService.SearchCandidatesAsync(Query, _clientId, _clientSecret);
-        foreach (var candidate in results)
+        if (_searchSource == SearchSource.Igdb)
         {
-            Candidates.Add(new CandidateRow(candidate));
+            var result = await IgdbCoverService.SearchCandidatesAsync(Query, _credential, _secondaryCredential ?? "");
+            foreach (var candidate in result.Candidates)
+            {
+                Candidates.Add(CandidateRow.ForIgdb(candidate));
+            }
+
+            SearchErrorMessage = result.ErrorMessage;
+        }
+        else
+        {
+            var result = await TheGamesDbCoverService.SearchCandidatesAsync(Query, _credential, _preferredPlatform);
+            foreach (var candidate in result.Candidates)
+            {
+                Candidates.Add(CandidateRow.ForTheGamesDb(candidate));
+            }
+
+            SearchErrorMessage = result.ErrorMessage;
         }
 
         _hasSearched = true;
@@ -121,7 +181,7 @@ public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
         }
 
         IsSearching = true;
-        var path = await IgdbCoverService.DownloadCoverAsync(row.Candidate);
+        var path = await row.DownloadCoverAsync();
         IsSearching = false;
 
         if (path is null)
@@ -147,14 +207,37 @@ public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
 
 public class CandidateRow
 {
-    public IgdbCoverService.IgdbCandidate Candidate { get; }
     public string Label { get; }
     public ImageSource Thumbnail { get; }
+    private readonly Func<Task<string?>> _downloadCoverAsync;
 
-    public CandidateRow(IgdbCoverService.IgdbCandidate candidate)
+    private CandidateRow(string label, string thumbnailUrl, Func<Task<string?>> downloadCoverAsync)
     {
-        Candidate = candidate;
-        Label = candidate.ReleaseYear is { } year ? $"{candidate.Name} ({year})" : candidate.Name;
-        Thumbnail = new BitmapImage(new Uri($"https://images.igdb.com/igdb/image/upload/t_cover_small/{candidate.ImageId}.jpg"));
+        Label = label;
+        Thumbnail = new BitmapImage(new Uri(thumbnailUrl));
+        _downloadCoverAsync = downloadCoverAsync;
     }
+
+    public static CandidateRow ForIgdb(IgdbCoverService.IgdbCandidate candidate)
+    {
+        var label = candidate.ReleaseYear is { } year ? $"{candidate.Name} ({year})" : candidate.Name;
+        var thumbnailUrl = $"https://images.igdb.com/igdb/image/upload/t_cover_small/{candidate.ImageId}.jpg";
+        return new CandidateRow(label, thumbnailUrl, () => IgdbCoverService.DownloadCoverAsync(candidate));
+    }
+
+    public static CandidateRow ForTheGamesDb(TheGamesDbCoverService.Candidate candidate)
+    {
+        var label = candidate.ReleaseYear is { } year ? $"{candidate.Name} ({year})" : candidate.Name;
+        if (!string.IsNullOrWhiteSpace(candidate.PlatformName))
+        {
+            label += $" - {candidate.PlatformName}";
+        }
+
+        return new CandidateRow(
+            label,
+            candidate.ThumbnailUrl,
+            () => TheGamesDbCoverService.DownloadCoverAsync(candidate));
+    }
+
+    public Task<string?> DownloadCoverAsync() => _downloadCoverAsync();
 }
