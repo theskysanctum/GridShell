@@ -14,6 +14,8 @@
         Topmost="True"
         AllowsTransparency="True"
         Background="Transparent"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
         FontFamily="{DynamicResource AppFontFamily}"
         KeyDown="Window_KeyDown"
         PreviewTextInput="Window_PreviewTextInput"
@@ -214,19 +216,29 @@
         <CollectionViewSource x:Key="GroupedTiles" Source="{Binding Tiles}" />
     </Window.Resources>
     <Grid x:Name="RootGrid">
-        <Grid.RenderTransform>
-            <TranslateTransform x:Name="SlideTransform" />
-        </Grid.RenderTransform>
+        <!-- Dim backdrop behind the centered panel below, spanning the whole work area - this
+             is also the modal's light-dismiss target: Window_PreviewMouseDown closes the grid
+             when a click lands directly on this Border (never on the panel or anything inside
+             it). Overdrawn 1px past every edge so layout rounding never lands exactly on the
+             real edge and exposes the window's true (non-alpha-blended) transparent backdrop
+             as a hairline. -->
+        <Border x:Name="ScrimBorder" Background="Black" Opacity="0.45" Margin="-1" />
 
-        <!-- The window itself is fully transparent (AllowsTransparency) so this panel alone
-             controls the see-through amount — everything else (tiles, top bar, buttons) stays
-             fully opaque since Opacity only affects this element, not its siblings. -->
-        <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.82" />
+        <!-- The actual grid, as a centered modal panel instead of filling the screen. Its own
+             background is a separate sibling Border at reduced opacity (same trick the old
+             full-screen background used) so the translucency affects only that fill, never the
+             fully-opaque tiles/buttons/etc. stacked on top of it. -->
+        <Border x:Name="ModalPanel" Width="1200" Height="800" CornerRadius="16"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Effect="{StaticResource CardShadow}">
+            <Grid>
+                <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.94" CornerRadius="16" />
 
         <ListBox x:Name="TileList"
                  ItemsSource="{Binding Source={StaticResource GroupedTiles}}"
                  Background="Transparent"
                  BorderThickness="0"
+                 FocusVisualStyle="{x:Null}"
                  Padding="24,72,24,24"
                  ScrollViewer.CanContentScroll="True"
                  VirtualizingPanel.IsVirtualizing="True"
@@ -418,5 +430,7 @@
                 </ContextMenu>
             </Button.ContextMenu>
         </Button>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

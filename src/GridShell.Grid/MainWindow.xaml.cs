@@ -256,8 +256,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     /// <summary>Shows the pre-warmed, already-running grid in place — this is what makes
     /// toggling instant, since it's not a fresh process launch.</summary>
-    private static readonly TimeSpan SlideDuration = TimeSpan.FromMilliseconds(260);
-
     public void ShowGrid()
     {
         // Re-applying right before showing covers any display change that happened since the
@@ -267,10 +265,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _previousForegroundWindow = GetForegroundWindow();
 
-        // Starts fully off-screen to the left before Show() so there's no flash of the
-        // fully-in-place grid before the slide-in animation takes over.
-        SlideTransform.BeginAnimation(TranslateTransform.XProperty, null);
-        SlideTransform.X = -SystemParameters.PrimaryScreenWidth;
         Show();
         Activate();
 
@@ -292,33 +286,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // already running stayed "not installed" on its quick-launch button until GridShell
         // itself restarted, since this only ran once before.
         DetectGameLaunchers();
-
-        var slideIn = new DoubleAnimation(-SystemParameters.PrimaryScreenWidth, 0, SlideDuration)
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-        };
-        SlideTransform.BeginAnimation(TranslateTransform.XProperty, slideIn);
     }
 
     private void HideGrid(bool restorePreviousFocus = true)
     {
         _controller.Stop();
-
-        // Slides back out before actually hiding — Hide() is instant, so without this the
-        // window would just vanish rather than appearing to leave.
-        var slideOut = new DoubleAnimation(0, -SystemParameters.PrimaryScreenWidth, SlideDuration)
+        Hide();
+        if (restorePreviousFocus && !_previousForegroundWindow.IsNull)
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
-        };
-        slideOut.Completed += (_, _) =>
-        {
-            Hide();
-            if (restorePreviousFocus && !_previousForegroundWindow.IsNull)
-            {
-                SetForegroundWindow(_previousForegroundWindow);
-            }
-        };
-        SlideTransform.BeginAnimation(TranslateTransform.XProperty, slideOut);
+            SetForegroundWindow(_previousForegroundWindow);
+        }
     }
 
     private void ToggleVisibility()
@@ -653,6 +630,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (FindResource("GameTileContextMenu") is ContextMenu { IsOpen: true } gameTileMenu)
         {
             gameTileMenu.IsOpen = false;
+        }
+
+        // Modal light-dismiss - a click landing directly on the scrim (never on the panel or
+        // anything inside it, since those are separate elements under the pointer) closes the
+        // grid, same as clicking outside any other modal.
+        if (ReferenceEquals(e.OriginalSource, ScrimBorder))
+        {
+            HideGrid();
         }
     }
 
