@@ -204,10 +204,8 @@ public static class TileLauncher
     /// path&gt;" resolves to that MSIX-packaged app's current install folder — the family name
     /// stays constant across updates, unlike the version-numbered folder itself, so a tile keeps
     /// working after the app updates instead of breaking. Returns null (caller falls back to the
-    /// literal TargetPath) for anything else, or if the package can't be found. Public - shared
-    /// with TaskbarEntryMatcher, which needs the same resolution to match a running window's
-    /// exe path back to the Tile that launched it.</summary>
-    public static string? ResolveTargetPath(string path)
+    /// literal TargetPath) for anything else, or if the package can't be found.</summary>
+    private static string? ResolveTargetPath(string path)
     {
         const string prefix = "appx:";
         if (!path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
