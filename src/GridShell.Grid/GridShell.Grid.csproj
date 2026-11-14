@@ -9,7 +9,7 @@
     <AssemblyName>GridShell.Grid</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\icon.ico</ApplicationIcon>
-    <Version>1.1.105</Version>
+    <Version>1.1.106</Version>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
