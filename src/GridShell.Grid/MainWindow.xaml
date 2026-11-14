@@ -192,20 +192,6 @@
             </Border>
         </DataTemplate>
 
-        <DataTemplate x:Key="BrowserTileTemplate">
-            <Grid Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type vwp:VirtualizingWrapPanel}}, Path=ActualWidth}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <ContentPresenter Grid.Row="0" Content="{Binding}"
-                                  ContentTemplate="{StaticResource RegularTileTemplate}"
-                                  HorizontalAlignment="Left" />
-                <Border Grid.Row="1" Height="1" Margin="8,4,8,4"
-                        Background="{DynamicResource AccentOutlineBrush}" />
-            </Grid>
-        </DataTemplate>
-
         <!-- Box-art style: the cover fills the whole tile, with the name as a small label over
              a gradient at the bottom edge — matches how IGDB cover art (portrait, like a game
              box) reads best, unlike the small-icon-above-label layout the other kinds use. A
@@ -251,7 +237,6 @@
 
         <local:GameTileTemplateSelector x:Key="TileTemplateSelector"
                                          RegularTemplate="{StaticResource RegularTileTemplate}"
-                                         BrowserTemplate="{StaticResource BrowserTileTemplate}"
                                          GameTemplate="{StaticResource GameTileTemplate}" />
     </Window.Resources>
     <Grid x:Name="RootGrid" SizeChanged="RootGrid_SizeChanged">
@@ -276,25 +261,90 @@
             <Grid>
                 <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.94" CornerRadius="16" />
 
-        <ListBox x:Name="TileList"
-                 ItemsSource="{Binding Tiles}"
-                 Visibility="{Binding IsAppsOrWebTabActive, Converter={StaticResource BoolToVisibility}}"
-                 Background="Transparent"
-                 BorderThickness="0"
-                 FocusVisualStyle="{x:Null}"
-                 Padding="{Binding MainContentPadding}"
-                 ScrollViewer.CanContentScroll="True"
-                 VirtualizingPanel.IsVirtualizing="True"
-                 VirtualizingPanel.VirtualizationMode="Recycling"
-                 ItemTemplateSelector="{StaticResource TileTemplateSelector}"
-                 ItemContainerStyle="{StaticResource TileContainerStyle}"
-                 MouseDoubleClick="TileList_MouseDoubleClick">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-        </ListBox>
+        <Grid x:Name="AppsWebPanel" Margin="{Binding MainContentMargin}"
+              Visibility="{Binding IsAppsOrWebTabActive, Converter={StaticResource BoolToVisibility}}"
+              PreviewKeyDown="AppsWebPanel_PreviewKeyDown">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{Binding DefaultSectionRowHeight}" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0"
+                        Visibility="{Binding IsBrowserShortcutVisible, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Default Apps" FontWeight="SemiBold"
+                           Foreground="{DynamicResource MutedForegroundBrush}"
+                           Margin="8,0,0,6" />
+                <ListBox x:Name="BrowserShortcutList"
+                         ItemsSource="{Binding BrowserShortcutTiles}"
+                         Background="Transparent" BorderThickness="0"
+                         FocusVisualStyle="{x:Null}"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ItemTemplate="{StaticResource RegularTileTemplate}"
+                         ItemContainerStyle="{StaticResource TileContainerStyle}"
+                         MouseDoubleClick="TileList_MouseDoubleClick" />
+            </StackPanel>
+
+            <Grid Grid.Row="0"
+                  Visibility="{Binding IsDefaultWebsiteSectionVisible, Converter={StaticResource BoolToVisibility}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Default Websites" FontWeight="SemiBold"
+                           Foreground="{DynamicResource MutedForegroundBrush}"
+                           Margin="8,0,0,6" />
+                <ListBox x:Name="DefaultWebsiteList" Grid.Row="1"
+                         ItemsSource="{Binding DefaultWebsiteTiles}"
+                         Background="Transparent" BorderThickness="0"
+                         FocusVisualStyle="{x:Null}"
+                         ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         ItemTemplateSelector="{StaticResource TileTemplateSelector}"
+                         ItemContainerStyle="{StaticResource TileContainerStyle}"
+                         MouseDoubleClick="TileList_MouseDoubleClick">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </Grid>
+
+            <Border Grid.Row="1" Height="1" Margin="8,4,8,12"
+                    Background="{DynamicResource AccentOutlineBrush}"
+                    Visibility="{Binding IsDefaultSectionVisible, Converter={StaticResource BoolToVisibility}}" />
+
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="{Binding UserTileSectionTitle}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource MutedForegroundBrush}"
+                           Margin="8,0,0,6" />
+                <ListBox x:Name="TileList" Grid.Row="1"
+                         ItemsSource="{Binding Tiles}"
+                         Background="Transparent" BorderThickness="0"
+                         FocusVisualStyle="{x:Null}"
+                         ScrollViewer.CanContentScroll="True"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         ItemTemplateSelector="{StaticResource TileTemplateSelector}"
+                         ItemContainerStyle="{StaticResource TileContainerStyle}"
+                         MouseDoubleClick="TileList_MouseDoubleClick">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </Grid>
+        </Grid>
 
         <!-- Games tab only: platforms on the left ("PC" pinned at top), box art in a responsive
              grid on the right - replaces the flat/grouped TileList above for this tab only. -->

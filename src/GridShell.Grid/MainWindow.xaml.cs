@@ -80,6 +80,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         new() { Interval = TimeSpan.FromMilliseconds(600) };
 
     public ObservableCollection<Tile> Tiles { get; } = new();
+    public ObservableCollection<Tile> BrowserShortcutTiles { get; } = new();
+    public ObservableCollection<Tile> DefaultWebsiteTiles { get; } = new();
 
     /// <summary>Games tab only: the left pane's platform list - "PC" first (native, non-emulated
     /// games), then every other platform that currently has at least one tile, alphabetically.</summary>
@@ -95,9 +97,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public GridLength PlatformPaneWidth { get; private set; } = new(200);
     public int GameGridColumns { get; private set; } = 3;
-    public Thickness MainContentPadding => new(24, _mainContentTopOffset, 24, 24);
     public Thickness MainContentMargin => new(24, _mainContentTopOffset, 24, 24);
     public bool AreLauncherShortcutsVisible => !_isCompactLayout;
+    public bool IsBrowserShortcutVisible => ActiveTab == GridTab.Apps && BrowserShortcutTiles.Count > 0;
+    public bool IsDefaultWebsiteSectionVisible => ActiveTab == GridTab.Web && DefaultWebsiteTiles.Count > 0;
+    public bool IsDefaultSectionVisible => IsBrowserShortcutVisible || IsDefaultWebsiteSectionVisible;
+    public GridLength DefaultSectionRowHeight =>
+        IsDefaultWebsiteSectionVisible ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+    public string UserTileSectionTitle => ActiveTab == GridTab.Web ? "Your Websites" : "Your Apps";
 
     public string? SelectedPlatform
     {
@@ -147,6 +154,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsWebTabActive));
             OnPropertyChanged(nameof(IsGamesTabActive));
             OnPropertyChanged(nameof(IsAppsOrWebTabActive));
+            OnPropertyChanged(nameof(IsBrowserShortcutVisible));
+            OnPropertyChanged(nameof(IsDefaultWebsiteSectionVisible));
+            OnPropertyChanged(nameof(IsDefaultSectionVisible));
+            OnPropertyChanged(nameof(DefaultSectionRowHeight));
+            OnPropertyChanged(nameof(UserTileSectionTitle));
             ApplyFilter();
         }
     }
@@ -155,9 +167,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public bool IsWebTabActive => ActiveTab == GridTab.Web;
     public bool IsGamesTabActive => ActiveTab == GridTab.Games;
 
-    /// <summary>Apps and Web both still use the single flat TileList; only Games gets the
-    /// dual-pane platform/box-art layout, so TileList's own Visibility is keyed off this
-    /// rather than two separate bindings.</summary>
+    /// <summary>Apps and Web share the same content panel; only Games uses the
+    /// dual-pane platform/box-art layout.</summary>
     public bool IsAppsOrWebTabActive => !IsGamesTabActive;
 
     private TileKind ActiveKind => ActiveTab switch
@@ -454,7 +465,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         ApplyFilter();
-        TileList.Focus();
+        FocusActiveList();
         ApplySettings();
         DetectGameLaunchers();
     }
@@ -629,7 +640,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         _mainContentTopOffset = topOffset;
-        OnPropertyChanged(nameof(MainContentPadding));
         OnPropertyChanged(nameof(MainContentMargin));
     }
 
@@ -718,9 +728,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         else
         {
             Tiles.Clear();
+            BrowserShortcutTiles.Clear();
+            DefaultWebsiteTiles.Clear();
             if (ActiveTab == GridTab.Apps && ShouldShowDefaultBrowserShortcut())
             {
-                Tiles.Add(GetDefaultBrowserShortcut());
+                BrowserShortcutTiles.Add(GetDefaultBrowserShortcut());
             }
 
             if (ActiveTab == GridTab.Web)
@@ -738,7 +750,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                              string.IsNullOrWhiteSpace(SearchText)
                              || website.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
                 {
-                    Tiles.Add(website);
+                    DefaultWebsiteTiles.Add(website);
                 }
             }
 
@@ -747,7 +759,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Tiles.Add(tile);
             }
 
+            OnPropertyChanged(nameof(IsBrowserShortcutVisible));
+            OnPropertyChanged(nameof(IsDefaultWebsiteSectionVisible));
+            OnPropertyChanged(nameof(IsDefaultSectionVisible));
+            OnPropertyChanged(nameof(DefaultSectionRowHeight));
+            OnPropertyChanged(nameof(UserTileSectionTitle));
+            BrowserShortcutList.SelectedIndex = BrowserShortcutTiles.Count > 0 ? 0 : -1;
+            DefaultWebsiteList.SelectedIndex = DefaultWebsiteTiles.Count > 0 ? 0 : -1;
             TileList.SelectedIndex = Tiles.Count > 0 ? 0 : -1;
+            if (DefaultWebsiteTiles.Count > 0)
+            {
+                DefaultWebsiteList.ScrollIntoView(DefaultWebsiteTiles[0]);
+            }
+
+            if (Tiles.Count > 0)
+            {
+                TileList.ScrollIntoView(Tiles[0]);
+            }
         }
 
         // Filtering rebuilds the virtualized containers, which can silently drop keyboard
@@ -1146,10 +1174,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>Whichever of TileList (Apps/Web) or GamesGrid (Games' dual-pane box-art list)
-    /// is actually showing right now - keyboard actions (Enter/Delete) and focus restoration
-    /// need to target the one the user can currently see, not always TileList.</summary>
-    private Tile? SelectedTile => IsGamesTabActive ? GamesGrid.SelectedItem as Tile : TileList.SelectedItem as Tile;
+    /// <summary>The selected tile in the list that currently has keyboard focus.</summary>
+    private Tile? SelectedTile => IsGamesTabActive
+        ? GamesGrid.SelectedItem as Tile
+        : IsAppsTabActive && BrowserShortcutList.IsKeyboardFocusWithin
+            ? BrowserShortcutList.SelectedItem as Tile
+            : IsWebTabActive && DefaultWebsiteList.IsKeyboardFocusWithin
+                ? DefaultWebsiteList.SelectedItem as Tile
+            : TileList.SelectedItem as Tile;
 
     private void FocusActiveList()
     {
@@ -1157,10 +1189,70 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             GamesGrid.Focus();
         }
+        else if (IsBrowserShortcutVisible)
+        {
+            BrowserShortcutList.Focus();
+        }
+        else if (IsDefaultWebsiteSectionVisible)
+        {
+            DefaultWebsiteList.Focus();
+        }
         else
         {
             TileList.Focus();
         }
+    }
+
+    private void AppsWebPanel_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (IsBrowserTabShortcutFocused() && (e.Key == Key.Down || e.Key == Key.Right))
+        {
+            TileList.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (IsAppsTabActive
+            && TileList.IsKeyboardFocusWithin
+            && e.Key == Key.Up
+            && TileList.SelectedIndex >= 0
+            && TileList.SelectedIndex < GetTileColumnCount(TileList))
+        {
+            BrowserShortcutList.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (IsDefaultWebsiteSectionVisible
+            && DefaultWebsiteList.IsKeyboardFocusWithin
+            && ((e.Key == Key.Down
+                 && DefaultWebsiteList.SelectedIndex >= DefaultWebsiteTiles.Count - GetTileColumnCount(DefaultWebsiteList))
+                || (e.Key == Key.Right
+                    && DefaultWebsiteList.SelectedIndex == DefaultWebsiteTiles.Count - 1)))
+        {
+            TileList.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (IsWebTabActive
+            && TileList.IsKeyboardFocusWithin
+            && e.Key == Key.Up
+            && TileList.SelectedIndex >= 0
+            && TileList.SelectedIndex < GetTileColumnCount(TileList))
+        {
+            DefaultWebsiteList.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private bool IsBrowserTabShortcutFocused() =>
+        IsAppsTabActive && IsBrowserShortcutVisible && BrowserShortcutList.IsKeyboardFocusWithin;
+
+    private int GetTileColumnCount(ListBox list)
+    {
+        var tileWidth = Resources["TileWidth"] is double width ? width : 140;
+        return Math.Max(1, (int)(list.ActualWidth / (tileWidth + 16)));
     }
 
     private void ActivateTile(Tile tile)
