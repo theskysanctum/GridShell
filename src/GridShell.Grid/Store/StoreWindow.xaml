@@ -116,6 +116,12 @@
             <Setter Property="Padding" Value="8,3" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
+
+        <Style x:Key="StoreContentScrollViewerStyle" TargetType="ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Margin="16,16,16,0" SizeChanged="RootGrid_SizeChanged">
@@ -173,6 +179,7 @@
             <ListBox Grid.Column="0" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
                      ItemContainerStyle="{StaticResource CategoryItemStyle}"
                      Background="Transparent" BorderThickness="0"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
@@ -192,8 +199,7 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Auto"
+            <ScrollViewer Grid.Column="2" Style="{StaticResource StoreContentScrollViewerStyle}"
                           Visibility="{Binding IsAppsCategory, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl ItemsSource="{Binding Apps}">
                     <ItemsControl.ItemTemplate>
@@ -269,8 +275,7 @@
             </ScrollViewer>
 
             <!-- Scenes: animated wallpapers, not StoreApps - a thumbnail/Download card grid. -->
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Auto"
+            <ScrollViewer Grid.Column="2" Style="{StaticResource StoreContentScrollViewerStyle}"
                           Visibility="{Binding IsScenesCategory, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl ItemsSource="{Binding Scenes}">
                     <ItemsControl.ItemsPanel>
@@ -337,7 +342,7 @@
                          SelectedItem="{Binding SelectedGamePlatform}"
                          ItemContainerStyle="{StaticResource CategoryItemStyle}"
                          Background="Transparent" BorderThickness="0" ClipToBounds="True"
-                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          SelectionChanged="GamePlatformList_SelectionChanged">
                     <ListBox.ItemTemplate>
@@ -361,13 +366,16 @@
                 <Border Grid.Column="1" Width="1" HorizontalAlignment="Center" Background="{DynamicResource PanelBorderBrush}" />
 
                 <Grid Grid.Column="2">
-                    <TextBlock Text="{Binding GamesRepoStatusText}" FontSize="12" TextWrapping="Wrap"
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="{Binding GamesRepoStatusText}" FontSize="12" TextWrapping="Wrap"
                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,8,0,0"
                                Foreground="{DynamicResource MutedForegroundBrush}"
                                Visibility="{Binding HasGamesRepoStatusText, Converter={StaticResource BoolToVisibility}}" />
-                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" VerticalAlignment="Top"
-                                  ClipToBounds="True"
-                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" Grid.Row="1"
+                                  Style="{StaticResource StoreContentScrollViewerStyle}">
                         <ItemsControl ItemsSource="{Binding GameLinkEntries}" MouseDoubleClick="GameLinkEntry_MouseDoubleClick">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
