@@ -264,14 +264,18 @@
             <Grid>
                 <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.94" CornerRadius="16" />
 
-        <Grid x:Name="AppsWebPanel" Margin="{Binding MainContentMargin}"
-              Visibility="{Binding IsAppsOrWebTabActive, Converter={StaticResource BoolToVisibility}}"
-              PreviewKeyDown="AppsWebPanel_PreviewKeyDown">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <ScrollViewer x:Name="AppsWebScrollViewer"
+                      Margin="{Binding MainContentMargin}"
+                      Visibility="{Binding IsAppsOrWebTabActive, Converter={StaticResource BoolToVisibility}}"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="AppsWebPanel"
+                  PreviewKeyDown="AppsWebPanel_PreviewKeyDown">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
             <ListBox x:Name="BrowserShortcutList" Grid.Row="0"
                      Visibility="{Binding IsBrowserShortcutVisible, Converter={StaticResource BoolToVisibility}}"
@@ -299,7 +303,7 @@
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
                      ScrollViewer.CanContentScroll="True"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      VirtualizingPanel.IsVirtualizing="True"
                      VirtualizingPanel.VirtualizationMode="Recycling"
@@ -322,6 +326,7 @@
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
                      ScrollViewer.CanContentScroll="True"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      VirtualizingPanel.IsVirtualizing="True"
                      VirtualizingPanel.VirtualizationMode="Recycling"
                      ItemTemplateSelector="{StaticResource TileTemplateSelector}"
@@ -333,7 +338,8 @@
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>
-        </Grid>
+            </Grid>
+        </ScrollViewer>
 
         <!-- Games tab only: platforms on the left ("PC" pinned at top), box art in a responsive
              grid on the right - replaces the flat/grouped TileList above for this tab only. -->
