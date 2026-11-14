@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GridShell • controller-first Windows shell</title>
-<meta name="description" content="GridShell is a controller-first Windows shell with a fullscreen launcher, dual-pane file explorer, download manager, and emulation tooling built for living-room PCs.">
+<meta name="description" content="GridShell is a dark, controller-first Windows shell with a fullscreen launcher, built-in website shortcuts, game cover search, a dual-pane file explorer, and emulation tools.">
 <link rel="canonical" href="https://theskysanctum.com/gridshell/">
 <meta property="og:title" content="GridShell • controller-first Windows shell">
-<meta property="og:description" content="A fullscreen launcher, taskbar replacement, file explorer, download manager, and emulation toolkit for Windows.">
+<meta property="og:description" content="A fullscreen launcher, taskbar replacement, built-in website shortcuts, game cover search, file explorer, downloads, and emulation tools for Windows.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://theskysanctum.com/gridshell/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -72,6 +72,7 @@ h1{margin:1rem 0 0;font:700 clamp(2.5rem,5vw,4rem)/1 var(--display-font);letter-
 .tool-btn{width:1.7rem;height:1.7rem;border-radius:.5rem;display:flex;align-items:center;justify-content:center;font-size:.82rem;color:var(--muted);background:rgba(255,255,255,.02)}
 .main{position:relative;background:linear-gradient(180deg, rgba(18,24,31,.9), rgba(13,17,22,.9))}
 .mosaic{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:4.5rem;gap:.52rem;padding:0 .78rem .8rem}
+.browser-divider{grid-column:1/-1;height:1px;background:var(--accent);opacity:.6}
 .t{border-radius:.6rem;background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.42rem;font-weight:700;font-size:.62rem;color:#fff;outline:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
 .t.on{outline-color:var(--accent);box-shadow:0 0 0 1px rgba(255,209,102,.22)}
 .t i{width:1.65rem;height:1.65rem;border-radius:.5rem;display:block}
@@ -190,6 +191,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
    matches MainWindow's current ModalPanel + ScrimBorder layout (src/GridShell.Grid/MainWindow.xaml). */
 .demo-screen{position:absolute;inset:1.3rem 1.5rem;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,#141c28,#0e141d);border-radius:1rem;box-shadow:0 24px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;overflow:hidden}
 .demo-screen .main{position:relative;flex:1;overflow:hidden}
+.demo-screen .mosaic{height:100%;overflow:auto;align-content:start}
 .demo-frame .side .pin,.demo-frame .side .launcher,.demo-frame .tool-btn,.demo-frame .pill,.demo-frame .corner-btn,.demo-frame .t,.demo-frame .gt,.demo-frame .wt{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .demo-frame .t:hover,.demo-frame .gt:hover,.demo-frame .wt:hover{filter:brightness(1.18)}
 .demo-frame .t.launching,.demo-frame .gt.launching,.demo-frame .wt.launching{outline:2px solid var(--accent2);box-shadow:0 0 0 1px rgba(123,223,242,.3)}
@@ -235,7 +237,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <div>
 <div class="kicker">Windows shell</div>
 <h1>Your Windows desktop, built for the couch.</h1>
-<p class="sub">GridShell replaces the Start Menu and taskbar with a fullscreen, controller-first launcher. It also includes a dual-pane file explorer, download manager, emulator tooling, and a proper taskbar/sidebar workflow for a living-room PC.</p>
+<p class="sub">GridShell replaces the Start Menu and taskbar with a fullscreen, controller-first launcher. It includes fixed shortcuts for popular websites, game cover search, a dual-pane file explorer, download manager, and emulation tools.</p>
 <div class="acts">
 <a class="btn main" href="https://github.com/theskysanctum/gridshell/releases/latest/download/GridShell-Setup.exe">Download for Windows</a>
 <a class="btn alt" href="#features">See what it does</a>
@@ -272,6 +274,8 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 </div>
 </div>
 <div class="mosaic" id="mosaic">
+<div class="t"><i class="c1"></i>Browser</div>
+<div class="browser-divider"></div>
 <div class="t"><i class="c1"></i>Bitwarden</div>
 <div class="t"><i class="c5"></i>Brave</div>
 <div class="t"><i class="c7"></i>Claude</div>
@@ -294,7 +298,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 </div>
 </div>
 </div>
-<p class="cap">A fullscreen launcher for apps, games, files, and downloads—designed to feel natural from the couch.</p>
+<p class="cap">A fullscreen launcher for apps, websites, games, files, and downloads—designed to feel natural from the couch.</p>
 </div>
 </div></header>
 
@@ -380,6 +384,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <div class="doverlay" id="dSettings">
 <div class="doverlay-head"><h4>Settings — Appearance</h4><div class="doverlay-close" data-close>✕ Close</div></div>
 <div class="demo-settings">
+<div class="srow"><label>Theme</label><div class="sselect">Dark</div></div>
 <div class="srow"><label>Accent color</label>
 <div class="swatches" id="dSwatches">
 <div class="swatch on" data-accent="#FFD166" style="background:#FFD166"></div>
@@ -390,7 +395,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 </div>
 </div>
 <div class="srow"><label>Tile size</label><div class="sselect">Medium</div></div>
-<div class="srow"><label>Wallpaper</label><div class="sselect">Current Windows wallpaper</div></div>
+<div class="srow"><label>Scenes</label><div class="sselect">Choose a scene</div></div>
 </div>
 </div>
 
@@ -417,7 +422,11 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <div class="cat"><h3>Launcher grid</h3><ul>
 <li><b>Apps, Web, and Games tabs</b> — a fullscreen tile grid designed for a D-pad, stick, keyboard, or mouse.</li>
 <li><b>Search-first workflow</b> — type once to filter the grid without hunting through menus.</li>
-<li><b>Custom tiles</b> — add, rename, change icons, or remove shortcuts; games can fetch cover art automatically.</li>
+<li><b>Default browser shortcut</b> — open your configured browser directly from the Apps tab.</li>
+<li><b>Built-in website shortcuts</b> — YouTube, Netflix, Spotify, Twitch, Poki, and more are ready in the Web tab.</li>
+<li><b>Custom website tiles</b> — add sites and customize user-added shortcut names and icons.</li>
+<li><b>Game Manager</b> — add Windows executables manually; removing one never deletes the native game file, while ROM removal deletes the ROM.</li>
+<li><b>Game cover search</b> — choose a matching cover from IGDB or TheGamesDB in Game Manager.</li>
 <li><b>Installed-game detection</b> — Steam and Heroic (Epic, GOG, and Amazon Games libraries) are scanned and surfaced as tiles.</li>
 <li><b>Quick storefront launchers</b> — Steam, Heroic, and itch can launch directly from the grid.</li>
 </ul></div>
@@ -451,10 +460,10 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 </ul></div>
 
 <div class="cat"><h3>Appearance and settings</h3><ul>
-<li><b>Theme and accent</b> — dark or light mode, curated palette, or custom color.</li>
+<li><b>Dark-only theme</b> — a consistent dark interface with curated or custom accent colors.</li>
 <li><b>Tile size and fonts</b> — adjust the interface to fit your display and taste.</li>
-<li><b>Wallpaper support</b> — image, video, HTML, or URL; use your active Windows wallpaper by default.</li>
-<li><b>Widgets</b> — overlay widgets on desktop wallpapers or full-screen backgrounds.</li>
+<li><b>Scenes</b> — choose and manage backgrounds through the Store's Scenes catalog.</li>
+<li><b>Live accent updates</b> — accent changes apply across GridShell and its taskbar.</li>
 </ul></div>
 
 <div class="cat"><h3>Networking and devices</h3><ul>
@@ -533,7 +542,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <script>
 (function(){
 var el=document.getElementById('mosaic');if(!el)return;
-var t=[].slice.call(el.children),i=0;t[0].classList.add('on');
+var t=[].slice.call(el.querySelectorAll('.t')),i=0;t[0].classList.add('on');
 if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 var order=[0,1,2,5,6,3,4,7,8];
 setInterval(function(){t[order[i%order.length]].classList.remove('on');i++;t[order[i%order.length]].classList.add('on')},1400);
@@ -564,11 +573,14 @@ toast(msg);
 
 var tabs={
 apps:{cls:'mosaic',tiles:[
-['c1','Bitwarden'],['c5','Brave'],['c7','Claude'],['c6','Discord'],['c4','LibreOffice'],
+['c1','Browser'],['c1','Bitwarden'],['c5','Brave'],['c7','Claude'],['c6','Discord'],['c4','LibreOffice'],
 ['c7','LM Studio'],['c2','Telegram'],['c6','VLC'],['c5','PowerShell'],['c8','WinSCP'],['c3','XnView']
 ]},
 web:{cls:'mosaic',tiles:[
-['c6','YouTube'],['c1','Gmail'],['c4','Reddit'],['c7','Twitch'],['c3','Netflix'],['c2','Spotify']
+['c6','YouTube'],['c3','Netflix'],['c5','Prime Video'],['c4','Disney+'],['c7','Hulu'],['c2','Max'],
+['c1','Peacock'],['c5','Paramount+'],['c3','Apple TV+'],['c7','Twitch'],['c4','Crunchyroll'],
+['c6','YouTube Music'],['c2','Spotify'],['c3','Apple Music'],['c5','Amazon Music'],['c4','Pandora'],
+['c7','SoundCloud'],['c1','Tidal'],['c2','Poki'],['c6','CrazyGames'],['c5','Newgrounds'],['c3','itch.io']
 ]},
 games:{cls:'games-dual',platforms:[
 {name:'PC',games:[['#1E6FD9','Half-Life 2'],['#C8453B','DOOM Eternal'],['#3C9A4B','Portal 2'],['#8E44AD','Baldur’s Gate 3'],['#D35400','Hades'],['#16A085','Celeste']]},
@@ -622,12 +634,19 @@ content.appendChild(grid);
 renderGamesTiles();
 return;
 }
-t.tiles.forEach(function(pair){
+t.tiles.forEach(function(pair,index){
 var tile=document.createElement('div');
 tile.className='t';
 tile.innerHTML='<i class="'+pair[0]+'"></i>'+pair[1];
-tile.addEventListener('click',function(){flashLaunch(tile,'Launching '+pair[1]+'…')});
+tile.addEventListener('click',function(){
+flashLaunch(tile,pair[1]==='Browser'?'Opening the default browser…':'Launching '+pair[1]+'…')
+});
 content.appendChild(tile);
+if(name==='apps'&&index===0){
+var divider=document.createElement('div');
+divider.className='browser-divider';
+content.appendChild(divider);
+}
 });
 }
 
