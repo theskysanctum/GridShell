@@ -82,11 +82,19 @@
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                 </DataTrigger>
+                <!-- Website tiles alone get Rename/Change Icon/Remove here - App tiles have no
+                     right-click menu at all. A GameTileTemplate Border's own local ContextMenu
+                     attribute (GameTileContextMenu) always wins over this style setter, so Game
+                     tiles are unaffected by this trigger despite sharing this same style. -->
+                <DataTrigger Binding="{Binding IsWebsiteKind}" Value="True">
+                    <Setter Property="ContextMenu" Value="{StaticResource TileContextMenu}" />
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Shared by both tile templates below, so Rename/Change Icon/Remove stay identical
-             regardless of which layout a tile's kind picks. -->
+        <!-- Website tiles' own Rename/Change Icon/Remove menu - wired via TileSelectionBorderStyle's
+             own IsWebsiteKind trigger above, not a local ContextMenu attribute, so App tiles
+             (which share RegularTileTemplate) stay menu-less. -->
         <ContextMenu x:Key="TileContextMenu">
             <MenuItem Header="Rename..." Click="RenameTileMenuItem_Click"
                       CommandParameter="{Binding}">
@@ -145,7 +153,6 @@
             <Border Width="{DynamicResource TileWidth}" Height="{DynamicResource TileHeight}"
                     Margin="8" CornerRadius="10"
                     Background="{DynamicResource SurfaceBackgroundBrush}"
-                    ContextMenu="{StaticResource TileContextMenu}"
                     Effect="{StaticResource CardShadow}"
                     Style="{StaticResource TileSelectionBorderStyle}">
                 <StackPanel VerticalAlignment="Center" Margin="8">

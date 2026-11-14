@@ -24,6 +24,11 @@ public class Tile : INotifyPropertyChanged
     public required string TargetPath { get; init; }
     public required TileKind Kind { get; init; }
 
+    /// <summary>Lets XAML (MainWindow's shared TileSelectionBorderStyle) give Website tiles
+    /// their Rename/Change Icon/Remove right-click menu without also giving App tiles one -
+    /// a plain enum DataTrigger binding works too, but this reads clearer at the trigger site.</summary>
+    public bool IsWebsiteKind => Kind == TileKind.Website;
+
     /// <summary>Path whose shell icon represents this tile (the shortcut file itself for App tiles, so icon overrides are honored).</summary>
     public required string IconSourcePath { get; init; }
 
