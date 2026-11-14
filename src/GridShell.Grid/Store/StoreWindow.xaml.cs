@@ -29,6 +29,9 @@ namespace GridShell;
 /// throughout, same DynamicResource brushes as every other window.</summary>
 public partial class StoreWindow : Window, INotifyPropertyChanged
 {
+    private readonly DispatcherTimer _displayChangeSettleTimer =
+        new() { Interval = TimeSpan.FromMilliseconds(600) };
+
     private const string ScenesCategoryLabel = "Scenes";
     private const string GamesCategoryLabel = "Games";
 
@@ -46,6 +49,11 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private List<StoreSceneViewModel> _allScenes = new();
     private List<GameLinkEntryViewModel> _currentPlatformEntries = new();
     private bool _gamesRepoSynced;
+    private double _categoryRailWidth = 180;
+    private double _gamePlatformRailWidth = 160;
+
+    public GridLength CategoryRailWidth => new(_categoryRailWidth);
+    public GridLength GamePlatformRailWidth => new(_gamePlatformRailWidth);
 
     public ObservableCollection<StoreAppViewModel> Apps { get; } = new();
     public ObservableCollection<StoreSceneViewModel> Scenes { get; } = new();
@@ -144,6 +152,13 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         Width = workArea.Width;
         Height = SystemParameters.PrimaryScreenHeight;
 
+        _displayChangeSettleTimer.Tick += (_, _) =>
+        {
+            _displayChangeSettleTimer.Stop();
+            ApplyScreenGeometryNative();
+        };
+
+        Closed += (_, _) => _displayChangeSettleTimer.Stop();
         Loaded += StoreWindow_Loaded;
     }
 
@@ -154,12 +169,56 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private void Window_SourceInitialized(object? sender, EventArgs e)
     {
         var hwnd = new WindowInteropHelper(this).Handle;
+        HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
+        ApplyScreenGeometryNative();
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg == (int)User32.WindowMessage.WM_DISPLAYCHANGE ||
+            msg == (int)User32.WindowMessage.WM_DPICHANGED)
+        {
+            ApplyScreenGeometryNative();
+            _displayChangeSettleTimer.Stop();
+            _displayChangeSettleTimer.Start();
+        }
+
+        return IntPtr.Zero;
+    }
+
+    private void ApplyScreenGeometryNative()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
         var workArea = AppBarManager.GetWorkArea();
         var screenWidth = User32.GetSystemMetrics(User32.SystemMetric.SM_CXSCREEN);
         var screenHeight = User32.GetSystemMetrics(User32.SystemMetric.SM_CYSCREEN);
 
         User32.SetWindowPos(hwnd, HWND.NULL, workArea.left, 0, screenWidth - workArea.left, screenHeight,
             User32.SetWindowPosFlags.SWP_NOZORDER | User32.SetWindowPosFlags.SWP_NOACTIVATE);
+    }
+
+    private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var categoryRailWidth = Math.Clamp(RootGrid.ActualWidth * 0.3, 96, 180);
+        var gamePlatformRailWidth = Math.Clamp(
+            (RootGrid.ActualWidth - categoryRailWidth - 16) * 0.3, 72, 160);
+
+        if (Math.Abs(_categoryRailWidth - categoryRailWidth) >= 0.5)
+        {
+            _categoryRailWidth = categoryRailWidth;
+            OnPropertyChanged(nameof(CategoryRailWidth));
+        }
+
+        if (Math.Abs(_gamePlatformRailWidth - gamePlatformRailWidth) >= 0.5)
+        {
+            _gamePlatformRailWidth = gamePlatformRailWidth;
+            OnPropertyChanged(nameof(GamePlatformRailWidth));
+        }
     }
 
     private async void StoreWindow_Loaded(object sender, RoutedEventArgs e)

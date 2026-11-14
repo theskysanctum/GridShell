@@ -1,4 +1,7 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Vanara.PInvoke;
@@ -13,6 +16,118 @@ namespace GridShell.Core.Interop;
 /// display change can end up partly or fully off the new screen bounds.</summary>
 public static class ScreenChangeReaction
 {
+    public static readonly DependencyProperty ExcludeFromWorkAreaFitProperty =
+        DependencyProperty.RegisterAttached(
+            "ExcludeFromWorkAreaFit",
+            typeof(bool),
+            typeof(ScreenChangeReaction),
+            new PropertyMetadata(false));
+
+    public static void SetExcludeFromWorkAreaFit(DependencyObject element, bool value) =>
+        element.SetValue(ExcludeFromWorkAreaFitProperty, value);
+
+    public static bool GetExcludeFromWorkAreaFit(DependencyObject element) =>
+        (bool)element.GetValue(ExcludeFromWorkAreaFitProperty);
+
+    /// <summary>Constrains ordinary windows to the work area and makes oversized content
+    /// scrollable instead of allowing it to be cut off. Full-screen surfaces opt out via the
+    /// attached property and manage their own responsive layout.</summary>
+    public static void FitToWorkArea(this Window window)
+    {
+        if (GetExcludeFromWorkAreaFit(window))
+        {
+            return;
+        }
+
+        var settleTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
+        FitState? state = null;
+
+        void Apply()
+        {
+            var hwnd = new WindowInteropHelper(window).Handle;
+            if (hwnd == IntPtr.Zero)
+            {
+                return;
+            }
+
+            var workArea = AppBarManager.GetWorkArea();
+            var scale = GetDpiScale(hwnd);
+            var areaWidth = workArea.right - workArea.left;
+            var areaHeight = workArea.bottom - workArea.top;
+            var maxWidth = areaWidth / scale;
+            var maxHeight = areaHeight / scale;
+
+            if (state is null)
+            {
+                state = new FitState(
+                    window.MinWidth,
+                    window.MinHeight,
+                    double.IsFinite(window.Width) ? window.Width : window.ActualWidth,
+                    double.IsFinite(window.Height) ? window.Height : window.ActualHeight);
+            }
+
+            var needsScroll = state.MinWidth > maxWidth || state.MinHeight > maxHeight ||
+                              (double.IsFinite(state.Width) && state.Width > maxWidth) ||
+                              (double.IsFinite(state.Height) && state.Height > maxHeight);
+            if (needsScroll && window.Content is UIElement content && content is not ScrollViewer)
+            {
+                window.Content = new ScrollViewer
+                {
+                    Content = content,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    CanContentScroll = false,
+                    Focusable = false,
+                };
+            }
+
+            window.MinWidth = Math.Min(state.MinWidth, maxWidth);
+            window.MinHeight = Math.Min(state.MinHeight, maxHeight);
+            window.MaxWidth = maxWidth;
+            window.MaxHeight = maxHeight;
+            window.UpdateLayout();
+
+            var width = Math.Min(window.ActualWidth, maxWidth);
+            var height = Math.Min(window.ActualHeight, maxHeight);
+            var widthPixels = (int)(width * scale);
+            var heightPixels = (int)(height * scale);
+            if (!GetWindowRect(new HWND(hwnd), out var currentRect))
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            var left = Math.Clamp(currentRect.left, workArea.left, workArea.right - widthPixels);
+            var top = Math.Clamp(currentRect.top, workArea.top, workArea.bottom - heightPixels);
+
+            SetWindowPos(new HWND(hwnd), HWND.NULL, left, top, widthPixels, heightPixels,
+                SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
+        }
+
+        window.Loaded += (_, _) =>
+        {
+            var hwnd = new WindowInteropHelper(window).Handle;
+            HwndSource.FromHwnd(hwnd)?.AddHook((IntPtr _, int msg, IntPtr _, IntPtr _, ref bool handled) =>
+            {
+                if (msg == (int)WindowMessage.WM_DISPLAYCHANGE || msg == (int)WindowMessage.WM_DPICHANGED)
+                {
+                    Apply();
+                    settleTimer.Stop();
+                    settleTimer.Start();
+                }
+
+                return IntPtr.Zero;
+            });
+
+            Apply();
+        };
+
+        settleTimer.Tick += (_, _) =>
+        {
+            settleTimer.Stop();
+            Apply();
+        };
+        window.Closed += (_, _) => settleTimer.Stop();
+    }
+
     /// <summary>Convenience hook for a dialog-style window's constructor — no other wiring
     /// needed at the call site.</summary>
     public static void RecenterOnDisplayChange(this Window window)
@@ -131,4 +246,6 @@ public static class ScreenChangeReaction
     }
 
     private static double GetDpiScale(IntPtr hwnd) => GetDpiForWindow(new HWND(hwnd)) / 96.0;
+
+    private sealed record FitState(double MinWidth, double MinHeight, double Width, double Height);
 }

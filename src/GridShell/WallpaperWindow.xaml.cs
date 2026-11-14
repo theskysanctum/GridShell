@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using GridShell.Core;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
@@ -22,6 +23,9 @@ public partial class WallpaperWindow : Window
     private static readonly string GeneratedWrapperPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GridShell", "WallpaperWebView2", "wallpaper.html");
 
+    private readonly DispatcherTimer _displayChangeSettleTimer =
+        new() { Interval = TimeSpan.FromMilliseconds(600) };
+
     public WallpaperWindow()
     {
         InitializeComponent();
@@ -34,11 +38,19 @@ public partial class WallpaperWindow : Window
         Height = SystemParameters.VirtualScreenHeight;
 
         this.NeverActivate();
+        _displayChangeSettleTimer.Tick += (_, _) =>
+        {
+            _displayChangeSettleTimer.Stop();
+            ApplyScreenGeometryNative();
+        };
+        Closed += (_, _) => _displayChangeSettleTimer.Stop();
+
         SourceInitialized += (_, _) =>
         {
             SendToBottom();
             ApplyScreenGeometryNative();
-            HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(WndProc);
+            var hwnd = new WindowInteropHelper(this).Handle;
+            HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
         };
         Loaded += async (_, _) => await ReloadAsync();
 
@@ -70,6 +82,12 @@ public partial class WallpaperWindow : Window
         if (AltF4Blocker.IsSysCommandClose(msg, wParam))
         {
             handled = true;
+        }
+        else if (msg == (int)WindowMessage.WM_DISPLAYCHANGE || msg == (int)WindowMessage.WM_DPICHANGED)
+        {
+            ApplyScreenGeometryNative();
+            _displayChangeSettleTimer.Stop();
+            _displayChangeSettleTimer.Start();
         }
 
         return IntPtr.Zero;

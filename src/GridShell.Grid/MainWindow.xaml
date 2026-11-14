@@ -6,7 +6,9 @@
         xmlns:local="clr-namespace:GridShell"
         xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:interop="clr-namespace:GridShell.Core.Interop;assembly=GridShell.Core"
         mc:Ignorable="d"
+        interop:ScreenChangeReaction.ExcludeFromWorkAreaFit="True"
         Title="GridShell"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -239,7 +241,7 @@
                                          RegularTemplate="{StaticResource RegularTileTemplate}"
                                          GameTemplate="{StaticResource GameTileTemplate}" />
     </Window.Resources>
-    <Grid x:Name="RootGrid">
+    <Grid x:Name="RootGrid" SizeChanged="RootGrid_SizeChanged">
         <!-- Dim backdrop behind the centered panel below, spanning the whole work area - this
              is also the modal's light-dismiss target: Window_PreviewMouseDown closes the grid
              when a click lands directly on this Border (never on the panel or anything inside
@@ -264,7 +266,7 @@
                  Background="Transparent"
                  BorderThickness="0"
                  FocusVisualStyle="{x:Null}"
-                 Padding="24,72,24,24"
+                 Padding="{Binding MainContentPadding}"
                  ScrollViewer.CanContentScroll="True"
                  VirtualizingPanel.IsVirtualizing="True"
                  VirtualizingPanel.VirtualizationMode="Recycling"
@@ -278,12 +280,12 @@
             </ListBox.ItemsPanel>
         </ListBox>
 
-        <!-- Games tab only: platforms on the left ("PC" pinned at top), box art in a 3-column
+        <!-- Games tab only: platforms on the left ("PC" pinned at top), box art in a responsive
              grid on the right - replaces the flat/grouped TileList above for this tab only. -->
         <Grid Visibility="{Binding IsGamesTabActive, Converter={StaticResource BoolToVisibility}}"
-              Margin="24,72,24,24">
+              Margin="{Binding MainContentMargin}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="{Binding PlatformPaneWidth}" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -369,25 +371,15 @@
                      MouseDoubleClick="TileList_MouseDoubleClick">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="3" />
+                        <UniformGrid Columns="{Binding GameGridColumns}" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>
         </Grid>
 
-        <!-- A 3-column Grid (not independently-positioned Left/Center/Right panels) so the
-             layout system itself keeps these from ever overlapping: the outer columns get
-             exactly what their buttons need, and the search bar's center column only ever gets
-             whatever's left — shrinking gracefully at narrow window widths instead of the
-             search bar and the add-tile button fighting over the same space. -->
-        <Grid Margin="24,16,24,0" VerticalAlignment="Top">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+        <WrapPanel x:Name="HeaderPanel" Margin="24,16,24,0" VerticalAlignment="Top"
+                   SizeChanged="HeaderPanel_SizeChanged">
+            <WrapPanel VerticalAlignment="Center" Width="{Binding HeaderTabWidth}">
                 <Button Content="Apps" Padding="14,6" Margin="0,0,8,0" Click="AppsTab_Click">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
@@ -442,10 +434,11 @@
                     <TextBlock Text="&#xe145;" FontFamily="{StaticResource IconFont}"
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="16" />
                 </Button>
-            </StackPanel>
+            </WrapPanel>
 
-            <Border Grid.Column="1" Background="{DynamicResource SurfaceBackgroundBrush}" CornerRadius="10" Padding="14,8"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="400">
+            <Border Background="{DynamicResource SurfaceBackgroundBrush}" CornerRadius="10" Padding="14,8"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="400"
+                    Visibility="{Binding IsSearchDisplayVisible, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="{Binding SearchDisplay}"
                            Foreground="{DynamicResource PrimaryForegroundBrush}"
                            FontSize="16"
@@ -453,7 +446,7 @@
                            HorizontalAlignment="Center" />
             </Border>
 
-            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Padding="8" Margin="0,0,8,0" Click="ExplorerButton_Click" Style="{StaticResource ModernButtonStyle}"
                         Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="File Explorer">
                     <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}"
@@ -475,9 +468,10 @@
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
                 </Button>
             </StackPanel>
-        </Grid>
+        </WrapPanel>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    Visibility="{Binding AreLauncherShortcutsVisible, Converter={StaticResource BoolToVisibility}}"
                     Margin="0,0,72,16">
             <Button Padding="8" Margin="0,0,8,0" Click="SteamButton_Click" Style="{StaticResource ModernButtonStyle}"
                     Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="Steam">

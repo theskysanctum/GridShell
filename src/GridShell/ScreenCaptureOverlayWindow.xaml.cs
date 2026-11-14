@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using GridShell.Core.Interop;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
@@ -25,6 +26,8 @@ public partial class ScreenCaptureOverlayWindow : Window
     private double _dpiScale = 1.0;
     private int _virtualScreenLeft;
     private int _virtualScreenTop;
+    private readonly DispatcherTimer _displayChangeSettleTimer =
+        new() { Interval = TimeSpan.FromMilliseconds(600) };
 
     public ScreenCaptureOverlayWindow()
     {
@@ -43,7 +46,19 @@ public partial class ScreenCaptureOverlayWindow : Window
         Width = SystemParameters.VirtualScreenWidth;
         Height = SystemParameters.VirtualScreenHeight;
 
-        SourceInitialized += (_, _) => ApplyScreenGeometryNative();
+        _displayChangeSettleTimer.Tick += (_, _) =>
+        {
+            _displayChangeSettleTimer.Stop();
+            ApplyScreenGeometryNative();
+        };
+        Closed += (_, _) => _displayChangeSettleTimer.Stop();
+
+        SourceInitialized += (_, _) =>
+        {
+            ApplyScreenGeometryNative();
+            var hwnd = new WindowInteropHelper(this).Handle;
+            HwndSource.FromHwnd(hwnd)?.AddHook(WndProc);
+        };
         Loaded += (_, _) =>
         {
             Activate();
@@ -61,6 +76,23 @@ public partial class ScreenCaptureOverlayWindow : Window
 
         SetWindowPos(new HWND(hwnd), HWND.HWND_TOPMOST, bounds.Left, bounds.Top, bounds.Width, bounds.Height,
             SetWindowPosFlags.SWP_SHOWWINDOW);
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg == (int)WindowMessage.WM_DISPLAYCHANGE || msg == (int)WindowMessage.WM_DPICHANGED)
+        {
+            _dragStart = null;
+            ReleaseMouseCapture();
+            SelectionRect.Visibility = Visibility.Collapsed;
+            HintText.Visibility = Visibility.Visible;
+
+            ApplyScreenGeometryNative();
+            _displayChangeSettleTimer.Stop();
+            _displayChangeSettleTimer.Start();
+        }
+
+        return IntPtr.Zero;
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

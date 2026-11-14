@@ -81,7 +81,8 @@ public partial class TaskbarWindow : Window
 
     private void RegisterAppBar()
     {
-        var rect = AppBarManager.Register(_hwnd, ABE.ABE_LEFT, SidebarWidth);
+        var scale = GetDpiForWindow(_hwnd) / 96.0;
+        var rect = AppBarManager.Register(_hwnd, ABE.ABE_LEFT, SidebarWidth * scale);
         SetWindowPos(_hwnd, HWND.NULL, rect.left, rect.top, rect.Width, rect.Height,
             SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
     }

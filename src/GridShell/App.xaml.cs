@@ -48,6 +48,14 @@ public partial class App : System.Windows.Application
         new() { Interval = TimeSpan.FromMilliseconds(500) };
     private bool _sidebarHiddenForGame;
 
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Window window)
+        {
+            window.FitToWorkArea();
+        }
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);

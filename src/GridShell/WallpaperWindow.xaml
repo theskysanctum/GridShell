@@ -1,6 +1,8 @@
 <Window x:Class="GridShell.WallpaperWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:interop="clr-namespace:GridShell.Core.Interop;assembly=GridShell.Core"
+        interop:ScreenChangeReaction.ExcludeFromWorkAreaFit="True"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"

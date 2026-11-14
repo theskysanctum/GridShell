@@ -4,6 +4,9 @@
              xmlns:local="clr-namespace:GridShell"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
+        <Style TargetType="{x:Type Window}">
+            <EventSetter Event="Loaded" Handler="Window_Loaded" />
+        </Style>
         <!-- Shared app-wide so every window (not just MainWindow) can use it — ApplySettings()
              overwrites this with the user's saved color once settings are loaded. -->
         <SolidColorBrush x:Key="AccentBrush" Color="#4A90D9" />

@@ -60,6 +60,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<Tile> GamesForSelectedPlatform { get; } = new();
 
     private string? _selectedPlatform;
+    private bool _isCompactLayout;
+    private double _mainContentTopOffset = 72;
+
+    public GridLength PlatformPaneWidth { get; private set; } = new(200);
+    public int GameGridColumns { get; private set; } = 3;
+    public Thickness MainContentPadding => new(24, _mainContentTopOffset, 24, 24);
+    public Thickness MainContentMargin => new(24, _mainContentTopOffset, 24, 24);
+    public bool IsSearchDisplayVisible => !_isCompactLayout;
+    public bool AreLauncherShortcutsVisible => !_isCompactLayout;
+    public double HeaderTabWidth => _isCompactLayout ? Math.Max(0, RootGrid.ActualWidth - 48) : double.NaN;
 
     public string? SelectedPlatform
     {
@@ -417,7 +427,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Resources["GameTileWidth"] = w;
         Resources["GameTileHeight"] = w * 1.4;
 
-        // Exactly 1 row (3 tiles) tall; each cover has an 8px margin on every side.
+        // Exactly 1 row tall at the configured tile size; each cover has an 8px margin on every side.
         Resources["GamesGridVisibleHeight"] = w * 1.4 + 16;
 
         try
@@ -448,17 +458,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        var platformPaneWidth = Math.Clamp(gamesPane.ActualWidth * 0.28, 72, 200);
+        var platformPane = new GridLength(platformPaneWidth);
+        if (PlatformPaneWidth != platformPane)
+        {
+            PlatformPaneWidth = platformPane;
+            OnPropertyChanged(nameof(PlatformPaneWidth));
+        }
+
         var (baseTileWidth, _) = _settings.TileSize switch
         {
             TileSize.Small => (100.0, 80.0),
             TileSize.Large => (180.0, 140.0),
             _ => (140.0, 110.0),
         };
-        var sizeScale = baseTileWidth / 140.0;
-        var widthLimit = (GamesGrid.ActualWidth / 3) - 16;
+        var columns = Math.Clamp((int)(GamesGrid.ActualWidth / (baseTileWidth + 16)), 1, 3);
+        if (GameGridColumns != columns)
+        {
+            GameGridColumns = columns;
+            OnPropertyChanged(nameof(GameGridColumns));
+        }
+
+        var widthLimit = (GamesGrid.ActualWidth / columns) - 16;
         var heightLimit = (gamesPane.ActualHeight - 16) / 1.4;
         var maxTileWidth = Math.Min(widthLimit, heightLimit);
-        var tileWidth = maxTileWidth * Math.Min(sizeScale, 1.0);
+        var tileWidth = Math.Min(maxTileWidth, baseTileWidth);
         if (tileWidth <= 0)
         {
             return;
@@ -468,6 +492,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Resources["GameTileWidth"] = tileWidth;
         Resources["GameTileHeight"] = tileHeight;
         Resources["GamesGridVisibleHeight"] = tileHeight + 16;
+    }
+
+    private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var isCompact = RootGrid.ActualWidth < 620;
+        if (_isCompactLayout != isCompact)
+        {
+            _isCompactLayout = isCompact;
+            OnPropertyChanged(nameof(IsSearchDisplayVisible));
+            OnPropertyChanged(nameof(AreLauncherShortcutsVisible));
+        }
+
+        OnPropertyChanged(nameof(HeaderTabWidth));
+    }
+
+    private void HeaderPanel_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var topOffset = Math.Max(72, HeaderPanel.ActualHeight + 36);
+        if (Math.Abs(_mainContentTopOffset - topOffset) < 0.5)
+        {
+            return;
+        }
+
+        _mainContentTopOffset = topOffset;
+        OnPropertyChanged(nameof(MainContentPadding));
+        OnPropertyChanged(nameof(MainContentMargin));
     }
 
     public void OpenSettings()

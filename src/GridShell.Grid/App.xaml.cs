@@ -32,6 +32,14 @@ public partial class App : System.Windows.Application
     /// process's whole lifetime, same reasoning as DownloadBridge above.</summary>
     public Aria2Daemon Aria2 { get; } = new();
 
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Window window)
+        {
+            window.FitToWorkArea();
+        }
+    }
+
     // A reused singleton (like MainWindow itself), not recreated per-toggle - downloads
     // should keep accumulating/running whether or not the window is currently visible, and
     // DownloadBridge needs one single place to route forwarded downloads to regardless of
