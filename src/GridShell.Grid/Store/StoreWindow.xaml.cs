@@ -29,6 +29,12 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     private const string ScenesCategoryLabel = "Scenes";
     private const string GamesCategoryLabel = "Games";
 
+    /// <summary>A sentinel Categories entry (never a real winget category name) rendered as a
+    /// plain divider line instead of a selectable label - see CategoryItemStyle - marking where
+    /// the hardcoded Games/Scenes entries end and the catalog's real categories begin. Disabled
+    /// for hit-testing/focus there too, so it can never actually become SelectedCategory.</summary>
+    private const string CategorySeparatorLabel = "###CATEGORY_SEPARATOR###";
+
     private readonly List<Tile> _allTiles;
     private readonly AppSettings _settings;
     private readonly Action _onTilesChanged;
@@ -185,27 +191,35 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             scene.IsDownloaded = StoreSceneSync.IsDownloaded(scene.Scene.EntryFile);
         }
 
-        Categories.Clear();
-        foreach (var category in _allApps.Select(a => a.Category).Distinct().OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase))
-        {
-            Categories.Add(category);
-        }
+        var realCategories = _allApps.Select(a => a.Category).Distinct()
+            .OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
 
-        // Scenes aren't StoreApps, so they're not among _allApps' own categories - appended as
-        // its own fixed last entry instead, same left-rail category list either way.
+        // No catch-all "All Apps" entry - land on the first real category instead.
+        var defaultCategory = realCategories.FirstOrDefault();
+
+        Categories.Clear();
+
+        // Games is pinned at the very top of the rail regardless - unlike Scenes (only added
+        // when there's something to show), it's shown even with no repo configured yet, since
+        // setting one up is a status message inside the pane itself, not a reason to hide it.
+        Categories.Add(GamesCategoryLabel);
+
+        // Scenes aren't StoreApps, so they're not among _allApps' own categories - sits right
+        // after Games, so the two "not a plain app" categories stay together at the top of the
+        // rail, with CategorySeparatorLabel's own divider (see CategoryItemStyle) marking where
+        // they end and the catalog's real categories begin.
         if (_allScenes.Count > 0)
         {
             Categories.Add(ScenesCategoryLabel);
         }
 
-        // No catch-all "All Apps" entry - land on the first real category instead, now that
-        // Categories actually has entries for the ListBox's SelectedItem binding to match against.
-        var defaultCategory = Categories.Count > 0 ? Categories[0] : null;
+        Categories.Add(CategorySeparatorLabel);
 
-        // Games is pinned at the very top of the rail regardless - unlike Scenes (only added
-        // when there's something to show), it's shown even with no repo configured yet, since
-        // setting one up is a status message inside the pane itself, not a reason to hide it.
-        Categories.Insert(0, GamesCategoryLabel);
+        foreach (var category in realCategories)
+        {
+            Categories.Add(category);
+        }
 
         if (defaultCategory is not null)
         {

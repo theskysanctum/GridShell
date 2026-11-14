@@ -77,6 +77,15 @@
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Foreground" Value="White" />
                 </Trigger>
+                <!-- The Games/Scenes-vs-catalog divider (CategorySeparatorLabel) is never a real
+                     selectable category - disabling hit-testing/focus means IsMouseOver/
+                     IsSelected above can never fire for it either, so it stays a plain line with
+                     no hover/selection highlight. -->
+                <DataTrigger Binding="{Binding}" Value="###CATEGORY_SEPARATOR###">
+                    <Setter Property="IsHitTestVisible" Value="False" />
+                    <Setter Property="Focusable" Value="False" />
+                    <Setter Property="Padding" Value="14,4" />
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -165,7 +174,26 @@
             <ListBox Grid.Column="0" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
                      ItemContainerStyle="{StaticResource CategoryItemStyle}"
                      Background="Transparent" BorderThickness="0"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <TextBlock x:Name="CategoryLabel" Text="{Binding}" />
+                            <!-- A spacious divider, not just a thin rule - margin on both sides
+                                 gives real breathing room between the hardcoded Games/Scenes
+                                 entries above and the catalog's real categories below. -->
+                            <Border x:Name="SeparatorLine" Visibility="Collapsed" Height="1"
+                                    Margin="0,10,0,10" Background="{DynamicResource PanelBorderBrush}" />
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding}" Value="###CATEGORY_SEPARATOR###">
+                                <Setter TargetName="CategoryLabel" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="SeparatorLine" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
