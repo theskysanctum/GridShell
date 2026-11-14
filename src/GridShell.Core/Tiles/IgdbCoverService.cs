@@ -21,8 +21,57 @@ public static class IgdbCoverService
 
     private static string? _cachedAccessToken;
     private static DateTime _accessTokenExpiresAtUtc = DateTime.MinValue;
+    private static readonly Dictionary<string, int?> PlatformIdCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, string?> ImageIdCache = new(StringComparer.OrdinalIgnoreCase);
 
-    public static async Task<string?> GetCachedCoverPathAsync(string gameName, string clientId, string clientSecret)
+    /// <summary>Resolves straight to the IGDB CDN's own public image URL - no byte download, no
+    /// disk cache file - for callers that just hand it to an Image control (BitmapImage can
+    /// download a remote UriSource on its own, same as StoreSceneSync's thumbnail URLs already
+    /// do) rather than needing a local file path. Meant for a transient browsing view (the
+    /// Store's Games category) where covers are looked at once and never again, not for Game
+    /// tiles that reload the same cover every session - those still go through
+    /// GetCachedCoverPathAsync, where a persistent disk cache actually earns its keep. Only the
+    /// resolved image id is cached (in memory, for this process's lifetime) to avoid re-querying
+    /// IGDB's search on every repeat view of the same platform within one session - the image
+    /// bytes themselves are never kept.</summary>
+    public static async Task<string?> GetCoverImageUrlAsync(string gameName, string clientId, string clientSecret, int? platformId = null)
+    {
+        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+        {
+            return null;
+        }
+
+        var cacheKey = SanitizeFileName(gameName) + (platformId is { } pid ? $"_p{pid}" : "");
+        if (ImageIdCache.TryGetValue(cacheKey, out var cachedImageId))
+        {
+            return cachedImageId is null ? null : $"https://images.igdb.com/igdb/image/upload/t_cover_big/{cachedImageId}.jpg";
+        }
+
+        try
+        {
+            var token = await GetAccessTokenAsync(clientId, clientSecret);
+            if (token is null)
+            {
+                return null;
+            }
+
+            var imageId = await SearchCoverImageIdAsync(gameName, clientId, token, platformId);
+            ImageIdCache[cacheKey] = imageId;
+            return imageId is null ? null : $"https://images.igdb.com/igdb/image/upload/t_cover_big/{imageId}.jpg";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>platformId, when given, narrows the IGDB search to that one platform (see
+    /// ResolvePlatformIdAsync) - without it, the same title on a different system (e.g. a
+    /// "Aladdin" released separately on Genesis and SNES, with different box art) can resolve
+    /// to the wrong platform's cover purely by whichever has the higher rating_count. Baked
+    /// into the cache filename too, so the same name on two different platforms never collides
+    /// on one cached file.</summary>
+    public static async Task<string?> GetCachedCoverPathAsync(string gameName, string clientId, string clientSecret, int? platformId = null)
     {
         if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
         {
@@ -30,7 +79,8 @@ public static class IgdbCoverService
         }
 
         Directory.CreateDirectory(CacheDir);
-        var cachePath = Path.Combine(CacheDir, SanitizeFileName(gameName) + ".jpg");
+        var cacheSuffix = platformId is { } pid ? $"_p{pid}" : "";
+        var cachePath = Path.Combine(CacheDir, SanitizeFileName(gameName) + cacheSuffix + ".jpg");
         if (File.Exists(cachePath))
         {
             return cachePath;
@@ -44,7 +94,7 @@ public static class IgdbCoverService
                 return null;
             }
 
-            var imageId = await SearchCoverImageIdAsync(gameName, clientId, token);
+            var imageId = await SearchCoverImageIdAsync(gameName, clientId, token, platformId);
             if (imageId is null)
             {
                 return null;
@@ -89,7 +139,60 @@ public static class IgdbCoverService
         return accessToken;
     }
 
-    private static async Task<string?> SearchCoverImageIdAsync(string gameName, string clientId, string accessToken)
+    /// <summary>Resolves a platform's IGDB numeric id by name, via IGDB's own /platforms search
+    /// - not a hardcoded id table (EmulationPlatform.All alone is ~190 entries, and getting
+    /// even one of those ids wrong from memory would be worse than not filtering at all).
+    /// Cached in memory, so each distinct platform name this process ever asks about is only
+    /// ever looked up once. Null means either no IGDB match or the lookup failed - callers
+    /// already treat that the same as "don't filter by platform".</summary>
+    public static async Task<int?> ResolvePlatformIdAsync(string platformName, string clientId, string clientSecret)
+    {
+        if (string.IsNullOrWhiteSpace(platformName))
+        {
+            return null;
+        }
+
+        if (PlatformIdCache.TryGetValue(platformName, out var cached))
+        {
+            return cached;
+        }
+
+        int? resolved = null;
+        try
+        {
+            var token = await GetAccessTokenAsync(clientId, clientSecret);
+            if (token is not null)
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.igdb.com/v4/platforms");
+                request.Headers.Add("Client-ID", clientId);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var escaped = platformName.Replace("\"", "\\\"");
+                request.Content = new StringContent(
+                    $"search \"{escaped}\"; fields name; limit 1;", Encoding.UTF8, "text/plain");
+
+                using var response = await Http.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    using var stream = await response.Content.ReadAsStreamAsync();
+                    using var doc = await JsonDocument.ParseAsync(stream);
+                    if (doc.RootElement.GetArrayLength() > 0 && doc.RootElement[0].TryGetProperty("id", out var idProp))
+                    {
+                        resolved = idProp.GetInt32();
+                    }
+                }
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or JsonException)
+        {
+            resolved = null;
+        }
+
+        PlatformIdCache[platformName] = resolved;
+        return resolved;
+    }
+
+    private static async Task<string?> SearchCoverImageIdAsync(string gameName, string clientId, string accessToken, int? platformId)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.igdb.com/v4/games");
         request.Headers.Add("Client-ID", clientId);
@@ -102,8 +205,9 @@ public static class IgdbCoverService
         // pick the most-rated one client-side, since an obscure fan entry essentially never has
         // one.
         var escapedName = gameName.Replace("\"", "\\\"");
+        var whereClause = platformId is { } pid ? $" where platforms = ({pid});" : "";
         request.Content = new StringContent(
-            $"search \"{escapedName}\"; fields name,cover.image_id,rating_count; limit 10;", Encoding.UTF8, "text/plain");
+            $"search \"{escapedName}\";{whereClause} fields name,cover.image_id,rating_count; limit 10;", Encoding.UTF8, "text/plain");
 
         using var response = await Http.SendAsync(request);
         if (!response.IsSuccessStatusCode)

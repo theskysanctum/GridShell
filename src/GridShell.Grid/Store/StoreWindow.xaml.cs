@@ -287,12 +287,13 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         // list is missing" until the user notices and scrolls back up themselves.
         GameLinkEntriesScrollViewer.ScrollToTop();
 
-        _currentPlatformEntries = SelectedGamePlatform is { } platform
+        var platform = SelectedGamePlatform;
+        _currentPlatformEntries = platform is not null
             ? GameLinksRepoSync.GetEntries(platform.Slug).Select(e => new GameLinkEntryViewModel { Entry = e }).ToList()
             : new List<GameLinkEntryViewModel>();
 
         ApplyFilter();
-        _ = LoadGameLinkCoversAsync(_currentPlatformEntries);
+        _ = LoadGameLinkCoversAsync(platform, _currentPlatformEntries);
     }
 
     private TranslateTransform? _platformMarqueeTransform;
@@ -376,12 +377,19 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
     /// <summary>Same IGDB lookup/cache IconLoader already uses for real Game tiles' cover art
     /// (IgdbCoverService, keyed by name) - these entries aren't Tiles yet (nothing's been
     /// downloaded), so this fetches directly instead of going through IconLoader.</summary>
-    private async Task LoadGameLinkCoversAsync(List<GameLinkEntryViewModel> entries)
+    private async Task LoadGameLinkCoversAsync(EmulationPlatform? platform, List<GameLinkEntryViewModel> entries)
     {
         if (_settings is not { IgdbClientId: { Length: > 0 } clientId, IgdbClientSecret: { Length: > 0 } clientSecret })
         {
             return;
         }
+
+        // Resolved once for the whole batch, not per entry - every entry here is already the
+        // same platform (this list is GameLinksRepoSync.GetEntries(platform.Slug)'s own
+        // result), so there's no reason to ask IGDB for the same platform id repeatedly.
+        var platformId = platform is not null
+            ? await IgdbCoverService.ResolvePlatformIdAsync(platform.DisplayName, clientId, clientSecret)
+            : null;
 
         using var throttle = new SemaphoreSlim(4);
         var tasks = entries.Select(async entry =>
@@ -389,10 +397,10 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             await throttle.WaitAsync();
             try
             {
-                var coverPath = await IgdbCoverService.GetCachedCoverPathAsync(entry.Name, clientId, clientSecret);
-                if (coverPath is not null)
+                var coverUrl = await IgdbCoverService.GetCoverImageUrlAsync(entry.Name, clientId, clientSecret, platformId);
+                if (coverUrl is not null)
                 {
-                    entry.Cover = await Task.Run(() => ImageLoader.LoadFromFile(coverPath));
+                    entry.Cover = LoadRemoteBitmap(coverUrl);
                 }
             }
             finally
@@ -539,6 +547,18 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         bitmap.UriSource = new Uri(StoreSceneSync.GetThumbnailUrl(scene.Scene.Id), UriKind.Absolute);
         bitmap.EndInit();
         scene.Thumbnail = bitmap;
+    }
+
+    /// <summary>Same remote-UriSource pattern as SetSceneThumbnail - WPF downloads it on its
+    /// own in the background, so there's nothing here to await or cache to disk ourselves.</summary>
+    private static BitmapImage LoadRemoteBitmap(string url)
+    {
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.UriSource = new Uri(url, UriKind.Absolute);
+        bitmap.EndInit();
+        return bitmap;
     }
 
     private void ApplyFilter()
