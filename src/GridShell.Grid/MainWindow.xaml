@@ -209,11 +209,6 @@
         <local:GameTileTemplateSelector x:Key="TileTemplateSelector"
                                          RegularTemplate="{StaticResource RegularTileTemplate}"
                                          GameTemplate="{StaticResource GameTileTemplate}" />
-
-        <!-- Only grouped (by PlatformGroupName) while the Games tab is active - toggled in
-             code (ApplyFilter) rather than always-on, since Apps/Web were never asked to group
-             and a single "PC" header over every app/website tile would just be noise. -->
-        <CollectionViewSource x:Key="GroupedTiles" Source="{Binding Tiles}" />
     </Window.Resources>
     <Grid x:Name="RootGrid">
         <!-- Dim backdrop behind the centered panel below, spanning the whole work area - this
@@ -235,14 +230,14 @@
                 <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.94" CornerRadius="16" />
 
         <ListBox x:Name="TileList"
-                 ItemsSource="{Binding Source={StaticResource GroupedTiles}}"
+                 ItemsSource="{Binding Tiles}"
+                 Visibility="{Binding IsAppsOrWebTabActive, Converter={StaticResource BoolToVisibility}}"
                  Background="Transparent"
                  BorderThickness="0"
                  FocusVisualStyle="{x:Null}"
                  Padding="24,72,24,24"
                  ScrollViewer.CanContentScroll="True"
                  VirtualizingPanel.IsVirtualizing="True"
-                 VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                  VirtualizingPanel.VirtualizationMode="Recycling"
                  ItemTemplateSelector="{StaticResource TileTemplateSelector}"
                  ItemContainerStyle="{StaticResource TileContainerStyle}"
@@ -252,23 +247,67 @@
                     <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
-            <ListBox.GroupStyle>
-                <GroupStyle>
-                    <GroupStyle.Panel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </GroupStyle.Panel>
-                    <GroupStyle.HeaderTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"
-                                       Foreground="{DynamicResource PrimaryForegroundBrush}"
-                                       Margin="24,12,0,0" />
-                        </DataTemplate>
-                    </GroupStyle.HeaderTemplate>
-                </GroupStyle>
-            </ListBox.GroupStyle>
         </ListBox>
+
+        <!-- Games tab only: platforms on the left ("PC" pinned at top), box art in a 3-column
+             grid on the right - replaces the flat/grouped TileList above for this tab only. -->
+        <Grid Visibility="{Binding IsGamesTabActive, Converter={StaticResource BoolToVisibility}}"
+              Margin="24,72,24,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ListBox x:Name="PlatformList" Grid.Column="0" Margin="0,0,16,0"
+                     ItemsSource="{Binding Platforms}"
+                     Background="Transparent" BorderThickness="0"
+                     FocusVisualStyle="{x:Null}"
+                     SelectionChanged="PlatformList_SelectionChanged">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="12,10" />
+                        <Setter Property="Margin" Value="0,0,0,4" />
+                        <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="Bd" CornerRadius="8" Background="Transparent"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PanelBorderBrush}" />
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+
+            <ListBox x:Name="GamesGrid" Grid.Column="1"
+                     ItemsSource="{Binding GamesForSelectedPlatform}"
+                     Background="Transparent" BorderThickness="0"
+                     FocusVisualStyle="{x:Null}"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     ItemTemplate="{StaticResource GameTileTemplate}"
+                     ItemContainerStyle="{StaticResource TileContainerStyle}"
+                     MouseDoubleClick="TileList_MouseDoubleClick">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+        </Grid>
 
         <!-- A 3-column Grid (not independently-positioned Left/Center/Right panels) so the
              layout system itself keeps these from ever overlapping: the outer columns get

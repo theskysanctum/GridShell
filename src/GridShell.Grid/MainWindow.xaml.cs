@@ -51,6 +51,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public ObservableCollection<Tile> Tiles { get; } = new();
 
+    /// <summary>Games tab only: the left pane's platform list - "PC" first (native, non-emulated
+    /// games), then every other platform that currently has at least one tile, alphabetically.</summary>
+    public ObservableCollection<string> Platforms { get; } = new();
+
+    /// <summary>Games tab only: the right pane's box-art grid, filtered to SelectedPlatform.</summary>
+    public ObservableCollection<Tile> GamesForSelectedPlatform { get; } = new();
+
+    private string? _selectedPlatform;
+
+    public string? SelectedPlatform
+    {
+        get => _selectedPlatform;
+        set
+        {
+            if (_selectedPlatform == value)
+            {
+                return;
+            }
+
+            _selectedPlatform = value;
+            OnPropertyChanged();
+            RefreshGamesForSelectedPlatform();
+        }
+    }
+
     public string SearchDisplay => string.IsNullOrEmpty(SearchText) ? "Type to search" : SearchText;
 
     public string SearchText
@@ -85,6 +110,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsAppsTabActive));
             OnPropertyChanged(nameof(IsWebTabActive));
             OnPropertyChanged(nameof(IsGamesTabActive));
+            OnPropertyChanged(nameof(IsAppsOrWebTabActive));
             ApplyFilter();
         }
     }
@@ -92,6 +118,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public bool IsAppsTabActive => ActiveTab == GridTab.Apps;
     public bool IsWebTabActive => ActiveTab == GridTab.Web;
     public bool IsGamesTabActive => ActiveTab == GridTab.Games;
+
+    /// <summary>Apps and Web both still use the single flat TileList; only Games gets the
+    /// dual-pane platform/box-art layout, so TileList's own Visibility is keyed off this
+    /// rather than two separate bindings.</summary>
+    public bool IsAppsOrWebTabActive => !IsGamesTabActive;
 
     private TileKind ActiveKind => ActiveTab switch
     {
@@ -279,7 +310,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOACTIVATE);
         _osk.BringAboveOthers();
 
-        TileList.Focus();
+        FocusActiveList();
         _controller.Start();
         // Re-checks every time the grid opens, not just once at startup - confirmed live: a
         // storefront installed (via BrowserInstaller, see StoreWindow) while GridShell was
@@ -482,34 +513,90 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             matches = matches.Where(t => t.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        matches = matches.OrderBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase);
+        var matchList = matches.OrderBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
-        Tiles.Clear();
-        foreach (var tile in matches)
-        {
-            Tiles.Add(tile);
-        }
-
-        // Only the Games tab groups by platform - Apps/Web never asked for it, and a single
-        // "PC" header over every app/website tile would just be noise.
-        var groupedView = (System.Windows.Data.CollectionViewSource)Resources["GroupedTiles"];
-        groupedView.GroupDescriptions.Clear();
-        groupedView.SortDescriptions.Clear();
         if (ActiveTab == GridTab.Games)
         {
-            groupedView.SortDescriptions.Add(new System.ComponentModel.SortDescription(
-                nameof(Tile.PlatformGroupName), System.ComponentModel.ListSortDirection.Ascending));
-            groupedView.SortDescriptions.Add(new System.ComponentModel.SortDescription(
-                nameof(Tile.Name), System.ComponentModel.ListSortDirection.Ascending));
-            groupedView.GroupDescriptions.Add(new System.Windows.Data.PropertyGroupDescription(nameof(Tile.PlatformGroupName)));
+            RefreshPlatforms(matchList);
         }
+        else
+        {
+            Tiles.Clear();
+            foreach (var tile in matchList)
+            {
+                Tiles.Add(tile);
+            }
 
-        TileList.SelectedIndex = Tiles.Count > 0 ? 0 : -1;
+            TileList.SelectedIndex = Tiles.Count > 0 ? 0 : -1;
+        }
 
         // Filtering rebuilds the virtualized containers, which can silently drop keyboard
         // focus out of the list. Re-assert it so mouse and keyboard always share the same
         // selection/focus state instead of drifting apart.
-        TileList.Focus();
+        FocusActiveList();
+    }
+
+    /// <summary>Games tab's left pane: "PC" first (native, non-emulated games), then every
+    /// other platform with at least one matching tile, alphabetically - rebuilt from the
+    /// already kind/search-filtered list every time ApplyFilter runs, same as Tiles is for
+    /// Apps/Web. Keeps the previously selected platform selected when it's still present
+    /// (e.g. after adding another game to it), rather than always resetting to the top.</summary>
+    private void RefreshPlatforms(List<Tile> matchList)
+    {
+        var previousSelection = SelectedPlatform;
+
+        var platforms = matchList.Select(t => t.PlatformGroupName).Distinct()
+            .OrderBy(name => name == "PC" ? 0 : 1)
+            .ThenBy(name => name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        Platforms.Clear();
+        foreach (var name in platforms)
+        {
+            Platforms.Add(name);
+        }
+
+        var nextSelection = previousSelection is not null && platforms.Contains(previousSelection)
+            ? previousSelection
+            : platforms.FirstOrDefault();
+        if (nextSelection == SelectedPlatform)
+        {
+            // SelectedPlatform's own setter already calls this, but a same-value assignment
+            // (same platform still selected) short-circuits before that - the underlying game
+            // list still needs rebuilding since matchList itself just changed.
+            RefreshGamesForSelectedPlatform();
+        }
+        else
+        {
+            SelectedPlatform = nextSelection;
+        }
+    }
+
+    private void RefreshGamesForSelectedPlatform()
+    {
+        GamesForSelectedPlatform.Clear();
+        if (SelectedPlatform is null)
+        {
+            return;
+        }
+
+        foreach (var tile in _allTiles
+                     .Where(t => t.Kind == TileKind.Game && t.PlatformGroupName == SelectedPlatform)
+                     .Where(t => string.IsNullOrWhiteSpace(SearchText) || t.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                     .OrderBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            GamesForSelectedPlatform.Add(tile);
+        }
+
+        GamesGrid.SelectedIndex = GamesForSelectedPlatform.Count > 0 ? 0 : -1;
+    }
+
+    private void PlatformList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (PlatformList.SelectedItem is string platform)
+        {
+            SelectedPlatform = platform;
+        }
     }
 
     private void AppsTab_Click(object sender, RoutedEventArgs e) => ActiveTab = GridTab.Apps;
@@ -684,7 +771,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 break;
 
             case Key.Delete:
-                RemoveTile(TileList.SelectedItem as Tile);
+                RemoveTile(SelectedTile);
                 e.Handled = true;
                 break;
         }
@@ -719,9 +806,26 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ActivateSelected()
     {
-        if (TileList.SelectedItem is Tile tile)
+        if (SelectedTile is { } tile)
         {
             ActivateTile(tile);
+        }
+    }
+
+    /// <summary>Whichever of TileList (Apps/Web) or GamesGrid (Games' dual-pane box-art list)
+    /// is actually showing right now - keyboard actions (Enter/Delete) and focus restoration
+    /// need to target the one the user can currently see, not always TileList.</summary>
+    private Tile? SelectedTile => IsGamesTabActive ? GamesGrid.SelectedItem as Tile : TileList.SelectedItem as Tile;
+
+    private void FocusActiveList()
+    {
+        if (IsGamesTabActive)
+        {
+            GamesGrid.Focus();
+        }
+        else
+        {
+            TileList.Focus();
         }
     }
 
@@ -778,7 +882,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         // Returning from the dialog otherwise leaves keyboard focus nowhere in particular.
-        TileList.Focus();
+        FocusActiveList();
     }
 
     private void RenameTileMenuItem_Click(object sender, RoutedEventArgs e)
@@ -796,7 +900,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             TileStore.Save(_allTiles);
         }
 
-        TileList.Focus();
+        FocusActiveList();
     }
 
     private void ChangeIcon_Click(object sender, RoutedEventArgs e)
@@ -819,7 +923,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _ = IconLoader.LoadIconAsync(tile, _settings);
         }
 
-        TileList.Focus();
+        FocusActiveList();
     }
 
     private void RemoveTileMenuItem_Click(object sender, RoutedEventArgs e)
@@ -849,7 +953,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _ = IconLoader.LoadIconAsync(tile, _settings);
         }
 
-        TileList.Focus();
+        FocusActiveList();
     }
 
     private void RemoveTile(Tile? tile)
