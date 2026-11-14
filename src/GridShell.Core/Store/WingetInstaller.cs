@@ -41,9 +41,14 @@ public static class WingetInstaller
     /// entry - an install that doesn't support it just lands in that installer's own default
     /// location instead, same as it always did, not a failure either way.
     ///
-    /// Steam is the one exception - StoreApp.RequiresElevation skips --location for it (a
-    /// custom location broke its own registry entry regardless of elevation) and routes its
-    /// install/uninstall through RunElevatedAsync instead.</summary>
+    /// Steam is the one exception - StoreApp.RequiresElevation skips --location for it
+    /// specifically (a custom location broke its own registry entry, unrelated to elevation).
+    ///
+    /// Every install/uninstall now runs elevated regardless of RequiresElevation - confirmed
+    /// live that several per-machine MSI installs (Notepad++, VLC) reject a non-elevated
+    /// uninstall outright with Error 1730 ("You must be an Administrator to remove this
+    /// application"), the same underlying requirement Steam's install already had. Running
+    /// everything elevated avoids needing to predict per-app which ones need it.</summary>
     public const string InstallRoot = @"C:\GridShell\Applications";
 
     /// <summary>Whether an app is already installed, per the same `winget list --id X -e` check
@@ -94,25 +99,11 @@ public static class WingetInstaller
         var installArgs = $"--id {wingetId} -e --silent --accept-package-agreements --accept-source-agreements " +
                            $"--disable-interactivity --source winget{locationArg}";
 
-        if (app.RequiresElevation)
-        {
-            var elevatedExitCode = await RunElevatedAsync("install", installArgs);
-            return elevatedExitCode is 0
-                ? new InstallResult(InstallOutcome.Installed, "Installed.")
-                : new InstallResult(InstallOutcome.Failed,
-                    "Install failed, or the admin prompt was cancelled.");
-        }
-
-        var installResult = await RunAsync("install", installArgs);
-        if (installResult is null)
-        {
-            return new InstallResult(InstallOutcome.WingetNotFound,
-                "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
-        }
-
-        return installResult.Value.ExitCode == 0
+        var elevatedExitCode = await RunElevatedAsync("install", installArgs);
+        return elevatedExitCode is 0
             ? new InstallResult(InstallOutcome.Installed, "Installed.")
-            : new InstallResult(InstallOutcome.Failed, LastMeaningfulLine(installResult.Value.Output));
+            : new InstallResult(InstallOutcome.Failed,
+                "Install failed, or the admin prompt was cancelled.");
     }
 
     /// <summary>Checks InstalledAppLocator first, same as IsInstalledAsync - if no real exe
@@ -140,27 +131,10 @@ public static class WingetInstaller
 
         var uninstallArgs = $"--id {app.WingetId} -e --silent --accept-source-agreements --disable-interactivity";
 
-        if (app.RequiresElevation)
+        var elevatedExitCode = await RunElevatedAsync("uninstall", uninstallArgs);
+        if (elevatedExitCode != 0)
         {
-            var elevatedExitCode = await RunElevatedAsync("uninstall", uninstallArgs);
-            if (elevatedExitCode != 0)
-            {
-                return new UninstallResult(UninstallOutcome.Failed, "Uninstall failed, or the admin prompt was cancelled.");
-            }
-        }
-        else
-        {
-            var result = await RunAsync("uninstall", uninstallArgs);
-            if (result is null)
-            {
-                return new UninstallResult(UninstallOutcome.WingetNotFound,
-                    "winget (Windows Package Manager / App Installer) wasn't found on this PC.");
-            }
-
-            if (result.Value.ExitCode != 0)
-            {
-                return new UninstallResult(UninstallOutcome.Failed, LastMeaningfulLine(result.Value.Output));
-            }
+            return new UninstallResult(UninstallOutcome.Failed, "Uninstall failed, or the admin prompt was cancelled.");
         }
 
         var location = Path.Combine(InstallRoot, app.Id);
