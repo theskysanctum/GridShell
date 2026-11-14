@@ -18,7 +18,9 @@ public static class Aria2Client
             ["out"] = fileName,
         };
 
-        if (!string.IsNullOrWhiteSpace(cookies))
+        // The saved session is for Archive.org only. Never attach it to an unrelated URL,
+        // even if a caller accidentally supplies cookies for a different download.
+        if (!string.IsNullOrWhiteSpace(cookies) && ArchiveOrgSession.IsArchiveOrgUrl(url))
         {
             options["header"] = $"Cookie: {cookies}";
         }
