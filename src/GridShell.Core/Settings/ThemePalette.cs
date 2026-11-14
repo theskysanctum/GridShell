@@ -3,11 +3,8 @@ using System.Windows.Media;
 
 namespace GridShell.Core.Settings;
 
-/// <summary>Applies GridShell's own custom-colored surfaces (window/tile/panel backgrounds,
-/// text, borders) for the selected theme — separate from WPF's built-in ThemeMode (Fluent light/
-/// dark), which only restyles standard controls (buttons, combo boxes, scrollbars) and has no
-/// effect on colors we set explicitly ourselves. Both need to be applied together for a
-/// consistent look; see each App.xaml.cs's theme-apply step.</summary>
+/// <summary>Applies GridShell's dark custom-colored surfaces (window/tile/panel backgrounds,
+/// text, and borders); WPF's built-in dark ThemeMode separately restyles standard controls.</summary>
 public static class ThemePalette
 {
     public static Color DarkenAccent(Color color, double factor) =>
@@ -49,19 +46,15 @@ public static class ThemePalette
         return brush;
     }
 
-    public static void Apply(ResourceDictionary resources, AppTheme theme)
+    public static void Apply(ResourceDictionary resources)
     {
-        var (window, surface, border, text, mutedText, faintText, error) = theme == AppTheme.Light
-            ? ("#F3F3F3", "#FFFFFF", "#D0D0D0", "#1A1A1A", "#666666", "#999999", "#C0392B")
-            : ("#1A1A1A", "#2A2A2A", "#555555", "#FFFFFF", "#AAAAAA", "#777777", "#E08080");
-
-        resources["WindowBackgroundBrush"] = Brush(window);
-        resources["SurfaceBackgroundBrush"] = Brush(surface);
-        resources["PanelBorderBrush"] = Brush(border);
-        resources["PrimaryForegroundBrush"] = Brush(text);
-        resources["MutedForegroundBrush"] = Brush(mutedText);
-        resources["FaintForegroundBrush"] = Brush(faintText);
-        resources["ErrorForegroundBrush"] = Brush(error);
+        resources["WindowBackgroundBrush"] = Brush("#1A1A1A");
+        resources["SurfaceBackgroundBrush"] = Brush("#2A2A2A");
+        resources["PanelBorderBrush"] = Brush("#555555");
+        resources["PrimaryForegroundBrush"] = Brush("#FFFFFF");
+        resources["MutedForegroundBrush"] = Brush("#AAAAAA");
+        resources["FaintForegroundBrush"] = Brush("#777777");
+        resources["ErrorForegroundBrush"] = Brush("#E08080");
     }
 
     private static SolidColorBrush Brush(string hex)

@@ -21,9 +21,7 @@ using GridShell.Core.Updates;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 using AppSettings = GridShell.Core.Settings.AppSettings;
-using AppTheme = GridShell.Core.Settings.AppTheme;
 using TileSizeOption = GridShell.Core.Settings.TileSize;
-using ThemePalette = GridShell.Core.Settings.ThemePalette;
 using UiFontChoice = GridShell.Core.Settings.UiFontChoice;
 using EDataFlow = Vanara.PInvoke.CoreAudio.EDataFlow;
 
@@ -37,7 +35,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private bool _autostartEnabled;
     private DetectedBrowser? _selectedDefaultBrowser;
     private TileSizeOption _tileSize;
-    private AppTheme _theme;
     private UiFontChoice _uiFont;
     private string? _startButtonIconImagePath;
     private bool _useGridShellAsSystemShell;
@@ -812,25 +809,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public AppTheme Theme
-    {
-        get => _theme;
-        set
-        {
-            _theme = value;
-            OnPropertyChanged();
-            _settings.Theme = value;
-
-#pragma warning disable WPF0001
-            Application.Current.ThemeMode = value == AppTheme.Light ? ThemeMode.Light : ThemeMode.Dark;
-#pragma warning restore WPF0001
-            ThemePalette.Apply(Application.Current.Resources, value);
-
-            _onSettingsChanged();
-            NotifyTaskbarSettingsChanged();
-        }
-    }
-
     public UiFontChoice UiFont
     {
         get => _uiFont;
@@ -1055,9 +1033,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
         _tileSize = _settings.TileSize;
         OnPropertyChanged(nameof(TileSize));
-
-        _theme = _settings.Theme;
-        OnPropertyChanged(nameof(Theme));
 
         _uiFont = _settings.UiFont;
         OnPropertyChanged(nameof(UiFont));

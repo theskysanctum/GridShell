@@ -26,6 +26,7 @@ public static class AppSettingsStore
 
             var json = File.ReadAllText(StorePath);
             var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            settings.Theme = AppTheme.Dark;
             if (string.IsNullOrWhiteSpace(json))
             {
                 return settings;

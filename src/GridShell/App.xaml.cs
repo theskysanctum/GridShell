@@ -279,9 +279,9 @@ public partial class App : System.Windows.Application
     {
         var settings = AppSettingsStore.Load();
 #pragma warning disable WPF0001 // ThemeMode is experimental, same suppression as GridShell.Grid
-        ThemeMode = settings.Theme == AppTheme.Light ? ThemeMode.Light : ThemeMode.Dark;
+        ThemeMode = ThemeMode.Dark;
 #pragma warning restore WPF0001
-        ThemePalette.Apply(Resources, settings.Theme);
+        ThemePalette.Apply(Resources);
 
         var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.AccentColor)!;
         ThemePalette.ApplyAccent(Resources, color);

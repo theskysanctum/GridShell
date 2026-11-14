@@ -87,11 +87,7 @@
             <TabItem Header="Appearance">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Margin="0,12,8,0" IsEnabled="{Binding CanEditAppearance}">
-                    <TextBlock Text="Theme" Margin="0,0,0,4" />
-                    <ComboBox SelectedValue="{Binding Theme}" SelectedValuePath="Tag" Margin="0,0,0,16">
-                        <ComboBoxItem Content="Dark" Tag="Dark" />
-                        <ComboBoxItem Content="Light" Tag="Light" />
-                    </ComboBox>
+                    <TextBlock Text="Theme: Dark" Margin="0,0,0,16" />
 
                     <TextBlock Text="Tile size" Margin="0,0,0,4" />
                     <ComboBox SelectedValue="{Binding TileSize}" SelectedValuePath="Tag" Margin="0,0,0,16">
