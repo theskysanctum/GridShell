@@ -76,6 +76,9 @@
 
                     <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
+                    <Button Content="Report a Bug" Padding="10,6" HorizontalAlignment="Left" Margin="0,0,0,16"
+                            Click="ReportBugButton_Click" />
+
                     <Button Content="Exit GridShell" Padding="10,6" HorizontalAlignment="Left"
                             Click="ExitGridShell_Click" />
                 </StackPanel>
