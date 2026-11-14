@@ -6,12 +6,12 @@
         xmlns:local="clr-namespace:GridShell"
         mc:Ignorable="d"
         Title="GridShell Store"
-        Width="960" Height="640" MinWidth="680" MinHeight="440"
-        WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
+        WindowStyle="None"
+        ResizeMode="NoResize"
         Background="{DynamicResource WindowBackgroundBrush}"
         Foreground="{DynamicResource PrimaryForegroundBrush}"
         FontFamily="{DynamicResource AppFontFamily}"
+        SourceInitialized="Window_SourceInitialized"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <FontFamily x:Key="IconFont">../Fonts/#Material Symbols Outlined</FontFamily>

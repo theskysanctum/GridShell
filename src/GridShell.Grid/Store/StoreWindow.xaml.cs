@@ -7,10 +7,13 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using GridShell.Core.Interop;
 using GridShell.Core.Settings;
 using GridShell.Core.Store;
 using GridShell.Core.Tiles;
+using Vanara.PInvoke;
 
 namespace GridShell;
 
@@ -74,7 +77,32 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         _settings = settings;
         _onTilesChanged = onTilesChanged;
 
+        // WPF-property sizing for the brief window before the HWND exists -
+        // Window_SourceInitialized takes over with the authoritative native version right
+        // after, same two-step MainWindow already uses for the same reason (SystemParameters.
+        // WorkArea is WPF's own cached, DPI-scaled copy, good enough only for this first paint).
+        var workArea = SystemParameters.WorkArea;
+        Left = workArea.Left;
+        Top = 0;
+        Width = workArea.Width;
+        Height = SystemParameters.PrimaryScreenHeight;
+
         Loaded += StoreWindow_Loaded;
+    }
+
+    /// <summary>Sizes to the real screen minus GridShell's own taskbar sidebar - a real AppBar
+    /// reservation (AppBarManager), not the fake "maximized" the Store used to rely on, which
+    /// only respected the real Windows taskbar (hidden for GridShell's whole lifetime) and had
+    /// no idea GridShell's own sidebar existed.</summary>
+    private void Window_SourceInitialized(object? sender, EventArgs e)
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        var workArea = AppBarManager.GetWorkArea();
+        var screenWidth = User32.GetSystemMetrics(User32.SystemMetric.SM_CXSCREEN);
+        var screenHeight = User32.GetSystemMetrics(User32.SystemMetric.SM_CYSCREEN);
+
+        User32.SetWindowPos(hwnd, HWND.NULL, workArea.left, 0, screenWidth - workArea.left, screenHeight,
+            User32.SetWindowPosFlags.SWP_NOZORDER | User32.SetWindowPosFlags.SWP_NOACTIVATE);
     }
 
     private async void StoreWindow_Loaded(object sender, RoutedEventArgs e)
