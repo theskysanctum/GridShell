@@ -79,8 +79,7 @@
                 </Trigger>
                 <!-- The Games/Scenes-vs-catalog divider (CategorySeparatorLabel) is never a real
                      selectable category - disabling hit-testing/focus means IsMouseOver/
-                     IsSelected above can never fire for it either, so it stays a plain line with
-                     no hover/selection highlight. -->
+                     IsSelected above can never fire for it either. -->
                 <DataTrigger Binding="{Binding}" Value="###CATEGORY_SEPARATOR###">
                     <Setter Property="IsHitTestVisible" Value="False" />
                     <Setter Property="Focusable" Value="False" />
@@ -109,8 +108,7 @@
         </Style>
 
         <!-- Rounded capsule status badges - accent for Installed, the app's existing themed
-             error color for Failed, muted/transparent while checking or installing (that state
-             already has its own "..." text, a badge would be redundant noise). -->
+             error color for Failed, muted/transparent while checking or installing. -->
         <Style x:Key="StatusBadgeStyle" TargetType="Border">
             <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Padding" Value="8,3" />
@@ -161,9 +159,7 @@
             </Border>
         </Grid>
 
-        <!-- Two-pane body: category rail on the left, app cards on the right - same shape as
-             this app's other config windows (Settings, Controller Manager) rather than one long
-             grouped list. -->
+        <!-- Two-pane body: category rail on the left, app cards on the right. -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="180" />
@@ -179,9 +175,6 @@
                     <DataTemplate>
                         <Grid>
                             <TextBlock x:Name="CategoryLabel" Text="{Binding}" />
-                            <!-- A spacious divider, not just a thin rule - margin on both sides
-                                 gives real breathing room between the hardcoded Games/Scenes
-                                 entries above and the catalog's real categories below. -->
                             <Border x:Name="SeparatorLine" Visibility="Collapsed" Height="1"
                                     Margin="0,10,0,10" Background="{DynamicResource PanelBorderBrush}" />
                         </Grid>
@@ -210,10 +203,6 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-
-                                    <!-- Real shell icon once installed; an accent-colored
-                                         initial-letter square until then (there's nothing to
-                                         extract an icon from before the app exists on disk). -->
                                     <Grid Grid.Column="0" Width="44" Height="44" Margin="0,0,14,0">
                                         <Border CornerRadius="10" Background="{DynamicResource AccentBrush}"
                                                 Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibilityInverse}}">
@@ -225,18 +214,13 @@
                                             <Image Source="{Binding Icon}" Stretch="Uniform" Margin="7" />
                                         </Border>
                                     </Grid>
-
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13"
                                                    Foreground="{DynamicResource PrimaryForegroundBrush}" />
                                         <TextBlock Text="{Binding Description}" FontSize="11.5" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,3,12,0" />
                                     </StackPanel>
-
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <!-- Install/Uninstall already imply which state an app is
-                                             in, so no separate "Installed" pill is needed here -
-                                             the transition itself gets its own toast instead. -->
                                         <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="0,0,10,0"
                                                    MaxWidth="160" TextWrapping="Wrap" TextAlignment="Right"
                                                    Foreground="{DynamicResource ErrorForegroundBrush}">
@@ -254,7 +238,6 @@
                                         <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Margin="0,0,10,0"
                                                    Foreground="{DynamicResource MutedForegroundBrush}"
                                                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-
                                         <Button Style="{StaticResource InstallButtonStyle}"
                                                 Click="InstallButton_Click" CommandParameter="{Binding}"
                                                 Visibility="{Binding CanInstall, Converter={StaticResource BoolToVisibility}}">
@@ -264,7 +247,6 @@
                                                 <TextBlock Text="Install" FontSize="12" Foreground="White" />
                                             </StackPanel>
                                         </Button>
-
                                         <Button Style="{StaticResource InstallButtonStyle}"
                                                 Click="UninstallButton_Click" CommandParameter="{Binding}"
                                                 Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVisibility}}">
@@ -282,9 +264,7 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Scenes: animated wallpapers, not StoreApps - a thumbnail/Download card grid
-                 instead of the Apps list's icon/Install row. Download only - Applying one as the
-                 wallpaper happens in Settings' Appearance tab. -->
+            <!-- Scenes: animated wallpapers, not StoreApps - a thumbnail/Download card grid. -->
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           Visibility="{Binding IsScenesCategory, Converter={StaticResource BoolToVisibility}}">
@@ -310,13 +290,11 @@
                                         <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
                                                Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVisibility}}" />
                                     </Grid>
-
                                     <StackPanel Margin="12,10,12,12">
                                         <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13"
                                                    Foreground="{DynamicResource PrimaryForegroundBrush}" />
                                         <TextBlock Text="{Binding Description}" FontSize="11.5" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource MutedForegroundBrush}" Margin="0,3,0,10" />
-
                                         <Border Style="{StaticResource StatusBadgeStyle}" HorizontalAlignment="Left"
                                                 Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibility}}">
                                             <StackPanel Orientation="Horizontal">
@@ -326,7 +304,6 @@
                                                            Foreground="{DynamicResource AccentBrush}" />
                                             </StackPanel>
                                         </Border>
-
                                         <Button Style="{StaticResource InstallButtonStyle}" HorizontalAlignment="Left"
                                                 Click="DownloadSceneButton_Click" CommandParameter="{Binding}"
                                                 Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVisibilityInverse}}">
@@ -344,31 +321,23 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Games: a repo-backed game library (GameLinksRepoSync), not StoreApps - its own
-                 two-pane layout nested inside the outer category rail's content column: platform
-                 names on the left, IGDB-covered box art in a 3-column grid on the right, same
-                 visual shape as MainWindow's own Games tab (GameTileTemplate). Double-click
-                 queues the download in the Download Manager, pointed at that platform's ROM
-                 folder. -->
+            <!-- Games are shown as a plain, scrollable list. Cover art is deliberately omitted;
+                 double-click a row to choose a ROM folder and queue its download. -->
             <Grid Grid.Column="2" Visibility="{Binding IsGamesCategory, Converter={StaticResource BoolToVisibility}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="160" />
                     <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-
                 <ListBox x:Name="GamePlatformList" Grid.Column="0" ItemsSource="{Binding GamePlatforms}"
                          SelectedItem="{Binding SelectedGamePlatform}"
                          ItemContainerStyle="{StaticResource CategoryItemStyle}"
-                         Background="Transparent" BorderThickness="0"
-                         ClipToBounds="True"
+                         Background="Transparent" BorderThickness="0" ClipToBounds="True"
                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          SelectionChanged="GamePlatformList_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <!-- Same hard-boundary/ellipsis-or-marquee treatment as MainWindow's
-                                 own Games tab platform list - see its own remarks. -->
                             <Border x:Name="ClipBorder" ClipToBounds="True">
                                 <TextBlock x:Name="PlatformNameText" Text="{Binding DisplayName}"
                                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
@@ -385,9 +354,6 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-
-                <!-- The visible divider between the platform list and the game-covers grid -
-                     nothing from either side is allowed to render past it. -->
                 <Border Grid.Column="1" Width="1" HorizontalAlignment="Center" Background="{DynamicResource PanelBorderBrush}" />
 
                 <Grid Grid.Column="2">
@@ -395,59 +361,34 @@
                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,8,0,0"
                                Foreground="{DynamicResource MutedForegroundBrush}"
                                Visibility="{Binding HasGamesRepoStatusText, Converter={StaticResource BoolToVisibility}}" />
-
-                    <!-- Capped to exactly 2 rows (6 cards, the UniformGrid below is 3 columns) -
-                         each card is 260 tall with a 10px bottom margin, so 2 rows is 540.
-                         Scrolling disabled in both directions, same as MainWindow's own Games
-                         tab grid - anything past the first 6 simply isn't reachable. -->
-                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" MaxHeight="540" VerticalAlignment="Top"
+                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" VerticalAlignment="Top"
                                   ClipToBounds="True"
-                                  VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled">
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding GameLinkEntries}" MouseDoubleClick="GameLinkEntry_MouseDoubleClick">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Columns="3" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Width="200" Height="260" Margin="0,0,10,10" CornerRadius="10"
+                                    <Border Margin="0,0,0,8" Padding="12"
+                                            CornerRadius="10"
                                             Background="{DynamicResource SurfaceBackgroundBrush}"
-                                            Effect="{StaticResource CardShadow}">
+                                            BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1">
                                         <Grid>
-                                            <Border CornerRadius="10" Background="{DynamicResource AccentBrush}"
-                                                    Visibility="{Binding HasCover, Converter={StaticResource BoolToVisibilityInverse}}">
-                                                <TextBlock Text="{Binding InitialLetter}" FontSize="28" FontWeight="Bold"
-                                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                            <Border CornerRadius="10" Visibility="{Binding HasCover, Converter={StaticResource BoolToVisibility}}">
-                                                <Border.Background>
-                                                    <ImageBrush ImageSource="{Binding Cover}" Stretch="UniformToFill" />
-                                                </Border.Background>
-                                            </Border>
-
-                                            <Border VerticalAlignment="Bottom" Padding="8,24,8,8" CornerRadius="0,0,10,10">
-                                                <Border.Background>
-                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                        <GradientStop Color="Transparent" Offset="0" />
-                                                        <GradientStop Color="#D0000000" Offset="1" />
-                                                    </LinearGradientBrush>
-                                                </Border.Background>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12"
-                                                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
-                                                               HorizontalAlignment="Center" TextAlignment="Center" />
-                                                    <TextBlock Foreground="White" FontSize="10" Opacity="0.75"
-                                                               HorizontalAlignment="Center" Margin="0,2,0,0">
-                                                        <Run Text="{Binding SizeDisplay, Mode=OneWay}" />
-                                                        <Run Text=" " />
-                                                        <Run Text="{Binding MirrorCountDisplay, Mode=OneWay}" />
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <Border CornerRadius="10,0,0,10" Background="{DynamicResource AccentBrush}"
-                                                    HorizontalAlignment="Right" VerticalAlignment="Top" Padding="8,4"
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13"
+                                                           Foreground="{DynamicResource PrimaryForegroundBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock FontSize="11" Margin="0,3,0,0"
+                                                           Foreground="{DynamicResource MutedForegroundBrush}">
+                                                    <Run Text="{Binding SizeDisplay, Mode=OneWay}" />
+                                                    <Run Text="  " />
+                                                    <Run Text="{Binding MirrorCountDisplay, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" CornerRadius="10" Background="{DynamicResource AccentBrush}"
+                                                    Padding="8,4" VerticalAlignment="Top"
                                                     Visibility="{Binding IsQueued, Converter={StaticResource BoolToVisibility}}">
                                                 <TextBlock Text="Queued" FontSize="10" Foreground="White" />
                                             </Border>
