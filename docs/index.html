@@ -122,11 +122,17 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 .wtiles{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:4.2rem;gap:.45rem;padding:0 .7rem .7rem;overflow:hidden}
 .wt{border-radius:.6rem;background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;font-weight:700;font-size:.6rem;color:#fff}
 .wt i{width:1.5rem;height:1.5rem;border-radius:.5rem;display:block}
-.gamehead{grid-column:1/-1;color:var(--muted);font-size:.58rem;font-weight:800;margin:.35rem 0 0;text-transform:uppercase;letter-spacing:.05em}
-.gtiles{display:grid;grid-template-columns:repeat(6,1fr);gap:.45rem;padding:0 .7rem .7rem;overflow:hidden;align-content:start}
+.gtiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;align-content:start}
 .gt{position:relative;border-radius:.6rem;aspect-ratio:140/196;overflow:hidden;display:flex;align-items:flex-end;outline:2px solid transparent}
 .gt.on{outline-color:var(--accent)}
-.gt span{position:relative;z-index:1;color:#fff;font-size:.56rem;font-weight:700;padding:.32rem;text-align:center;width:100%;background:linear-gradient(to top,rgba(0,0,0,.82),transparent)}
+.gt span{position:relative;z-index:1;color:#fff;font-size:.7rem;font-weight:700;padding:.4rem;text-align:center;width:100%;background:linear-gradient(to top,rgba(0,0,0,.82),transparent)}
+/* Dual-pane Games tab - platforms on the left ("PC" pinned at top), box art on the right -
+   matches the real MainWindow.xaml layout (src/GridShell.Grid/MainWindow.xaml). */
+.games-dual{display:grid;grid-template-columns:9rem 1fr;gap:1rem;padding:0 .9rem .9rem;height:100%}
+.gplatforms{display:flex;flex-direction:column;gap:.3rem;overflow:auto}
+.gplat{padding:.5rem .65rem;border-radius:.5rem;font-size:.74rem;color:var(--muted);cursor:pointer}
+.gplat:hover{background:rgba(255,255,255,.04)}
+.gplat.on{background:var(--accent);color:#171b20;font-weight:700}
 .fmpanes{flex:1;display:grid;grid-template-columns:1fr 2px 1fr;min-height:0}
 .fmpane{display:flex;flex-direction:column;min-height:0;position:relative}
 .fmpane.active{box-shadow:inset 0 0 0 2px var(--accent)}
@@ -167,13 +173,20 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 @media (max-width:60rem){.hero .wrap{grid-template-columns:1fr}.kpi{grid-template-columns:1fr}.feat,.modes,.steps,.req,.catgrid,.shots{grid-template-columns:1fr}.bar nav a:not(.dl){display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.bar nav a{transition:none}}
 
-.demo-screen{position:relative;max-width:54rem;margin:0 auto;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,#0d1117,#080b10);border-radius:1.2rem;box-shadow:0 28px 70px rgba(0,0,0,.48);overflow:hidden}
-.demo-screen .body{display:grid;grid-template-columns:3.75rem 1fr;height:30rem}
-.demo-screen .main{position:relative;overflow:hidden}
-.demo-screen .side .pin,.demo-screen .side .launcher,.demo-screen .tool-btn,.demo-screen .pill,.demo-screen .corner-btn,.demo-screen .t,.demo-screen .gt,.demo-screen .wt{cursor:pointer;-webkit-tap-highlight-color:transparent}
-.demo-screen .t:hover,.demo-screen .gt:hover,.demo-screen .wt:hover{filter:brightness(1.18)}
-.demo-screen .t.launching,.demo-screen .gt.launching,.demo-screen .wt.launching{outline:2px solid var(--accent2);box-shadow:0 0 0 1px rgba(123,223,242,.3)}
-.demo-screen .tool-btn:hover,.demo-screen .pin:hover,.demo-screen .corner-btn:hover{filter:brightness(1.3)}
+.demo-frame{position:relative;max-width:54rem;margin:0 auto;border:1px solid rgba(255,255,255,.08);border-radius:1.2rem;box-shadow:0 28px 70px rgba(0,0,0,.48);overflow:hidden;background:#0d1117}
+.demo-frame .body{display:grid;grid-template-columns:3.75rem 1fr;height:30rem}
+/* The taskbar sidebar is its own always-docked process in the real app and never moves or
+   resizes with the grid - kept as a flush-edge sibling of the desktop area, not part of the
+   panel below, same split as GridShell.exe (taskbar) vs. GridShell.Grid.exe (the grid). */
+.demo-desktop{position:relative;background:radial-gradient(1100px 700px at 30% 0%, rgba(125,183,255,.08), transparent 55%),linear-gradient(165deg,#141b26,#0a0d12)}
+/* The grid itself is a centered modal panel over a dimmed backdrop, not a fullscreen app -
+   matches MainWindow's current ModalPanel + ScrimBorder layout (src/GridShell.Grid/MainWindow.xaml). */
+.demo-screen{position:absolute;inset:1.3rem 1.5rem;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,#141c28,#0e141d);border-radius:1rem;box-shadow:0 24px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;overflow:hidden}
+.demo-screen .main{position:relative;flex:1;overflow:hidden}
+.demo-frame .side .pin,.demo-frame .side .launcher,.demo-frame .tool-btn,.demo-frame .pill,.demo-frame .corner-btn,.demo-frame .t,.demo-frame .gt,.demo-frame .wt{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.demo-frame .t:hover,.demo-frame .gt:hover,.demo-frame .wt:hover{filter:brightness(1.18)}
+.demo-frame .t.launching,.demo-frame .gt.launching,.demo-frame .wt.launching{outline:2px solid var(--accent2);box-shadow:0 0 0 1px rgba(123,223,242,.3)}
+.demo-frame .tool-btn:hover,.demo-frame .pin:hover,.demo-frame .corner-btn:hover{filter:brightness(1.3)}
 .doverlay{position:absolute;inset:0;background:rgba(9,12,17,.98);display:none;flex-direction:column;z-index:5}
 .doverlay.show{display:flex}
 .doverlay-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.75rem .9rem;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -204,7 +217,6 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <nav aria-label="Main">
 <a href="#demo">Demo</a>
 <a href="#features">Features</a>
-<a href="#screens">Screenshots</a>
 <a href="#start">Get started</a>
 <a href="#faq">FAQ</a>
 <a href="https://github.com/theskysanctum/gridshell">GitHub</a>
@@ -244,7 +256,6 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <div class="pill on">Apps</div>
 <div class="pill">Web</div>
 <div class="pill">Games</div>
-<div class="pill add">+ New</div>
 </div>
 <div class="search">Type to search</div>
 <div class="tools">
@@ -286,7 +297,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <h2>Try it right now</h2>
 <p>A clickable mock of the real shell — switch tabs, launch a tile, open the Store, peek at the file explorer and downloads. Nothing here touches your actual PC.</p>
 </div>
-<div class="demo-screen">
+<div class="demo-frame">
 <div class="body">
 <div class="side">
 <div class="launcher">▦</div>
@@ -296,13 +307,15 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <div class="spacer"></div>
 <div class="batt">82%<br>9:41</div>
 </div>
-<div class="main">
+<div class="demo-desktop">
+<div class="demo-screen">
 <div class="panel-top">
 <div class="tabs" id="dTabs">
 <div class="pill on" data-tab="apps">Apps</div>
 <div class="pill" data-tab="web">Web</div>
 <div class="pill" data-tab="games">Games</div>
-<div class="pill add">+ New</div>
+<div class="pill add" id="dAddTile" style="display:none">+ New</div>
+<div class="pill add" id="dGameManager" style="display:none">🎮</div>
 </div>
 <div class="search">Type to search</div>
 <div class="tools">
@@ -312,6 +325,7 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <div class="tool-btn" data-overlay="settings" title="Settings">⚙</div>
 </div>
 </div>
+<div class="main">
 <div class="mosaic" id="dContent"></div>
 <div class="corner" style="position:absolute;right:.8rem;bottom:.64rem;display:flex;gap:.5rem;align-items:center;">
 <div class="corner-btn c5" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff" data-toast="Launching Steam…">◆</div>
@@ -379,6 +393,8 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 </div>
 </div>
 </div>
+</div>
+</div>
 <p class="dcap">This is a static HTML mock for the browser — the real GridShell runs as a native Windows app with controller support, live installs, and real file/network access.</p>
 </div></section>
 
@@ -397,8 +413,8 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <li><b>Apps, Web, and Games tabs</b> — a fullscreen tile grid designed for a D-pad, stick, keyboard, or mouse.</li>
 <li><b>Search-first workflow</b> — type once to filter the grid without hunting through menus.</li>
 <li><b>Custom tiles</b> — add, rename, change icons, or remove shortcuts; games can fetch cover art automatically.</li>
-<li><b>Installed-game detection</b> — Steam, Epic Games, and GOG libraries are scanned and surfaced as tiles.</li>
-<li><b>Quick storefront launchers</b> — Steam, Epic, GOG, and itch can launch directly from the grid.</li>
+<li><b>Installed-game detection</b> — Steam and Heroic (Epic, GOG, and Amazon Games libraries) are scanned and surfaced as tiles.</li>
+<li><b>Quick storefront launchers</b> — Steam, Heroic, and itch can launch directly from the grid.</li>
 </ul></div>
 
 <div class="cat"><h3>Controller and shell</h3><ul>
@@ -449,117 +465,6 @@ footer .wrap{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;align-items:center}
 <li><b>Easy to undo</b> — close the app or disable shell mode and your normal desktop comes back immediately.</li>
 <li><b>Watchdog protection</b> — if it is registered as the shell, it can fall back to Explorer after repeated failures.</li>
 </ul></div>
-</div>
-</div></section>
-
-<section id="screens" class="alt"><div class="wrap">
-<div class="head">
-<h2>See it in action</h2>
-<p>GridShell is designed to feel like a traditional launcher first, while still exposing the full Windows toolchain the moment you need it.</p>
-</div>
-<div class="shots">
-<figure class="shot"><div class="frame" aria-hidden="true">
-<div class="side">
-<div class="launcher">▦</div>
-<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
-<div class="spacer"></div><div class="batt">82%<br>9:41</div>
-</div>
-<div class="main">
-<div class="panel-top">
-<div class="tabs"><div class="pill">Apps</div><div class="pill on">Web</div><div class="pill">Games</div><div class="pill add">+ New</div></div>
-<div class="search">Type to search</div>
-<div class="tools"><div class="tool-btn">📁</div><div class="tool-btn">⭳</div><div class="tool-btn">🎮</div><div class="tool-btn">⚙</div></div>
-</div>
-<div class="wtiles">
-<div class="wt"><i class="c6"></i>YouTube</div><div class="wt"><i class="c1"></i>Gmail</div><div class="wt"><i class="c4"></i>Reddit</div>
-<div class="wt"><i class="c7"></i>Twitch</div><div class="wt"><i class="c3"></i>Netflix</div><div class="wt"><i class="c2"></i>Spotify</div>
-</div>
-<div class="corner" style="position:absolute;right:.8rem;bottom:.6rem;display:flex;gap:.5rem;align-items:center;">
-<div class="corner-btn c5" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn c7" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn c4" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn c6" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn power" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;background:rgba(255,255,255,.04)">⏻</div>
-</div>
-</div>
-</div>
-<figcaption><b>Web tab</b> — the same launcher can surface apps, websites, and utilities right next to each other.</figcaption></figure>
-
-<figure class="shot"><div class="frame" aria-hidden="true">
-<div class="side">
-<div class="launcher">▦</div>
-<div class="pin c5">◆</div><div class="pin c4">●</div><div class="pin c2">▲</div>
-<div class="spacer"></div><div class="batt">82%<br>9:41</div>
-</div>
-<div class="main">
-<div class="panel-top">
-<div class="tabs"><div class="pill">Apps</div><div class="pill">Web</div><div class="pill on">Games</div><div class="pill add">+ New</div></div>
-<div class="search">Type to search</div>
-<div class="tools"><div class="tool-btn">📁</div><div class="tool-btn">⭳</div><div class="tool-btn">🎮</div><div class="tool-btn">⚙</div></div>
-</div>
-<div class="gtiles">
-<div class="gamehead">PC</div>
-<div class="gt on" style="background:#1E6FD9"><span>Half-Life 2</span></div>
-<div class="gt" style="background:#C8453B"><span>DOOM Eternal</span></div>
-<div class="gt" style="background:#3C9A4B"><span>Portal 2</span></div>
-<div class="gamehead">Nintendo Switch</div>
-<div class="gt" style="background:#D9731A"><span>Mario Odyssey</span></div>
-<div class="gt" style="background:#7B52C9"><span>Zelda: TOTK</span></div>
-<div class="gt" style="background:#0E9594"><span>Metroid Dread</span></div>
-</div>
-<div class="corner" style="position:absolute;right:.8rem;bottom:.6rem;display:flex;gap:.5rem;align-items:center;">
-<div class="corner-btn c5" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn c7" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn c4" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn c6" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff">◆</div>
-<div class="corner-btn power" style="width:1.7rem;height:1.7rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;background:rgba(255,255,255,.04)">⏻</div>
-</div>
-</div>
-</div>
-<figcaption><b>Games tab</b> — detected PC and emulated libraries sit side-by-side in a single launcher flow.</figcaption></figure>
-
-<figure class="shot"><div class="frame" aria-hidden="true">
-<div class="side">
-<div class="launcher" style="background:transparent">📁</div>
-<div class="spacer"></div><div class="batt">82%<br>9:41</div>
-</div>
-<div class="main">
-<div class="fmpanes">
-<div class="fmpane active">
-<div class="fmtool">◀ ▶ ▲ <b>This PC › Games</b></div>
-<div class="fmhead"><span>Name</span><span>Size</span><span>Modified</span></div>
-<div class="fmrow on"><span><i style="background:#D9731A"></i>ROMs</span><span>-</span><span>Today</span></div>
-<div class="fmrow"><span><i style="background:#1E6FD9"></i>Saves</span><span>-</span><span>Today</span></div>
-<div class="fmrow"><span><i style="background:#3C9A4B"></i>setup.exe</span><span>42.1 MB</span><span>Yesterday</span></div>
-</div>
-<div class="fmsplit"></div>
-<div class="fmpane">
-<div class="fmtool">◀ ▶ ▲ <b>D:\Backups</b></div>
-<div class="fmhead"><span>Name</span><span>Size</span><span>Modified</span></div>
-<div class="fmrow"><span><i style="background:#7B52C9"></i>2026-11</span><span>-</span><span>11/1/2026</span></div>
-<div class="fmrow"><span><i style="background:#C8453B"></i>archive.7z</span><span>1.2 GB</span><span>10/2/2026</span></div>
-</div>
-</div>
-<div class="fmstatus">D-pad: move • A: open • B: up/close • LB/RB: switch pane • X / right-click: actions</div>
-</div>
-</div>
-<figcaption><b>File Explorer</b> — dual-pane, controller-friendly navigation with archive and disc-image tools built in.</figcaption></figure>
-
-<figure class="shot"><div class="frame" aria-hidden="true">
-<div class="side">
-<div class="launcher" style="background:transparent">⭳</div>
-<div class="spacer"></div><div class="batt">82%<br>9:41</div>
-</div>
-<div class="main">
-<div class="dlbar"><div class="dlinput">Paste a link or magnet...</div><div class="dlbtn">+ Add</div></div>
-<div class="dlstatus">Real-Debrid: connected</div>
-<div class="dlhead"><span>Name</span><span>Status</span><span>Size</span><span>Speed</span><span>Progress</span></div>
-<div class="dlrow"><span>Big_Game_Update.zip</span><span>Downloading</span><span>4.1 GB</span><span>18 MB/s</span><div class="dlprog"><i style="width:64%"></i></div></div>
-<div class="dlrow"><span>Soundtrack.flac</span><span>Queued</span><span>220 MB</span><span>-</span><div class="dlprog"><i style="width:0%"></i></div></div>
-<div class="dlrow"><span>Linux.iso</span><span>Complete</span><span>2.6 GB</span><span>-</span><div class="dlprog"><i style="width:100%"></i></div></div>
-</div>
-</div>
-<figcaption><b>Download Manager</b> — drop a direct link or magnet and let GridShell handle the rest.</figcaption></figure>
 </div>
 </div></section>
 
@@ -632,7 +537,7 @@ setInterval(function(){t[order[i%order.length]].classList.remove('on');i++;t[ord
 // Interactive demo: tabs, launching tiles/storefronts, and Explorer/Store/Downloads/Settings
 // overlays - all client-side, nothing here reaches a server or the real app.
 (function(){
-var screen=document.querySelector('.demo-screen');
+var screen=document.querySelector('.demo-frame');
 if(!screen)return;
 
 var content=document.getElementById('dContent');
@@ -660,31 +565,56 @@ apps:{cls:'mosaic',tiles:[
 web:{cls:'mosaic',tiles:[
 ['c6','YouTube'],['c1','Gmail'],['c4','Reddit'],['c7','Twitch'],['c3','Netflix'],['c2','Spotify']
 ]},
-games:{cls:'gtiles',groups:[
+games:{cls:'games-dual',platforms:[
 {name:'PC',games:[['#1E6FD9','Half-Life 2'],['#C8453B','DOOM Eternal'],['#3C9A4B','Portal 2']]},
 {name:'Nintendo Switch',games:[['#D9731A','Mario Odyssey'],['#7B52C9','Zelda: TOTK'],['#0E9594','Metroid Dread']]}
 ]}
 };
+
+var gamesSelectedPlatform=0;
+
+function renderGamesTiles(){
+var platform=tabs.games.platforms[gamesSelectedPlatform];
+var grid=document.getElementById('dGameGrid');
+grid.innerHTML='';
+platform.games.forEach(function(pair){
+var gt=document.createElement('div');
+gt.className='gt';
+gt.style.background=pair[0];
+gt.innerHTML='<span>'+pair[1]+'</span>';
+gt.addEventListener('click',function(){flashLaunch(gt,'Launching '+pair[1]+' (fullscreen)…')});
+grid.appendChild(gt);
+});
+}
 
 function renderTab(name){
 var t=tabs[name];
 content.className=t.cls;
 content.innerHTML='';
 if(name==='games'){
-t.groups.forEach(function(g){
-var head=document.createElement('div');
-head.className='gamehead';
-head.textContent=g.name;
-content.appendChild(head);
-g.games.forEach(function(pair){
-var gt=document.createElement('div');
-gt.className='gt';
-gt.style.background=pair[0];
-gt.innerHTML='<span>'+pair[1]+'</span>';
-gt.addEventListener('click',function(){flashLaunch(gt,'Launching '+pair[1]+' (fullscreen)…')});
-content.appendChild(gt);
+// Platforms on the left ("PC" pinned at top, same order the real app builds it in), the
+// selected platform's box art in a 3-column grid on the right.
+var list=document.createElement('div');
+list.className='gplatforms';
+t.platforms.forEach(function(p,i){
+var item=document.createElement('div');
+item.className='gplat'+(i===gamesSelectedPlatform?' on':'');
+item.textContent=p.name;
+item.addEventListener('click',function(){
+gamesSelectedPlatform=i;
+list.querySelectorAll('.gplat').forEach(function(el){el.classList.remove('on')});
+item.classList.add('on');
+renderGamesTiles();
 });
+list.appendChild(item);
 });
+content.appendChild(list);
+
+var grid=document.createElement('div');
+grid.className='gtiles';
+grid.id='dGameGrid';
+content.appendChild(grid);
+renderGamesTiles();
 return;
 }
 t.tiles.forEach(function(pair){
@@ -701,9 +631,14 @@ renderTab('apps');
 document.getElementById('dTabs').addEventListener('click',function(e){
 var pill=e.target.closest('[data-tab]');
 if(!pill)return;
-document.querySelectorAll('#dTabs .pill').forEach(function(p){p.classList.remove('on')});
+document.querySelectorAll('#dTabs .pill[data-tab]').forEach(function(p){p.classList.remove('on')});
 pill.classList.add('on');
-renderTab(pill.getAttribute('data-tab'));
+var name=pill.getAttribute('data-tab');
+// Matches MainWindow.xaml's own Visibility bindings: AddTileButton only shows on the Web
+// tab, GameManagerButton only on the Games tab - neither shows for Apps.
+document.getElementById('dAddTile').style.display=name==='web'?'':'none';
+document.getElementById('dGameManager').style.display=name==='games'?'':'none';
+renderTab(name);
 });
 
 // Storefront pins/corner buttons and the power button just show a toast - there's nothing
@@ -734,9 +669,11 @@ btn.addEventListener('click',closeOverlays);
 
 // Store: clicking Install flips the button to "Installed" and toasts, same as the real
 // Store's install flow minus any actual download.
+// Matches the real catalog (theskysanctum/gridshell-store's store-catalog/catalog.json) -
+// name, category, and spread across categories, not an invented list.
 var storeApps=[
-['c1','Audacity','Media'],['c2','7-Zip','Utilities'],['c4','OBS Studio','Streaming'],
-['c6','qBittorrent','Utilities'],['c7','Dolphin','Emulation'],['c5','Heroic Games Launcher','Gaming']
+['c2','Notepad++','Utilities'],['c1','Firefox','Browsers'],['c6','Discord','Communication'],
+['c4','VLC media player','Media'],['c7','OBS Studio','Streaming'],['c3','Dolphin','Emulation']
 ];
 var storeList=document.getElementById('dStoreList');
 storeApps.forEach(function(a){
