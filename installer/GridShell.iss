@@ -29,7 +29,9 @@ OutputDir=Output
 OutputBaseFilename=GridShell-Setup-{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
-WizardStyle=modern
+; Use Inno Setup's built-in dark Windows 11 style regardless of the user's Windows theme.
+WizardStyle=modern dark windows11 includetitlebar hidebevels
+WizardBackColor=#1A1A1A
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
@@ -38,6 +40,12 @@ SetupIconFile=..\src\icon.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Messages]
+WelcomeLabel1=Welcome to GridShell Setup
+WelcomeLabel2=Install GridShell, a full-screen launcher for your apps, games, and websites.
+FinishedHeadingLabel=GridShell is ready
+FinishedLabel=GridShell has been installed. Click Finish, or select Launch GridShell to open it now.
 
 [Files]
 Source: "..\publish\GridShell\*"; DestDir: "{app}\src\GridShell\bin\Release\net10.0-windows10.0.19041.0\win-x64"; Flags: ignoreversion recursesubdirs createallsubdirs
