@@ -9,7 +9,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using GridShell.Core.GameLibraries;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
@@ -290,6 +293,84 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
         ApplyFilter();
         _ = LoadGameLinkCoversAsync(_currentPlatformEntries);
+    }
+
+    private TranslateTransform? _platformMarqueeTransform;
+
+    private void GamePlatformList_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        Dispatcher.BeginInvoke(new Action(UpdatePlatformNameMarquee), DispatcherPriority.Loaded);
+
+    /// <summary>Only the selected platform's own name scrolls - every other entry shows a
+    /// static ellipsis (see GamePlatformList's ItemTemplate) - same treatment as MainWindow's
+    /// own Games tab platform list, see its own remarks for why this is deferred to Loaded
+    /// priority.</summary>
+    private void UpdatePlatformNameMarquee()
+    {
+        if (_platformMarqueeTransform is not null)
+        {
+            _platformMarqueeTransform.BeginAnimation(TranslateTransform.XProperty, null);
+            _platformMarqueeTransform.X = 0;
+            _platformMarqueeTransform = null;
+        }
+
+        if (SelectedGamePlatform is not { } platform ||
+            GamePlatformList.ItemContainerGenerator.ContainerFromItem(platform) is not ListBoxItem container)
+        {
+            return;
+        }
+
+        container.UpdateLayout();
+        if (FindVisualChild<ContentPresenter>(container) is not { } presenter)
+        {
+            return;
+        }
+
+        presenter.ApplyTemplate();
+        if (GamePlatformList.ItemTemplate.FindName("PlatformNameText", presenter) is not TextBlock textBlock ||
+            GamePlatformList.ItemTemplate.FindName("ClipBorder", presenter) is not FrameworkElement clipBorder ||
+            textBlock.RenderTransform is not TranslateTransform transform)
+        {
+            return;
+        }
+
+        textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var overflow = textBlock.DesiredSize.Width - clipBorder.ActualWidth;
+        if (overflow <= 1)
+        {
+            return;
+        }
+
+        _platformMarqueeTransform = transform;
+        var anim = new DoubleAnimationUsingKeyFrames
+        {
+            Duration = TimeSpan.FromSeconds(Math.Max(4, 4 + overflow / 20)),
+            RepeatBehavior = RepeatBehavior.Forever,
+        };
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(0)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(0.12)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(-overflow, KeyTime.FromPercent(0.55)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(-overflow, KeyTime.FromPercent(0.75)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(1)));
+        transform.BeginAnimation(TranslateTransform.XProperty, anim);
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T typed)
+            {
+                return typed;
+            }
+
+            if (FindVisualChild<T>(child) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Same IGDB lookup/cache IconLoader already uses for real Game tiles' cover art

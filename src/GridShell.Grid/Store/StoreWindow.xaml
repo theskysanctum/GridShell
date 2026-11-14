@@ -357,11 +357,38 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <ListBox Grid.Column="0" ItemsSource="{Binding GamePlatforms}" SelectedItem="{Binding SelectedGamePlatform}"
-                         DisplayMemberPath="DisplayName"
+                <ListBox x:Name="GamePlatformList" Grid.Column="0" ItemsSource="{Binding GamePlatforms}"
+                         SelectedItem="{Binding SelectedGamePlatform}"
                          ItemContainerStyle="{StaticResource CategoryItemStyle}"
                          Background="Transparent" BorderThickness="0"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                         ClipToBounds="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         SelectionChanged="GamePlatformList_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <!-- Same hard-boundary/ellipsis-or-marquee treatment as MainWindow's
+                                 own Games tab platform list - see its own remarks. -->
+                            <Border x:Name="ClipBorder" ClipToBounds="True">
+                                <TextBlock x:Name="PlatformNameText" Text="{Binding DisplayName}"
+                                           TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                                    <TextBlock.RenderTransform>
+                                        <TranslateTransform x:Name="MarqueeTransform" X="0" />
+                                    </TextBlock.RenderTransform>
+                                </TextBlock>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                    <Setter TargetName="PlatformNameText" Property="TextTrimming" Value="None" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- The visible divider between the platform list and the game-covers grid -
+                     nothing from either side is allowed to render past it. -->
+                <Border Grid.Column="1" Width="1" HorizontalAlignment="Center" Background="{DynamicResource PanelBorderBrush}" />
 
                 <Grid Grid.Column="2">
                     <TextBlock Text="{Binding GamesRepoStatusText}" FontSize="12" TextWrapping="Wrap"
@@ -369,7 +396,13 @@
                                Foreground="{DynamicResource MutedForegroundBrush}"
                                Visibility="{Binding HasGamesRepoStatusText, Converter={StaticResource BoolToVisibility}}" />
 
-                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <!-- Capped to exactly 2 rows (6 cards, the UniformGrid below is 3 columns) -
+                         each card is 260 tall with a 10px bottom margin, so 2 rows is 540.
+                         Scrolling disabled in both directions, same as MainWindow's own Games
+                         tab grid - anything past the first 6 simply isn't reachable. -->
+                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" MaxHeight="540" VerticalAlignment="Top"
+                                  ClipToBounds="True"
+                                  VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding GameLinkEntries}" MouseDoubleClick="GameLinkEntry_MouseDoubleClick">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
