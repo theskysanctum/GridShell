@@ -19,9 +19,6 @@
         <local:BoolToVisibilityInverseConverter x:Key="BoolToVisibilityInverse" />
         <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.4" BlurRadius="16" ShadowDepth="3" Direction="270" />
 
-        <!-- Shows the Tag text as a placeholder while the box is empty - the previous version
-             set Tag="Search apps..." but nothing ever rendered it, since a plain TextBox has no
-             built-in placeholder support. -->
         <Style x:Key="PlaceholderTextBoxStyle" TargetType="TextBox">
             <Setter Property="Template">
                 <Setter.Value>
@@ -47,10 +44,6 @@
             </Setter>
         </Style>
 
-        <!-- One flat list, filtered by SelectedCategory/search text in code - the left-hand
-             category rail replaces the old inline group headers, matching this app's other
-             two-pane config windows (Settings, Controller Manager) instead of a single long
-             grouped list. -->
         <Style x:Key="CategoryItemStyle" TargetType="ListBoxItem">
             <Setter Property="Padding" Value="14,10" />
             <Setter Property="Margin" Value="0,0,0,2" />
@@ -77,9 +70,6 @@
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Foreground" Value="White" />
                 </Trigger>
-                <!-- The Games/Scenes-vs-catalog divider (CategorySeparatorLabel) is never a real
-                     selectable category - disabling hit-testing/focus means IsMouseOver/
-                     IsSelected above can never fire for it either. -->
                 <DataTrigger Binding="{Binding}" Value="###CATEGORY_SEPARATOR###">
                     <Setter Property="IsHitTestVisible" Value="False" />
                     <Setter Property="Focusable" Value="False" />
@@ -107,8 +97,6 @@
             </Setter>
         </Style>
 
-        <!-- Rounded capsule status badges - accent for Installed, the app's existing themed
-             error color for Failed, muted/transparent while checking or installing. -->
         <Style x:Key="StatusBadgeStyle" TargetType="Border">
             <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Padding" Value="8,3" />
@@ -123,20 +111,17 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header: title + search, search icon prefixed inside the field itself. -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock Text="Store" FontSize="22" FontWeight="Bold"
                            Foreground="{DynamicResource PrimaryForegroundBrush}" />
                 <TextBlock Text="{Binding CatalogStatusText}" FontSize="11" Margin="0,2,0,0"
                            Foreground="{DynamicResource MutedForegroundBrush}" />
             </StackPanel>
-
             <Border Grid.Column="1" MaxWidth="360" HorizontalAlignment="Right" VerticalAlignment="Center"
                     CornerRadius="18" Background="{DynamicResource SurfaceBackgroundBrush}"
                     BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1" Padding="12,0">
@@ -159,14 +144,12 @@
             </Border>
         </Grid>
 
-        <!-- Two-pane body: category rail on the left, app cards on the right. -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="180" />
                 <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-
             <ListBox Grid.Column="0" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
                      ItemContainerStyle="{StaticResource CategoryItemStyle}"
                      Background="Transparent" BorderThickness="0"
@@ -264,22 +247,18 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Scenes: animated wallpapers, not StoreApps - a thumbnail/Download card grid. -->
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           Visibility="{Binding IsScenesCategory, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl ItemsSource="{Binding Scenes}">
                     <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
+                        <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border CornerRadius="12" Width="260" Margin="0,0,12,12"
                                     Background="{DynamicResource SurfaceBackgroundBrush}"
-                                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
-                                    ClipToBounds="True">
+                                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1" ClipToBounds="True">
                                 <StackPanel>
                                     <Grid Height="146">
                                         <Border Background="{DynamicResource AccentBrush}"
@@ -300,8 +279,7 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="&#xf0be;" FontFamily="{StaticResource IconFont}" FontSize="13"
                                                            Margin="0,0,4,0" Foreground="{DynamicResource AccentBrush}" />
-                                                <TextBlock Text="Downloaded" FontSize="11.5"
-                                                           Foreground="{DynamicResource AccentBrush}" />
+                                                <TextBlock Text="Downloaded" FontSize="11.5" Foreground="{DynamicResource AccentBrush}" />
                                             </StackPanel>
                                         </Border>
                                         <Button Style="{StaticResource InstallButtonStyle}" HorizontalAlignment="Left"
@@ -321,8 +299,6 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Games are shown as a plain, scrollable list. Cover art is deliberately omitted;
-                 double-click a row to choose a ROM folder and queue its download. -->
             <Grid Grid.Column="2" Visibility="{Binding IsGamesCategory, Converter={StaticResource BoolToVisibility}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="160" />
@@ -341,9 +317,7 @@
                             <Border x:Name="ClipBorder" ClipToBounds="True">
                                 <TextBlock x:Name="PlatformNameText" Text="{Binding DisplayName}"
                                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
-                                    <TextBlock.RenderTransform>
-                                        <TranslateTransform x:Name="MarqueeTransform" X="0" />
-                                    </TextBlock.RenderTransform>
+                                    <TextBlock.RenderTransform><TranslateTransform x:Name="MarqueeTransform" X="0" /></TextBlock.RenderTransform>
                                 </TextBlock>
                             </Border>
                             <DataTemplate.Triggers>
@@ -361,22 +335,21 @@
                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,8,0,0"
                                Foreground="{DynamicResource MutedForegroundBrush}"
                                Visibility="{Binding HasGamesRepoStatusText, Converter={StaticResource BoolToVisibility}}" />
-                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" VerticalAlignment="Top"
-                                  ClipToBounds="True"
+                    <ScrollViewer x:Name="GameLinkEntriesScrollViewer" VerticalAlignment="Top" ClipToBounds="True"
                                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding GameLinkEntries}" MouseDoubleClick="GameLinkEntry_MouseDoubleClick">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Margin="0,0,0,8" Padding="12"
-                                            CornerRadius="10"
+                                    <Border Margin="0,0,0,8" Padding="12" CornerRadius="10"
                                             Background="{DynamicResource SurfaceBackgroundBrush}"
                                             BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13"
                                                            Foreground="{DynamicResource PrimaryForegroundBrush}"
                                                            TextTrimming="CharacterEllipsis" />
@@ -388,10 +361,18 @@
                                                 </TextBlock>
                                             </StackPanel>
                                             <Border Grid.Column="1" CornerRadius="10" Background="{DynamicResource AccentBrush}"
-                                                    Padding="8,4" VerticalAlignment="Top"
+                                                    Padding="8,4" VerticalAlignment="Center" Margin="0,0,10,0"
                                                     Visibility="{Binding IsQueued, Converter={StaticResource BoolToVisibility}}">
                                                 <TextBlock Text="Queued" FontSize="10" Foreground="White" />
                                             </Border>
+                                            <Button Grid.Column="2" Style="{StaticResource InstallButtonStyle}"
+                                                    Click="GameLinkEntry_DownloadButton_Click" CommandParameter="{Binding}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xf090;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                                               Margin="0,0,4,0" Foreground="White" />
+                                                    <TextBlock Text="Download" FontSize="12" Foreground="White" />
+                                                </StackPanel>
+                                            </Button>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -404,8 +385,7 @@
 
         <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,10"
                 BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"
-                       Text="Esc: close" />
+            <TextBlock FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}" Text="Esc: close" />
         </Border>
     </Grid>
 </Window>
