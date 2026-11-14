@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows.Threading;
 using GridShell.Core.Interop;
+using GridShell.Core.Tiles;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
 
@@ -13,6 +15,12 @@ namespace GridShell.Core.Taskbar;
 /// simpler and plenty cheap given typical open-window counts.</summary>
 public sealed class TaskbarWindowTracker : IDisposable
 {
+    private const string StoreWindowTitle = "GridShell Store";
+
+    // Same Material Symbols codepoint the grid's own Store button already uses - visual
+    // consistency, not a new glyph.
+    private const string StoreGlyph = "";
+
     private readonly WindowEventWatcher _watcher = new();
     private readonly DispatcherTimer _debounce;
 
@@ -84,17 +92,33 @@ public sealed class TaskbarWindowTracker : IDisposable
         }
 
         var existingHandles = new HashSet<HWND>(Windows.Select(w => w.Handle));
-        foreach (var hwnd in current)
+        var newHandles = current.Where(hwnd => !existingHandles.Contains(hwnd)).ToList();
+        if (newHandles.Count > 0)
         {
-            if (!existingHandles.Contains(hwnd))
+            // Resolved once per refresh, not once per window - an "appx:" TargetPath needs a
+            // live WinRT PackageManager lookup, too expensive to repeat per-window.
+            var tileExePaths = ResolveTileExePaths();
+            foreach (var hwnd in newHandles)
             {
-                var ownIcon = ShellIcons.GetWindowOwnIcon(hwnd);
+                var title = GetTitle(hwnd);
+                if (string.Equals(title, StoreWindowTitle, StringComparison.Ordinal))
+                {
+                    // Same glyph the grid's own Store button already uses - never GridShell's
+                    // generic window icon for this one.
+                    Windows.Add(new TaskbarWindowEntry { Handle = hwnd, Title = title, Glyph = StoreGlyph });
+                    continue;
+                }
+
+                var customIconPath = FindMatchingCustomIconPath(hwnd, tileExePaths);
+                var ownIcon = customIconPath is null ? ShellIcons.GetWindowOwnIcon(hwnd) : null;
                 Windows.Add(new TaskbarWindowEntry
                 {
                     Handle = hwnd,
-                    Title = GetTitle(hwnd),
-                    Icon = ownIcon ?? ShellIcons.GetProcessIconForWindow(hwnd),
-                    HasOwnIcon = ownIcon is not null,
+                    Title = title,
+                    // The same icon the grid itself shows for the matching tile, when one
+                    // exists and has a custom icon - not a separately shell-extracted one.
+                    Icon = customIconPath is not null ? ImageLoader.LoadFromFile(customIconPath) : ownIcon ?? ShellIcons.GetProcessIconForWindow(hwnd),
+                    HasOwnIcon = customIconPath is not null || ownIcon is not null,
                 });
             }
         }
@@ -111,12 +135,73 @@ public sealed class TaskbarWindowTracker : IDisposable
     {
         foreach (var entry in Windows)
         {
-            if (!entry.HasOwnIcon && ShellIcons.GetWindowOwnIcon(entry.Handle) is { } ownIcon)
+            if (!entry.HasGlyph && !entry.HasOwnIcon && ShellIcons.GetWindowOwnIcon(entry.Handle) is { } ownIcon)
             {
                 entry.Icon = ownIcon;
                 entry.HasOwnIcon = true;
             }
         }
+    }
+
+    /// <summary>Every current Tile's own real exe path (App/Game: TargetPath, resolving an
+    /// "appx:" prefix the same way TileLauncher does; Website: BrowserExecutablePath) paired
+    /// with its CustomIconPath - null entries (no custom icon set) are skipped, since they'd
+    /// never win over the shell-icon fallback anyway.</summary>
+    private static List<(string ExePath, string CustomIconPath)> ResolveTileExePaths()
+    {
+        var result = new List<(string ExePath, string CustomIconPath)>();
+        foreach (var tile in TileStore.Load())
+        {
+            if (tile.CustomIconPath is not { } customIconPath)
+            {
+                continue;
+            }
+
+            var exePath = tile.Kind == TileKind.Website
+                ? tile.BrowserExecutablePath
+                : TileLauncher.ResolveTargetPath(tile.TargetPath) ?? tile.TargetPath;
+
+            if (exePath is not null)
+            {
+                result.Add((exePath, customIconPath));
+            }
+        }
+
+        return result;
+    }
+
+    private static string? FindMatchingCustomIconPath(HWND hwnd, List<(string ExePath, string CustomIconPath)> tileExePaths)
+    {
+        if (tileExePaths.Count == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            GetWindowThreadProcessId(hwnd, out var pid);
+            using var process = Process.GetProcessById((int)pid);
+            var exePath = process.MainModule?.FileName;
+            if (exePath is null)
+            {
+                return null;
+            }
+
+            foreach (var (tileExePath, customIconPath) in tileExePaths)
+            {
+                if (string.Equals(tileExePath, exePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return customIconPath;
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // Exited mid-lookup, or an elevated process we can't inspect - fall back to the
+            // normal shell-icon resolution for this one instead of failing it outright.
+        }
+
+        return null;
     }
 
     private static string GetTitle(HWND hwnd)
