@@ -70,10 +70,18 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Filename: "{tmp}\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Visual C++ runtime..."; Flags: waituntilterminated
 ; The DirectX redist is a self-extracting CAB, not a normal installer - it has to be extracted
 ; to a folder first (/Q /T:<dir>, silently, no setup run yet), then DXSETUP.exe run from
-; there to actually install it. Two [Run] steps, same as any other two-stage install.
-Filename: "{tmp}\directx_redist.exe"; Parameters: "/Q /T:""{tmp}\dxredist"""; StatusMsg: "Extracting DirectX runtime..."; Flags: waituntilterminated
-Filename: "{tmp}\dxredist\DXSETUP.exe"; Parameters: "/silent"; StatusMsg: "Installing DirectX runtime..."; Flags: waituntilterminated
+; there to actually install it. D3DX9_43.dll is one of its legacy components and is absent
+; from Windows itself, so use it to skip both steps when the runtime is already installed.
+Filename: "{tmp}\directx_redist.exe"; Parameters: "/Q /T:""{tmp}\dxredist"""; StatusMsg: "Extracting DirectX runtime..."; Flags: waituntilterminated; Check: not IsDirectXUserRuntimeInstalled
+Filename: "{tmp}\dxredist\DXSETUP.exe"; Parameters: "/silent"; StatusMsg: "Installing DirectX runtime..."; Flags: waituntilterminated; Check: not IsDirectXUserRuntimeInstalled
 Filename: "{app}\{#MyAppRelDir}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+function IsDirectXUserRuntimeInstalled: Boolean;
+begin
+  Result := FileExists(ExpandConstant('{sys}\D3DX9_43.dll'))
+    and FileExists(ExpandConstant('{syswow64}\D3DX9_43.dll'));
+end;
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"

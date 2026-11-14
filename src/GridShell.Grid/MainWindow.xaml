@@ -93,6 +93,27 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="GameTileSelectionBorderStyle" TargetType="Border"
+               BasedOn="{StaticResource TileSelectionBorderStyle}">
+            <Setter Property="BorderThickness" Value="3" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="GameTileSelectionPulse">
+                            <Storyboard>
+                                <ThicknessAnimation Storyboard.TargetProperty="BorderThickness"
+                                                    From="3" To="5" Duration="0:0:1"
+                                                    AutoReverse="True" RepeatBehavior="Forever" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <StopStoryboard BeginStoryboardName="GameTileSelectionPulse" />
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Website tiles' own Rename/Change Icon/Remove menu - wired via TileSelectionBorderStyle's
              own IsWebsiteKind trigger above, not a local ContextMenu attribute, so App tiles
              (which share RegularTileTemplate) stay menu-less. -->
@@ -188,7 +209,7 @@
                     Background="{DynamicResource SurfaceBackgroundBrush}"
                     ContextMenu="{StaticResource GameTileContextMenu}"
                     Effect="{StaticResource CardShadow}"
-                    Style="{StaticResource TileSelectionBorderStyle}">
+                    Style="{StaticResource GameTileSelectionBorderStyle}">
                 <Grid>
                     <Border CornerRadius="10">
                         <Border.Background>
