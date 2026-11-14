@@ -377,9 +377,14 @@
             </ListBox>
         </Grid>
 
-        <WrapPanel x:Name="HeaderPanel" Margin="24,16,24,0" VerticalAlignment="Top"
-                   SizeChanged="HeaderPanel_SizeChanged">
-            <WrapPanel VerticalAlignment="Center" Width="{Binding HeaderTabWidth}">
+        <Grid x:Name="HeaderPanel" Margin="24,16,24,0" VerticalAlignment="Top"
+              SizeChanged="HeaderPanel_SizeChanged">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <WrapPanel Grid.Column="0" VerticalAlignment="Center">
                 <Button Content="Apps" Padding="14,6" Margin="0,0,8,0" Click="AppsTab_Click">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
@@ -436,17 +441,8 @@
                 </Button>
             </WrapPanel>
 
-            <Border Background="{DynamicResource SurfaceBackgroundBrush}" CornerRadius="10" Padding="14,8"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="400"
-                    Visibility="{Binding IsSearchDisplayVisible, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="{Binding SearchDisplay}"
-                           Foreground="{DynamicResource PrimaryForegroundBrush}"
-                           FontSize="16"
-                           TextTrimming="CharacterEllipsis"
-                           HorizontalAlignment="Center" />
-            </Border>
-
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                        HorizontalAlignment="Right">
                 <Button Padding="8" Margin="0,0,8,0" Click="ExplorerButton_Click" Style="{StaticResource ModernButtonStyle}"
                         Background="{DynamicResource SurfaceBackgroundBrush}" BorderThickness="0" ToolTip="File Explorer">
                     <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}"
@@ -468,7 +464,7 @@
                                Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="20" />
                 </Button>
             </StackPanel>
-        </WrapPanel>
+        </Grid>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                     Visibility="{Binding AreLauncherShortcutsVisible, Converter={StaticResource BoolToVisibility}}"

@@ -67,9 +67,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public int GameGridColumns { get; private set; } = 3;
     public Thickness MainContentPadding => new(24, _mainContentTopOffset, 24, 24);
     public Thickness MainContentMargin => new(24, _mainContentTopOffset, 24, 24);
-    public bool IsSearchDisplayVisible => !_isCompactLayout;
     public bool AreLauncherShortcutsVisible => !_isCompactLayout;
-    public double HeaderTabWidth => _isCompactLayout ? Math.Max(0, RootGrid.ActualWidth - 48) : double.NaN;
 
     public string? SelectedPlatform
     {
@@ -87,8 +85,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public string SearchDisplay => string.IsNullOrEmpty(SearchText) ? "Type to search" : SearchText;
-
     public string SearchText
     {
         get => _searchText;
@@ -101,7 +97,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             _searchText = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(SearchDisplay));
             ApplyFilter();
         }
     }
@@ -500,11 +495,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (_isCompactLayout != isCompact)
         {
             _isCompactLayout = isCompact;
-            OnPropertyChanged(nameof(IsSearchDisplayVisible));
             OnPropertyChanged(nameof(AreLauncherShortcutsVisible));
         }
-
-        OnPropertyChanged(nameof(HeaderTabWidth));
     }
 
     private void HeaderPanel_SizeChanged(object sender, SizeChangedEventArgs e)
