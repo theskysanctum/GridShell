@@ -61,6 +61,10 @@ jobs:
           dotnet publish src/GridShell.Grid/GridShell.Grid.csproj -c Release -o publish/GridShell.Grid
           dotnet publish src/GridShell.Watchdog/GridShell.Watchdog.csproj -c Release -o publish/GridShell.Watchdog
 
+      - name: Fetch installer redistributables
+        shell: pwsh
+        run: installer/fetch-redist.ps1
+
       - name: Determine version
         id: version
         shell: bash
