@@ -26,10 +26,38 @@ public enum GridTab
 
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    private static readonly (string Name, string Url)[] BuiltInWebsites =
+    [
+        ("YouTube", "https://www.youtube.com/"),
+        ("Netflix", "https://www.netflix.com/"),
+        ("Prime Video", "https://www.primevideo.com/"),
+        ("Disney+", "https://www.disneyplus.com/"),
+        ("Hulu", "https://www.hulu.com/"),
+        ("Max", "https://www.max.com/"),
+        ("Peacock", "https://www.peacocktv.com/"),
+        ("Paramount+", "https://www.paramountplus.com/"),
+        ("Apple TV+", "https://tv.apple.com/"),
+        ("Twitch", "https://www.twitch.tv/"),
+        ("Crunchyroll", "https://www.crunchyroll.com/"),
+        ("YouTube Music", "https://music.youtube.com/"),
+        ("Spotify", "https://open.spotify.com/"),
+        ("Apple Music", "https://music.apple.com/"),
+        ("Amazon Music", "https://music.amazon.com/"),
+        ("Pandora", "https://www.pandora.com/"),
+        ("SoundCloud", "https://soundcloud.com/"),
+        ("Tidal", "https://tidal.com/"),
+        ("Poki", "https://poki.com/"),
+        ("CrazyGames", "https://www.crazygames.com/"),
+        ("Newgrounds", "https://www.newgrounds.com/"),
+        ("itch.io", "https://itch.io/"),
+    ];
+
     private readonly List<Tile> _allTiles = new();
     private readonly AppSettings _settings = AppSettingsStore.Load();
     private readonly ControllerInput _controller = new();
+    private readonly List<Tile> _builtInWebsiteTiles = new();
     private Tile? _defaultBrowserShortcut;
+    private bool _builtInWebsiteIconsLoaded;
 
     // The keyboard's trigger (Y/Triangle) is global, handled in the always-running taskbar
     // process — this instance is just where it actually lives (already pre-warmed, themed),
@@ -156,6 +184,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _displayChangeSettleTimer.Stop();
             ApplyScreenGeometryNative();
         };
+
+        foreach (var (name, url) in BuiltInWebsites)
+        {
+            _builtInWebsiteTiles.Add(new Tile
+            {
+                Name = name,
+                TargetPath = url,
+                Kind = TileKind.Website,
+                IconSourcePath = url,
+                IsBuiltInWebsite = true,
+            });
+        }
 
         SourceInitialized += MainWindow_SourceInitialized;
         Loaded += MainWindow_Loaded;
@@ -683,6 +723,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Tiles.Add(GetDefaultBrowserShortcut());
             }
 
+            if (ActiveTab == GridTab.Web)
+            {
+                if (!_builtInWebsiteIconsLoaded)
+                {
+                    _builtInWebsiteIconsLoaded = true;
+                    foreach (var website in _builtInWebsiteTiles)
+                    {
+                        _ = IconLoader.LoadIconAsync(website, _settings);
+                    }
+                }
+
+                foreach (var website in _builtInWebsiteTiles.Where(website =>
+                             string.IsNullOrWhiteSpace(SearchText)
+                             || website.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Tiles.Add(website);
+                }
+            }
+
             foreach (var tile in matchList)
             {
                 Tiles.Add(tile);
@@ -1125,6 +1184,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        if (tile.IsBuiltInWebsite)
+        {
+            if (string.IsNullOrWhiteSpace(_settings.DefaultBrowserExecutablePath))
+            {
+                new ToastWindow("Choose a default browser in Settings first.", TimeSpan.FromSeconds(5), isWarning: true).Show();
+                return;
+            }
+
+            tile = new Tile
+            {
+                Name = tile.Name,
+                TargetPath = tile.TargetPath,
+                Kind = tile.Kind,
+                IconSourcePath = tile.IconSourcePath,
+                BrowserExecutablePath = _settings.DefaultBrowserExecutablePath,
+            };
+        }
+
         if (TileLauncher.Launch(tile))
         {
             // Same spirit as Escape — once something's actually launched, the grid's done its
@@ -1250,7 +1327,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RemoveTile(Tile? tile)
     {
-        if (tile is null || ReferenceEquals(tile, _defaultBrowserShortcut) || _settings.KioskModeEnabled)
+        if (tile is null || tile.IsBuiltInWebsite || ReferenceEquals(tile, _defaultBrowserShortcut) || _settings.KioskModeEnabled)
         {
             return;
         }
