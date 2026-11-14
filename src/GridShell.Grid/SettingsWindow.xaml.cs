@@ -277,9 +277,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
         else
         {
-            System.Windows.MessageBox.Show(
-                this, $"Couldn't pair with {device.Name}.", "Pairing failed",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"Couldn't pair with {device.Name}.", TimeSpan.FromSeconds(5), isWarning: true).Show();
         }
     }
 
@@ -343,9 +341,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         var result = await WiFiNetworkManager.ConnectToSavedAsync(profileName);
         if (result != WiFiConnectResult.Success)
         {
-            System.Windows.MessageBox.Show(
-                this, $"Couldn't connect to {profileName}.", "Connection failed",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"Couldn't connect to {profileName}.", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return;
         }
 
@@ -409,9 +405,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
         if (result != WiFiConnectResult.Success)
         {
-            System.Windows.MessageBox.Show(
-                this, $"Couldn't connect to {network.Ssid}.", "Connection failed",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"Couldn't connect to {network.Ssid}.", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return;
         }
 
@@ -940,8 +934,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
         if (Fonts.GetFontFamilies(new Uri(dialog.FileName)).FirstOrDefault() is null)
         {
-            System.Windows.MessageBox.Show(this, "That file doesn't look like a usable font.", "Custom font",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow("That file doesn't look like a usable font.", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return;
         }
 
@@ -1206,6 +1199,9 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         _onSettingsChanged();
         RefreshAccentSwatches();
     }
+
+    private void ReportBugButton_Click(object sender, RoutedEventArgs e) =>
+        new ReportBugWindow { Owner = this }.ShowDialog();
 
     private void ExitGridShell_Click(object sender, RoutedEventArgs e)
     {

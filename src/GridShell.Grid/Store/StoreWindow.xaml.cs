@@ -528,8 +528,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
         if (entryPath is null)
         {
-            MessageBox.Show(this, $"Couldn't download {scene.Name} - check your internet connection.",
-                "Scenes", MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"Couldn't download {scene.Name} - check your internet connection.", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return;
         }
 

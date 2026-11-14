@@ -297,8 +297,7 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
 
         if (string.IsNullOrWhiteSpace(_settings.IgdbClientId) || string.IsNullOrWhiteSpace(_settings.IgdbClientSecret))
         {
-            MessageBox.Show(this, "Set an IGDB Client ID and Secret above first.", "Scrape Cover Art",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            new ToastWindow("Set an IGDB Client ID and Secret above first.", TimeSpan.FromSeconds(5)).Show();
             return;
         }
 
@@ -493,9 +492,7 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.IO.FileNotFoundException)
         {
-            MessageBox.Show(
-                this, $"Couldn't open {row.DisplayName}'s emulator.", "Launch failed",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"Couldn't open {row.DisplayName}'s emulator.", TimeSpan.FromSeconds(5), isWarning: true).Show();
         }
     }
 
@@ -586,9 +583,9 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this,
-                $"Couldn't create a virtual controller for {entry.Name}:\n\n{ex.Message}\n\nMake sure the ViGEmBus driver is installed.",
-                "Controllers", MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow(
+                $"Couldn't create a virtual controller for {entry.Name}: {ex.Message}\n\nMake sure the ViGEmBus driver is installed.",
+                TimeSpan.FromSeconds(7), isWarning: true).Show();
         }
     }
 
@@ -622,8 +619,7 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, $"HidHide operation failed:\n\n{ex.Message}", "Controllers",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"HidHide operation failed: {ex.Message}", TimeSpan.FromSeconds(5), isWarning: true).Show();
         }
     }
 }

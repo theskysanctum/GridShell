@@ -92,8 +92,7 @@ public static class FileOperations
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            System.Windows.MessageBox.Show(owner, ex.Message, "File operation failed",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"File operation failed: {ex.Message}", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return false;
         }
     }

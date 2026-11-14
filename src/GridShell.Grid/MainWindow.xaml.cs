@@ -940,8 +940,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (string.IsNullOrWhiteSpace(_settings.IgdbClientId) || string.IsNullOrWhiteSpace(_settings.IgdbClientSecret))
         {
-            System.Windows.MessageBox.Show(this, "Set an IGDB Client ID and Secret in Settings → Tiles → Games first.",
-                "Scrape Cover Art", MessageBoxButton.OK, MessageBoxImage.Information);
+            new ToastWindow("Set an IGDB Client ID and Secret in Settings → Tiles → Games first.", TimeSpan.FromSeconds(5)).Show();
             return;
         }
 

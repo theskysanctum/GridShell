@@ -58,8 +58,7 @@ public static class RomToolOperations
     }
 
     private static void WarnMissingTool(Window owner, string exeName) =>
-        MessageBox.Show(owner, $"{exeName} is missing from the Tools folder.", "ROM tool",
-            MessageBoxButton.OK, MessageBoxImage.Warning);
+        new ToastWindow($"{exeName} is missing from the Tools folder.", TimeSpan.FromSeconds(5), isWarning: true).Show();
 
     // Deliberately doesn't suppress the console window (no CreateNoWindow/redirect) - both
     // tools are plain console apps with no progress UI of their own, and CD/DVD compression
@@ -76,7 +75,7 @@ public static class RomToolOperations
         }
         catch (Exception ex) when (ex is IOException or Win32Exception)
         {
-            MessageBox.Show(owner, ex.Message, "ROM tool failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"ROM tool failed: {ex.Message}", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return false;
         }
     }

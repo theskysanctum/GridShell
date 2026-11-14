@@ -126,8 +126,10 @@ public partial class ScrapeCoverWindow : Window, INotifyPropertyChanged
 
         if (path is null)
         {
-            MessageBox.Show(this, "Couldn't download that cover - try another one.", "Scrape Cover Art",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            // A plain MessageBox here was a jarring, unthemed native dialog sitting in the
+            // middle of an otherwise dark/custom-styled window - same toast every other
+            // "didn't work, try again" moment in the app already uses.
+            new ToastWindow("Couldn't download that cover - try another one.", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return;
         }
 

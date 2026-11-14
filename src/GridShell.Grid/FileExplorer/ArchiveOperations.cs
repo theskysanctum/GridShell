@@ -47,7 +47,7 @@ public static class ArchiveOperations
     {
         if (!File.Exists(ToolPath))
         {
-            MessageBox.Show(owner, "7za.exe is missing from this install.", "Archive", MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow("7za.exe is missing from this install.", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return false;
         }
 
@@ -65,7 +65,7 @@ public static class ArchiveOperations
         }
         catch (Exception ex) when (ex is IOException or Win32Exception)
         {
-            MessageBox.Show(owner, ex.Message, "Archive operation failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            new ToastWindow($"Archive operation failed: {ex.Message}", TimeSpan.FromSeconds(5), isWarning: true).Show();
             return false;
         }
     }
