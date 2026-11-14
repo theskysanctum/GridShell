@@ -64,7 +64,7 @@
                               Margin="0,0,0,4" />
                     <TextBlock Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
                                TextWrapping="Wrap" Margin="0,0,0,16"
-                               Text="Machine-wide: affects every account on this PC and Safe Mode, not just yours. Takes effect on your next login, not immediately, and needs an admin (UAC) prompt. If something goes wrong: Ctrl+Shift+Esc, then File → Run new task → explorer.exe restores a normal desktop right away." />
+                               Text="Machine-wide: affects every account on this PC and Safe Mode, not just yours. Takes effect on your next login, not immediately, and needs an admin (UAC) prompt to change the shell registration." />
 
                     <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
 
@@ -118,8 +118,6 @@
                                                 <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
                                                 <Setter Property="BorderThickness" Value="1" />
                                                 <Style.Triggers>
-                                                    <!-- A thicker, brighter ring makes the active color obvious at a
-                                                         glance, on top of the checkmark overlay below. -->
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryForegroundBrush}" />
                                                         <Setter Property="BorderThickness" Value="3" />
@@ -132,8 +130,6 @@
                                                Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                IsHitTestVisible="False"
                                                Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibility}}" />
-                                    <!-- The trailing "custom" square: a pencil hint when nothing custom is active
-                                         yet (so it reads as "click to pick a color" rather than an empty swatch). -->
                                     <TextBlock Text="&#xf097;" FontFamily="{StaticResource IconFont}" FontSize="14"
                                                Foreground="{DynamicResource PrimaryForegroundBrush}"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -286,10 +282,6 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <!-- The whole card is the control - clicking its preview (or
-                                     anywhere on it) is how a Scene is selected, no separate Apply
-                                     button. The currently-applied one gets an accent border plus
-                                     a checkmark badge over its thumbnail instead. -->
                                 <Button Click="ApplySceneButton_Click" CommandParameter="{Binding}"
                                         Cursor="Hand" Focusable="False" Margin="0,0,10,10"
                                         ToolTip="{Binding Name}">
@@ -349,11 +341,16 @@
                     <TextBlock Text="Real-Debrid" FontWeight="Bold" Margin="0,0,0,4" />
                     <TextBlock Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
                                TextWrapping="Wrap" Margin="0,0,0,8"
-                               Text="Unrestricts hoster links and resolves magnet/torrent links in the Download Manager. Get a private API token from real-debrid.com/apitoken (requires a Premium account for most of it). Optional - without one, pasted links just download directly." />
+                               Text="Unrestricts hoster links and resolves magnet/torrent links in the Download Manager. Get a private API token from real-debrid.com/apitoken (requires a Premium account)." />
 
                     <TextBlock Text="API token" Margin="0,0,0,4" />
                     <PasswordBox x:Name="RealDebridApiTokenBox" Padding="4" Margin="0,0,0,8"
                                  PasswordChanged="RealDebridApiTokenBox_PasswordChanged" />
+
+                    <TextBlock Text="Download cookies (Archive.org / site session)" Margin="0,0,0,4" />
+                    <TextBox x:Name="DownloadCookiesBox" Text="{Binding DownloadCookies, UpdateSourceTrigger=LostFocus}" Padding="4" Height="72"
+                             Margin="0,0,0,8" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                             ToolTip="Paste the raw Cookie header value, e.g. logged-in-sig=...; PHPSESSID=..." />
 
                     <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,8,0,16" />
 
@@ -379,7 +376,7 @@
                     <TextBlock Text="Browser integration" FontWeight="Bold" Margin="0,0,0,4" />
                     <TextBlock Foreground="{DynamicResource MutedForegroundBrush}" FontSize="11"
                                TextWrapping="Wrap" Margin="0,0,0,8"
-                               Text="A small Chrome/Chromium extension that routes every browser download to the Download Manager instead of Chrome's own download popup. Not on the Web Store - load it unpacked: open chrome://extensions, turn on Developer mode, click 'Load unpacked', and pick the folder this opens." />
+                               Text="A small Chrome/Chromium extension that routes every browser download to the Download Manager instead of Chrome's own download popup. Not on the Web Store - look in the bundled ChromeExtension folder." />
                     <Button HorizontalAlignment="Left" Padding="8,4" Click="OpenExtensionFolderButton_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}" FontSize="14" Margin="0,0,4,0" />

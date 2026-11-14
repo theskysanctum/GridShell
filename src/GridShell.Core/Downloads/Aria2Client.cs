@@ -6,22 +6,28 @@ namespace GridShell.Core.Downloads;
 
 public sealed record Aria2Status(string Status, long TotalLength, long CompletedLength, long DownloadSpeed, string? ErrorMessage);
 
-/// <summary>Thin JSON-RPC client for a locally-running aria2c daemon (started in --enable-rpc
-/// mode) - every method/param shape here was verified against aria2's own manual
-/// (aria2.github.io/manual) before use. The secret is passed as "token:&lt;secret&gt;", the
-/// first element of each call's params array - that's aria2's own auth convention, not an
-/// HTTP header.</summary>
 public static class Aria2Client
 {
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
 
-    public static async Task<string?> AddUriAsync(int port, string secret, string url, string dir, string fileName)
+    public static async Task<string?> AddUriAsync(int port, string secret, string url, string dir, string fileName, string? cookies = null)
     {
+        var options = new Dictionary<string, string>
+        {
+            ["dir"] = dir,
+            ["out"] = fileName,
+        };
+
+        if (!string.IsNullOrWhiteSpace(cookies))
+        {
+            options["header"] = $"Cookie: {cookies}";
+        }
+
         var body = BuildRequest("aria2.addUri", new object[]
         {
             $"token:{secret}",
             new[] { url },
-            new Dictionary<string, string> { ["dir"] = dir, ["out"] = fileName },
+            options,
         });
 
         var result = await SendAsync(port, body);
@@ -51,7 +57,6 @@ public static class Aria2Client
         await SendAsync(port, body);
     }
 
-    // aria2's RPC returns these as JSON strings, not numbers - confirmed against its manual.
     private static long ParseLong(JsonElement element, string property) =>
         element.TryGetProperty(property, out var value) && long.TryParse(value.GetString(), out var parsed) ? parsed : 0;
 

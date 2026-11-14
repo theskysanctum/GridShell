@@ -53,9 +53,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>Only platforms with an emulator already configured (Game Manager > Emulation) -
-    /// same filter AddTileWindow's own "Emulated Game" tab uses, since a ROM for a platform with
-    /// no emulator set up can't be launched yet regardless of where it's saved.</summary>
     public ObservableCollection<EmulationPlatform> RomPlatforms { get; } = new();
 
     private bool _saveAsRom;
@@ -81,10 +78,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>The default ROMs root's own &lt;slug&gt; folder, then each configured extra ROM
-    /// folder's (Game Manager > Emulation > "Extra ROM folders") &lt;slug&gt; folder - same list
-    /// and order EmulatorPlatformRow.RomFolderPaths already shows per platform there, so "where
-    /// this lands" matches what Game Manager calls that folder.</summary>
     public ObservableCollection<string> RomFolderOptions { get; } = new();
 
     private string? _selectedRomFolder;
@@ -123,9 +116,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         DataContext = this;
 
-        // Same "download" glyph as the launcher button that opens this window, rendered to a
-        // bitmap since a code-behind FontFamily reference needs an explicit pack-URI base to
-        // resolve at all (a plain relative string only resolves automatically inside XAML).
         Icon = GlyphIcon.Render('', new SolidColorBrush(Color.FromRgb(0x4A, 0x90, 0xD9)), Brushes.White);
 
         _settings = AppSettingsStore.Load();
@@ -139,10 +129,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
             }
         }
 
-        // This window is a reused singleton for the process's whole lifetime (App.
-        // ShowDownloadManager), same as MainWindow - a real Close() would destroy the Downloads
-        // queue and orphan any in-flight downloads with no UI left to see or cancel them from.
-        // Closing instead hides it, same convention MainWindow already uses.
         Closing += (_, e) =>
         {
             e.Cancel = true;
@@ -197,27 +183,15 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
 
         LinkInputBox.Text = "";
-
-        // SaveAsRom/SelectedRomFolder reflect this add bar's own controls at the moment "Add"
-        // is clicked - read here, not later, so a different in-flight download's folder choice
-        // can't retroactively change where this one lands.
         var romFolder = SaveAsRom ? SelectedRomFolder : null;
         AddDownload(input, null, romFolder);
     }
 
     public void AddDownload(string input, string? suggestedName) => AddDownload(input, suggestedName, null);
 
-    /// <summary>destinationFolder, when set, is a Game Manager ROM platform folder (see
-    /// RomFolderOptions) rather than the generic Download Manager folder - the file (or, for a
-    /// .zip/.7z, its extracted contents) lands there instead, so RomScanner picks it up as a
-    /// game the next time Game Manager's "Scan for installed games" runs, the same as a ROM
-    /// dropped there by hand.</summary>
     public void AddDownload(string input, string? suggestedName, string? destinationFolder) =>
         AddDownload(new List<string> { input }, suggestedName, destinationFolder);
 
-    /// <summary>mirrorUrls' first entry is tried first - the rest are only ever touched if it
-    /// fails (see ProcessLinkWithFallbackAsync), so this behaves exactly like the single-URL
-    /// overload above when there's only one.</summary>
     public void AddDownload(List<string> mirrorUrls, string? suggestedName, string? destinationFolder)
     {
         var item = new DownloadItem
@@ -252,12 +226,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
             }
 
             item.State = DownloadState.Completed;
-
-            // item.Name at this point is still whatever AddDownload's suggestedName was (the
-            // Store's Games category passes the raw filename, e.g. "Ace_Combat_2.7z" - see
-            // GameLinkEntryViewModel's own remarks on why that's kept separate from the cleaned
-            // title) or, for a plain pasted link with no suggested name, the resolved filename a
-            // hoster/aria2 reported - either way, cleaning it is harmless and reads better here.
             new ToastWindow($"{RomTitleCleaner.CleanFileName(item.Name)} downloaded.", TimeSpan.FromSeconds(5)).Show();
         }
         catch (OperationCanceledException)
@@ -266,9 +234,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            // Deliberately broad, not just HttpRequestException/IOException - any unexpected
-            // failure here should leave the item visibly Failed with a message, not silently
-            // stuck "Resolving" forever as an unobserved background-task exception.
             item.State = DownloadState.Failed;
             item.ErrorMessage = ex.Message;
             File.AppendAllText(
@@ -277,15 +242,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>Tries sourceUrl, the first candidate in ProcessAsync's own mirror list (its own
-    /// own SourceInput on the very first attempt, then each of FallbackUrls in order) - any
-    /// candidate that fails outright (a 403 from a hoster that's since pulled the file, a dead
-    /// link, aria2/the direct fetch erroring out) just moves on to the next one rather than
-    /// failing the whole item, since every mirror is the exact same file (see GameLinkEntry's
-    /// own remarks). Resets progress between attempts so a partial transfer from a dead mirror
-    /// never bleeds into the next one's own progress bar. A genuine cancel (the user hit
-    /// Backspace/Delete) propagates immediately instead of "falling through" to a mirror the
-    /// user never asked to keep trying.</summary>
     private async Task ProcessLinkWithFallbackAsync(DownloadItem item, string folder, bool extractArchive)
     {
         var candidates = new List<string> { item.SourceInput }.Concat(item.FallbackUrls).ToList();
@@ -321,10 +277,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         item.State = DownloadState.Resolving;
 
         var downloadUrl = sourceUrl;
-
-        // AddDownload already set item.Name to whatever the browser extension (or the Store's
-        // Games category) suggested; only fall back to guessing from the URL's path when there
-        // was no suggestion (item.Name still equals the item's own first/primary URL).
         var fileName = (item.Name != item.SourceInput ? item.Name : null)
             ?? TryGetFileNameFromUrl(sourceUrl)
             ?? "download";
@@ -339,8 +291,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
                 fileName = unrestricted.Filename;
                 totalBytes = unrestricted.Filesize;
             }
-            // Real-Debrid not recognizing the link (null) isn't fatal - it just means this
-            // wasn't a restricted hoster link, so fall through and download it as-is.
         }
 
         item.Name = fileName;
@@ -420,9 +370,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>Downloads via the bundled aria2c (multi-connection, much faster for large
-    /// files) when its RPC daemon is up; falls back to a plain single-connection download
-    /// otherwise, so the feature still works if the bundled binary failed to start.</summary>
     private async Task DownloadFileAsync(DownloadItem item, string url, string folder, string fileName, bool extractArchive)
     {
         var sanitizedName = SanitizeFileName(fileName);
@@ -430,7 +377,7 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
 
         if (app.Aria2.IsRunning)
         {
-            var gid = await Aria2Client.AddUriAsync(app.Aria2.Port, app.Aria2.Secret, url, folder, sanitizedName);
+            var gid = await Aria2Client.AddUriAsync(app.Aria2.Port, app.Aria2.Secret, url, folder, sanitizedName, _settings.DownloadCookies);
             if (gid is not null)
             {
                 await TrackAria2DownloadAsync(item, app.Aria2, gid, folder, sanitizedName);
@@ -443,20 +390,13 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
             }
         }
 
-        await DownloadFileDirectAsync(item, url, folder, sanitizedName);
+        await DownloadFileDirectAsync(item, url, folder, sanitizedName, _settings.DownloadCookies);
         if (extractArchive)
         {
             await ExtractIntoDestinationAsync(item, folder, sanitizedName);
         }
     }
 
-    /// <summary>Only for a ROM-folder destination (see AddDownload's own remarks) - extracts a
-    /// downloaded .zip/.7z straight into the same slug folder it was downloaded to (not a
-    /// subfolder named after the archive) and deletes the archive, so RomScanner sees the loose
-    /// ROM file(s) rather than an archive it doesn't recognize as one of a platform's own
-    /// extensions. Anything that isn't a .zip/.7z (an .exe, or a ROM already matching the
-    /// platform's own extensions - several platforms accept a zipped ROM directly, see
-    /// EmulationPlatform's own remarks) is left exactly where it landed.</summary>
     private async Task ExtractIntoDestinationAsync(DownloadItem item, string folder, string fileName)
     {
         var archivePath = Path.Combine(folder, fileName);
@@ -488,9 +428,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
         {
-            // Leaves the archive itself on disk and SavedToPath pointing at it - same
-            // "downloaded fine, something after that failed" shape ProcessAsync's own catch
-            // uses, just without failing the whole item since the download itself did succeed.
             item.ErrorMessage = $"Downloaded, but couldn't extract: {ex.Message}";
         }
     }
@@ -506,8 +443,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
                 var status = await Aria2Client.TellStatusAsync(aria2.Port, aria2.Secret, gid);
                 if (status is null)
                 {
-                    // Lost contact with the daemon mid-download - can't track progress any
-                    // further, but the file on disk (if any) is aria2's responsibility now.
                     throw new IOException("Lost contact with the aria2 download engine.");
                 }
 
@@ -542,11 +477,17 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private async Task DownloadFileDirectAsync(DownloadItem item, string url, string folder, string fileName)
+    private async Task DownloadFileDirectAsync(DownloadItem item, string url, string folder, string fileName, string? cookies = null)
     {
         var destPath = Path.Combine(folder, fileName);
 
-        using var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, item.Cts.Token);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        if (!string.IsNullOrWhiteSpace(cookies))
+        {
+            request.Headers.TryAddWithoutValidation("Cookie", cookies);
+        }
+
+        using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, item.Cts.Token);
         response.EnsureSuccessStatusCode();
         if (item.TotalBytes == 0)
         {
@@ -565,9 +506,6 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
             await fileStream.WriteAsync(buffer.AsMemory(0, read), item.Cts.Token);
             downloaded += read;
 
-            // Setting the bound property on every ~80KB chunk - easily hundreds of times a
-            // second on a fast connection - made the whole queue list visibly stutter.
-            // Throttling to 10x/second keeps progress smooth without looking stalled.
             var now = DateTime.UtcNow;
             if (now - lastUiUpdate >= TimeSpan.FromMilliseconds(100))
             {

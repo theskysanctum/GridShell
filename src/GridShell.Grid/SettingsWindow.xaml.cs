@@ -80,10 +80,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private bool _outputMuted;
     private bool _inputMuted;
 
-    // Guards against the SelectedOutputDevice/SelectedInputDevice setters firing
-    // SetDefaultDevice while RefreshAudioDevices is just populating the lists for the first
-    // time (setting SelectedItem on a ComboBox binding raises the property setter same as a
-    // real user pick would).
     private bool _loadingAudioDevices;
 
     public AudioDeviceInfo? SelectedOutputDevice
@@ -266,8 +262,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        // Windows shows its own native pairing wizard dialog here (BluetoothAuthenticateDevice
-        // with a null passkey) - no GridShell-owned dialog needed.
         var paired = await BluetoothDeviceManager.PairAsync(device.Id);
 
         if (paired)
@@ -638,16 +632,10 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>Launches the just-downloaded installer, then tears down every GridShell process
-    /// so none of them still hold their own exe files open when Inno Setup tries to overwrite
-    /// them - the installer's own [Run] step relaunches GridShell once it's done.</summary>
     private void LaunchInstallerAndExit(string installerPath)
     {
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(installerPath) { UseShellExecute = true });
 
-        // Tell the taskbar process to exit with ShellExitCodes.Updating (not the usual
-        // RestoreExplorer) before closing it, so GridShell.Watchdog - if this is running as the
-        // Windows shell - knows not to relaunch it mid-install.
         foreach (var process in System.Diagnostics.Process.GetProcessesByName("GridShell"))
         {
             foreach (var hwnd in ProcessWindowCloser.FindWindowsOf(process.Id))
@@ -658,9 +646,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             ProcessWindowCloser.CloseAnyWindowOf(process.Id);
         }
 
-        // This process (GridShell.Grid, hosting this very Settings window) also needs to let go
-        // of its own exe/dll files - a normal clean exit, no special exit code needed since
-        // nothing watches this process the way Watchdog watches GridShell.exe.
         Application.Current.Shutdown();
     }
 
@@ -668,6 +653,17 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     {
         _settings.RealDebridApiToken = RealDebridApiTokenBox.Password;
         _onSettingsChanged();
+    }
+
+    public string? DownloadCookies
+    {
+        get => _settings.DownloadCookies;
+        set
+        {
+            _settings.DownloadCookies = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            OnPropertyChanged();
+            _onSettingsChanged();
+        }
     }
 
     public string? DownloadManagerFolder
@@ -711,10 +707,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>A local .html file path or http(s) URL to render as the desktop "wallpaper"
-    /// instead of the default (the actual current Windows wallpaper image) — rendered by
-    /// WallpaperWindow inside the taskbar process, not this one, hence the explicit
-    /// NotifyTaskbarSettingsChanged below rather than just ApplySettings locally.</summary>
     public string WallpaperUrl
     {
         get => _wallpaperUrl;
@@ -732,10 +724,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
     public string KioskModeButtonText => KioskModeEnabled ? "Disable Kiosk Mode..." : "Enable Kiosk Mode...";
 
-    /// <summary>Locks down Appearance editing and exiting GridShell. Changing
-    /// this directly (private setter) is only ever done after KioskModeButton_Click's PIN flow
-    /// succeeds - there's no plain two-way-bound checkbox, since turning it on requires setting
-    /// a PIN first and turning it off requires verifying one.</summary>
     public bool KioskModeEnabled
     {
         get => _settings.KioskModeEnabled;
@@ -800,13 +788,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    // --- Scenes: pre-made animated wallpapers, picked from among ones already downloaded in
-    // the Store (StoreSceneSync) - Settings only ever reads/applies them, never downloads. -----
-
-    /// <summary>Fetches store-catalog/scenes.json directly over HTTP (no git clone) just for
-    /// names/descriptions/thumbnails, then keeps only the scenes StoreSceneSync.IsDownloaded
-    /// says are actually sitting in the local cache already - downloading happens in the Store,
-    /// not here.</summary>
     private async Task LoadScenesAsync()
     {
         var scenes = (await StoreSceneSync.FetchCatalogAsync()).Scenes
@@ -827,9 +808,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    /// <summary>Loaded straight from raw.githubusercontent.com (PNGs don't hit the
-    /// text/plain-forcing behavior .html files do - see StoreSceneSync) - WPF's BitmapImage
-    /// downloads a remote UriSource on its own in the background, no manual fetch needed.</summary>
     private static void SetSceneThumbnail(StoreSceneViewModel scene)
     {
         var bitmap = new BitmapImage();
@@ -846,10 +824,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         scene.IsCurrent = string.Equals(_settings.WallpaperUrl, expectedPath, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Every scene listed here is already downloaded (LoadScenesAsync only ever adds
-    /// ones StoreSceneSync.IsDownloaded confirmed), so Applying is just setting the bound
-    /// WallpaperUrl property - same persist/live-reload path as typing a path into the wallpaper
-    /// box or browsing to a file, no network/await needed.</summary>
     private void ApplySceneButton_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.CommandParameter is not StoreSceneViewModel scene)
@@ -874,10 +848,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             OnPropertyChanged();
             _settings.Theme = value;
 
-            // Applies to this process immediately (Application.Resources covers this window,
-            // MainWindow, AddTileWindow and RenameTileWindow all at once) — the taskbar is a
-            // separate process with its own copy, notified below instead.
-#pragma warning disable WPF0001 // ThemeMode is experimental, same as GridShell.Grid's App.xaml.cs startup
+#pragma warning disable WPF0001
             Application.Current.ThemeMode = value == AppTheme.Light ? ThemeMode.Light : ThemeMode.Dark;
 #pragma warning restore WPF0001
             ThemePalette.Apply(Application.Current.Resources, value);
@@ -943,9 +914,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         UiFont = UiFontChoice.Custom;
     }
 
-    // Applies to this process immediately (Application.Resources covers this window,
-    // MainWindow, AddTileWindow and RenameTileWindow all at once) - the taskbar is a separate
-    // process with its own copy, notified via NotifyTaskbarSettingsChanged at each call site.
     private void ApplyFont() => Application.Current.Resources["AppFontFamily"] = UiFontResolver.Resolve(_settings);
 
     private void StartIcon_Click(object sender, RoutedEventArgs e)
@@ -1037,8 +1005,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
                 if (!confirmed)
                 {
-                    // Backing field never changed — re-raise so the checkbox's binding re-reads
-                    // the unchanged value and visually snaps back to unchecked.
                     OnPropertyChanged();
                     return;
                 }
@@ -1105,6 +1071,8 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(AutostartEnabled));
 
         RealDebridApiTokenBox.Password = _settings.RealDebridApiToken ?? "";
+        OnPropertyChanged(nameof(DownloadCookies));
+        DownloadCookies = _settings.DownloadCookies ?? "";
         OnPropertyChanged(nameof(DownloadManagerFolder));
 
         _wallpaperUrl = _settings.WallpaperUrl ?? "";
@@ -1138,8 +1106,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         await RefreshSavedWiFiNetworksAsync();
         RefreshMonitors();
 
-        // Checked once automatically on open - not a silent background poller, just so opening
-        // Settings alone already surfaces an available update instead of needing an extra click.
         CheckForUpdatesButton_Click(this, new RoutedEventArgs());
     }
 
@@ -1162,8 +1128,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         AccentSwatches.Add(new AccentSwatchItem
         {
             Hex = _settings.AccentColor,
-            // Shows the active custom color once one is set; otherwise a neutral placeholder
-            // behind the pencil icon, since there's no custom color to preview yet.
             Brush = isCustomActive ? HexToBrush(_settings.AccentColor) : Brushes.Transparent,
             IsCustom = true,
             IsSelected = isCustomActive,
@@ -1214,10 +1178,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             }
         }
 
-        // GridShell runs as two processes (this grid + the always-running taskbar) — signal
-        // the taskbar to close too, not just this window, so "Exit" actually exits GridShell.
-        // Not Process.CloseMainWindow() — that silently no-ops for the taskbar's window
-        // (ShowInTaskbar="False" sets WS_EX_TOOLWINDOW, which MainWindowHandle resolution skips).
         foreach (var process in System.Diagnostics.Process.GetProcessesByName("GridShell"))
         {
             ProcessWindowCloser.CloseAnyWindowOf(process.Id);
