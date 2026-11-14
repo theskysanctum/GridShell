@@ -31,6 +31,31 @@
         <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
+        <!-- Website tiles' own Rename/Change Icon/Remove menu - wired via TileSelectionBorderStyle's
+             own IsWebsiteKind trigger below, not a local ContextMenu attribute, so App tiles
+             (which share RegularTileTemplate) stay menu-less. -->
+        <ContextMenu x:Key="TileContextMenu">
+            <MenuItem Header="Rename..." Click="RenameTileMenuItem_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xf097;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Change Icon..." Click="ChangeIcon_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xe3f4;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="Remove" Click="RemoveTileMenuItem_Click"
+                      CommandParameter="{Binding}">
+                <MenuItem.Icon>
+                    <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+
         <!-- A soft ambient shadow under every tile/panel/button — the one thing that most makes
              a flat dark UI read as "bare": nothing is visually lifted off the background. -->
         <DropShadowEffect x:Key="CardShadow" Color="Black" Opacity="0.4" BlurRadius="16"
@@ -101,6 +126,9 @@
                         <StopStoryboard BeginStoryboardName="TileSelectionBorderAnimation" />
                     </DataTrigger.ExitActions>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource AccentOutlineBrush}" />
+                </DataTrigger>
                 <!-- Website tiles alone get Rename/Change Icon/Remove here - App tiles have no
                      right-click menu at all. A GameTileTemplate Border's own local ContextMenu
                      attribute (GameTileContextMenu) always wins over this style setter, so Game
@@ -113,31 +141,6 @@
 
         <Style x:Key="GameTileSelectionBorderStyle" TargetType="Border"
                BasedOn="{StaticResource TileSelectionBorderStyle}" />
-
-        <!-- Website tiles' own Rename/Change Icon/Remove menu - wired via TileSelectionBorderStyle's
-             own IsWebsiteKind trigger above, not a local ContextMenu attribute, so App tiles
-             (which share RegularTileTemplate) stay menu-less. -->
-        <ContextMenu x:Key="TileContextMenu">
-            <MenuItem Header="Rename..." Click="RenameTileMenuItem_Click"
-                      CommandParameter="{Binding}">
-                <MenuItem.Icon>
-                    <TextBlock Text="&#xf097;" FontFamily="{StaticResource IconFont}" />
-                </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem Header="Change Icon..." Click="ChangeIcon_Click"
-                      CommandParameter="{Binding}">
-                <MenuItem.Icon>
-                    <TextBlock Text="&#xe3f4;" FontFamily="{StaticResource IconFont}" />
-                </MenuItem.Icon>
-            </MenuItem>
-            <Separator />
-            <MenuItem Header="Remove" Click="RemoveTileMenuItem_Click"
-                      CommandParameter="{Binding}">
-                <MenuItem.Icon>
-                    <TextBlock Text="&#xe92e;" FontFamily="{StaticResource IconFont}" />
-                </MenuItem.Icon>
-            </MenuItem>
-        </ContextMenu>
 
         <!-- Game tiles alone get IGDB cover art, and the automatic best-match pick can be
              wrong (common title, a remaster vs. the original, a region-specific release) - a
@@ -265,85 +268,71 @@
               Visibility="{Binding IsAppsOrWebTabActive, Converter={StaticResource BoolToVisibility}}"
               PreviewKeyDown="AppsWebPanel_PreviewKeyDown">
             <Grid.RowDefinitions>
-                <RowDefinition Height="{Binding DefaultSectionRowHeight}" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0"
-                        Visibility="{Binding IsBrowserShortcutVisible, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Default Apps" FontWeight="SemiBold"
-                           Foreground="{DynamicResource MutedForegroundBrush}"
-                           Margin="8,0,0,6" />
-                <ListBox x:Name="BrowserShortcutList"
-                         ItemsSource="{Binding BrowserShortcutTiles}"
-                         Background="Transparent" BorderThickness="0"
-                         FocusVisualStyle="{x:Null}"
-                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ItemTemplate="{StaticResource RegularTileTemplate}"
-                         ItemContainerStyle="{StaticResource TileContainerStyle}"
-                         MouseDoubleClick="TileList_MouseDoubleClick" />
-            </StackPanel>
+            <ListBox x:Name="BrowserShortcutList" Grid.Row="0"
+                     Visibility="{Binding IsBrowserShortcutVisible, Converter={StaticResource BoolToVisibility}}"
+                     ItemsSource="{Binding BrowserShortcutTiles}"
+                     Background="Transparent" BorderThickness="0"
+                     FocusVisualStyle="{x:Null}"
+                     ScrollViewer.CanContentScroll="True"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     ItemTemplate="{StaticResource RegularTileTemplate}"
+                     ItemContainerStyle="{StaticResource TileContainerStyle}"
+                     MouseDoubleClick="TileList_MouseDoubleClick">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
 
-            <Grid Grid.Row="0"
-                  Visibility="{Binding IsDefaultWebsiteSectionVisible, Converter={StaticResource BoolToVisibility}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <TextBlock Text="Default Websites" FontWeight="SemiBold"
-                           Foreground="{DynamicResource MutedForegroundBrush}"
-                           Margin="8,0,0,6" />
-                <ListBox x:Name="DefaultWebsiteList" Grid.Row="1"
-                         ItemsSource="{Binding DefaultWebsiteTiles}"
-                         Background="Transparent" BorderThickness="0"
-                         FocusVisualStyle="{x:Null}"
-                         ScrollViewer.CanContentScroll="True"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         VirtualizingPanel.IsVirtualizing="True"
-                         VirtualizingPanel.VirtualizationMode="Recycling"
-                         ItemTemplateSelector="{StaticResource TileTemplateSelector}"
-                         ItemContainerStyle="{StaticResource TileContainerStyle}"
-                         MouseDoubleClick="TileList_MouseDoubleClick">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
-            </Grid>
+            <ListBox x:Name="DefaultWebsiteList" Grid.Row="0"
+                     Visibility="{Binding IsDefaultWebsiteSectionVisible, Converter={StaticResource BoolToVisibility}}"
+                     ItemsSource="{Binding DefaultWebsiteTiles}"
+                     Background="Transparent" BorderThickness="0"
+                     FocusVisualStyle="{x:Null}"
+                     ScrollViewer.CanContentScroll="True"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     ItemTemplateSelector="{StaticResource TileTemplateSelector}"
+                     ItemContainerStyle="{StaticResource TileContainerStyle}"
+                     MouseDoubleClick="TileList_MouseDoubleClick">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
 
             <Border Grid.Row="1" Height="1" Margin="8,4,8,12"
                     Background="{DynamicResource AccentOutlineBrush}"
                     Visibility="{Binding IsDefaultSectionVisible, Converter={StaticResource BoolToVisibility}}" />
 
-            <Grid Grid.Row="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <TextBlock Text="{Binding UserTileSectionTitle}" FontWeight="SemiBold"
-                           Foreground="{DynamicResource MutedForegroundBrush}"
-                           Margin="8,0,0,6" />
-                <ListBox x:Name="TileList" Grid.Row="1"
-                         ItemsSource="{Binding Tiles}"
-                         Background="Transparent" BorderThickness="0"
-                         FocusVisualStyle="{x:Null}"
-                         ScrollViewer.CanContentScroll="True"
-                         VirtualizingPanel.IsVirtualizing="True"
-                         VirtualizingPanel.VirtualizationMode="Recycling"
-                         ItemTemplateSelector="{StaticResource TileTemplateSelector}"
-                         ItemContainerStyle="{StaticResource TileContainerStyle}"
-                         MouseDoubleClick="TileList_MouseDoubleClick">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
-            </Grid>
+            <ListBox x:Name="TileList" Grid.Row="2"
+                     ItemsSource="{Binding Tiles}"
+                     Background="Transparent" BorderThickness="0"
+                     FocusVisualStyle="{x:Null}"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     ItemTemplateSelector="{StaticResource TileTemplateSelector}"
+                     ItemContainerStyle="{StaticResource TileContainerStyle}"
+                     MouseDoubleClick="TileList_MouseDoubleClick">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <vwp:VirtualizingWrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
         </Grid>
 
         <!-- Games tab only: platforms on the left ("PC" pinned at top), box art in a responsive

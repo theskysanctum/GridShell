@@ -102,9 +102,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public bool IsBrowserShortcutVisible => ActiveTab == GridTab.Apps && BrowserShortcutTiles.Count > 0;
     public bool IsDefaultWebsiteSectionVisible => ActiveTab == GridTab.Web && DefaultWebsiteTiles.Count > 0;
     public bool IsDefaultSectionVisible => IsBrowserShortcutVisible || IsDefaultWebsiteSectionVisible;
-    public GridLength DefaultSectionRowHeight =>
-        IsDefaultWebsiteSectionVisible ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
-    public string UserTileSectionTitle => ActiveTab == GridTab.Web ? "Your Websites" : "Your Apps";
 
     public string? SelectedPlatform
     {
@@ -157,8 +154,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsBrowserShortcutVisible));
             OnPropertyChanged(nameof(IsDefaultWebsiteSectionVisible));
             OnPropertyChanged(nameof(IsDefaultSectionVisible));
-            OnPropertyChanged(nameof(DefaultSectionRowHeight));
-            OnPropertyChanged(nameof(UserTileSectionTitle));
             ApplyFilter();
         }
     }
@@ -762,11 +757,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsBrowserShortcutVisible));
             OnPropertyChanged(nameof(IsDefaultWebsiteSectionVisible));
             OnPropertyChanged(nameof(IsDefaultSectionVisible));
-            OnPropertyChanged(nameof(DefaultSectionRowHeight));
-            OnPropertyChanged(nameof(UserTileSectionTitle));
-            BrowserShortcutList.SelectedIndex = BrowserShortcutTiles.Count > 0 ? 0 : -1;
-            DefaultWebsiteList.SelectedIndex = DefaultWebsiteTiles.Count > 0 ? 0 : -1;
-            TileList.SelectedIndex = Tiles.Count > 0 ? 0 : -1;
             if (DefaultWebsiteTiles.Count > 0)
             {
                 DefaultWebsiteList.ScrollIntoView(DefaultWebsiteTiles[0]);
