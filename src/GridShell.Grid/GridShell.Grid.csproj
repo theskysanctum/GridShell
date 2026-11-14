@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -9,9 +9,6 @@
     <AssemblyName>GridShell.Grid</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\icon.ico</ApplicationIcon>
-    <!-- Kept in sync with installer/GridShell.iss's MyAppVersion by the release workflow's
-         version-bump step - this is what UpdateChecker reads via Assembly.GetName().Version to
-         compare against the latest GitHub release. -->
     <Version>1.1.84</Version>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -23,20 +20,15 @@
 
   <ItemGroup>
     <PackageReference Include="VirtualizingWrapPanel" Version="2.5.4" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3179.45" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Custom SDL3 build (SDL_HIDAPI_LIBUSB=ON) replacing ppy.SDL3-CS's bundled binary, which
-         lacks libusb and therefore cannot see wired Nintendo Switch 1/2 controllers over USB.
-         See src/ThirdPartyNative/SDL3-libusb/README.txt. Copied after the package's own
-         runtime-asset copy so it overwrites it, not the other way around. -->
     <None Include="..\ThirdPartyNative\SDL3-libusb\SDL3.dll" CopyToOutputDirectory="PreserveNewest" Link="SDL3.dll" />
     <None Include="..\ThirdPartyNative\SDL3-libusb\libusb-1.0.dll" CopyToOutputDirectory="PreserveNewest" Link="libusb-1.0.dll" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Community-maintained SDL_GameControllerDB mappings (zlib-licensed), widening gamepad
-         recognition beyond SDL's own built-in list. See GridShell.Core/Interop/PadReader.cs. -->
     <None Include="..\GridShell.Core\Interop\GameControllerDB\gamecontrollerdb.txt" CopyToOutputDirectory="PreserveNewest" Link="GameControllerDB\gamecontrollerdb.txt" />
     <None Include="..\GridShell.Core\Interop\GameControllerDB\LICENSE.txt" CopyToOutputDirectory="PreserveNewest" Link="GameControllerDB\LICENSE.txt" />
   </ItemGroup>
@@ -47,10 +39,6 @@
   </Target>
 
   <ItemGroup>
-    <!-- Reuse the same physical font files as the GridShell (taskbar) project instead of
-         duplicating them on disk — each project still needs its own "Fonts" output folder
-         at this relative path, since the "./Fonts/#Family" pack URIs used throughout the
-         XAML resolve relative to the consuming assembly. -->
     <Resource Include="..\GridShell\Fonts\Roboto.ttf" Link="Fonts\Roboto.ttf" />
     <Resource Include="..\GridShell\Fonts\MaterialSymbolsOutlined.ttf" Link="Fonts\MaterialSymbolsOutlined.ttf" />
     <Resource Include="..\GridShell\Fonts\Exo2.ttf" Link="Fonts\Exo2.ttf" />
@@ -59,31 +47,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Bundled third-party command-line tools, kept as loose files next to the exe (not
-         embedded Resources) since each needs to be launched as its own process rather than
-         read from this assembly. Each tool's own license file ships alongside it. -->
     <None Include="Tools\chdman.exe" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\extract-xiso.exe" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\extract-xiso.LICENSE.TXT" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\aria2c.exe" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\aria2c.COPYING.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\aria2c.LICENSE.OpenSSL.txt" CopyToOutputDirectory="PreserveNewest" />
-    <!-- 7-Zip's official standalone console build (ip7z/7zip releases, the x64 "Extra" package)
-         - verified live to extract/create both .7z and .zip fully on its own (no companion DLL
-         needed, confirmed by running it with only this one file present). Used for
-         GitHubReleaseInstaller's .7z release assets (RPCS3's only real Windows build is a .7z,
-         not .zip) and as the File Explorer's only archiver (ArchiveOperations) - no more
-         detecting/depending on a system-installed 7-Zip or PeaZip for zip/7z/tar/gzip/bzip2/xz;
-         only RAR (proprietary, needs separately-licensed unrar code this build doesn't have)
-         stays unsupported. -->
     <None Include="Tools\7za.exe" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Tools\7za.LICENSE.TXT" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The "Load unpacked" Chrome extension that routes browser downloads to the Download
-         Manager - bundled as loose files (not embedded) since Chrome needs to load this
-         folder directly from disk. -->
     <None Include="ChromeExtension\manifest.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="ChromeExtension\background.js" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

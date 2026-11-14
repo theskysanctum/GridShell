@@ -1,8 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Web.WebView2.Core;
+
 namespace GridShell.Core.Downloads;
 
-/// <summary>Recognizes HTTPS Archive.org URLs for safely applying the user's Archive.org
-/// site-session cookies. The suffix check intentionally requires a label boundary so lookalike
-/// hosts such as archive.org.example.com never receive the session.</summary>
+/// <summary>Utilities for validating and exporting Archive.org cookies harvested from a
+/// temporary WebView2 login flow.</summary>
 public static class ArchiveOrgSession
 {
     public static bool IsArchiveOrgUrl(string? url)
@@ -15,5 +18,39 @@ public static class ArchiveOrgSession
 
         return string.Equals(uri.IdnHost, "archive.org", StringComparison.OrdinalIgnoreCase) ||
                uri.IdnHost.EndsWith(".archive.org", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static string? ToHeaderValue(ICoreWebView2CookieList? cookieList)
+    {
+        if (cookieList is null)
+        {
+            return null;
+        }
+
+        var values = new List<string>();
+        for (var i = 0; i < cookieList.GetCount(); i++)
+        {
+            var cookie = cookieList.GetCookie(i);
+            if (cookie is null || !IsArchiveOrgDomain(cookie.Domain))
+            {
+                continue;
+            }
+
+            values.Add($"{cookie.Name}={cookie.Value}");
+        }
+
+        return values.Count == 0 ? null : string.Join("; ", values.Distinct(StringComparer.Ordinal));
+    }
+
+    public static bool IsArchiveOrgDomain(string? domain)
+    {
+        if (string.IsNullOrWhiteSpace(domain))
+        {
+            return false;
+        }
+
+        var host = domain.TrimStart('.');
+        return string.Equals(host, "archive.org", StringComparison.OrdinalIgnoreCase) ||
+               host.EndsWith(".archive.org", StringComparison.OrdinalIgnoreCase);
     }
 }
