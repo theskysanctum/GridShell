@@ -10,6 +10,12 @@ namespace GridShell.Core.Settings;
 /// consistent look; see each App.xaml.cs's theme-apply step.</summary>
 public static class ThemePalette
 {
+    public static Color DarkenAccent(Color color, double factor) =>
+        Color.FromRgb(
+            (byte)(color.R * factor),
+            (byte)(color.G * factor),
+            (byte)(color.B * factor));
+
     public static void Apply(ResourceDictionary resources, AppTheme theme)
     {
         var (window, surface, border, text, mutedText, faintText, error) = theme == AppTheme.Light

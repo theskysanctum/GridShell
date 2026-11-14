@@ -45,6 +45,8 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="10" SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                                                Margin="{TemplateBinding Padding}" />
@@ -76,14 +78,28 @@
             </Setter>
         </Style>
 
-        <!-- Shared by both tile templates — a thin accent ring on selection/hover, matching the
-             tile's own corner radius, instead of a default WPF selection fill. -->
+        <!-- Shared by both tile templates — a consistent, animated accent ring on selection. -->
         <Style x:Key="TileSelectionBorderStyle" TargetType="Border">
-            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderThickness" Value="3" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource TileSelectionBorderBrush}" />
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="TileSelectionBorderAnimation">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(Border.BorderBrush).(LinearGradientBrush.RelativeTransform).(RotateTransform.Angle)"
+                                                 From="0" To="360" Duration="0:0:4"
+                                                 RepeatBehavior="Forever" />
+                                <DoubleAnimation Storyboard.TargetProperty="(Border.BorderBrush).(Brush.Opacity)"
+                                                 From="0.35" To="1" Duration="0:0:1.2"
+                                                 AutoReverse="True" RepeatBehavior="Forever" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <StopStoryboard BeginStoryboardName="TileSelectionBorderAnimation" />
+                    </DataTrigger.ExitActions>
                 </DataTrigger>
                 <!-- Website tiles alone get Rename/Change Icon/Remove here - App tiles have no
                      right-click menu at all. A GameTileTemplate Border's own local ContextMenu
@@ -96,25 +112,7 @@
         </Style>
 
         <Style x:Key="GameTileSelectionBorderStyle" TargetType="Border"
-               BasedOn="{StaticResource TileSelectionBorderStyle}">
-            <Setter Property="BorderThickness" Value="3" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard x:Name="GameTileSelectionPulse">
-                            <Storyboard>
-                                <ThicknessAnimation Storyboard.TargetProperty="BorderThickness"
-                                                    From="3" To="5" Duration="0:0:1"
-                                                    AutoReverse="True" RepeatBehavior="Forever" />
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                    <DataTrigger.ExitActions>
-                        <StopStoryboard BeginStoryboardName="GameTileSelectionPulse" />
-                    </DataTrigger.ExitActions>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+               BasedOn="{StaticResource TileSelectionBorderStyle}" />
 
         <!-- Website tiles' own Rename/Change Icon/Remove menu - wired via TileSelectionBorderStyle's
              own IsWebsiteKind trigger above, not a local ContextMenu attribute, so App tiles
@@ -390,10 +388,12 @@
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
                             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                            <Setter Property="BorderThickness" Value="1" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsAppsTabActive}" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                    <Setter Property="BorderThickness" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -404,10 +404,12 @@
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
                             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                            <Setter Property="BorderThickness" Value="1" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsWebTabActive}" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                    <Setter Property="BorderThickness" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -418,10 +420,12 @@
                         <Style TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
                             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+                            <Setter Property="BorderThickness" Value="1" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsGamesTabActive}" Value="True">
                                     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                    <Setter Property="BorderThickness" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -525,6 +529,9 @@
                 </ContextMenu>
             </Button.ContextMenu>
         </Button>
+            <Border CornerRadius="16" BorderThickness="3"
+                    BorderBrush="{DynamicResource ModalBorderBrush}"
+                    IsHitTestVisible="False" />
             </Grid>
         </Border>
     </Grid>

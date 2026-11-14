@@ -15,6 +15,9 @@
         FontFamily="{DynamicResource AppFontFamily}">
     <Window.Resources>
         <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
+        <DropShadowEffect x:Key="LauncherIconGlow"
+                          Color="{DynamicResource AccentSecondaryColor}"
+                          BlurRadius="12" ShadowDepth="0" Opacity="0.85" />
 
         <Style x:Key="InitialFallbackStyle" TargetType="TextBlock">
             <Style.Triggers>
@@ -39,12 +42,15 @@
         <Style x:Key="BaseTaskbarButtonStyle" TargetType="Button">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Effect" Value="{StaticResource CardShadow}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="12" SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
@@ -62,6 +68,8 @@
              itself is a sibling element in the DataTemplate below, not part of the button, so it
              can sit in the sidebar's own margin outside the button's 40px width). -->
         <Style x:Key="TaskbarWindowButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseTaskbarButtonStyle}">
+            <Setter Property="BorderBrush" Value="{DynamicResource TaskbarWindowBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsActive}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource PanelBorderBrush}" />
@@ -81,7 +89,7 @@
         <Button Grid.Row="0" Width="48" Height="48" Margin="0,12,0,12" Click="LauncherButton_Click"
                 Style="{StaticResource BaseTaskbarButtonStyle}" ToolTip="Open GridShell"
                 HorizontalAlignment="Center">
-            <Grid>
+            <Grid Effect="{StaticResource LauncherIconGlow}">
                 <!-- One of these two is visible at a time - the glyph by default, or a
                      user-picked custom image when StartButtonIconImagePath is set. Swapped by
                      ApplyLauncherIcon, called whenever settings load or change. -->

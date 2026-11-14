@@ -431,6 +431,26 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Application-level (not this window's own Resources) so other windows — the
             // on-screen keyboard, and anything else added later — can use it too.
             Application.Current.Resources["AccentBrush"] = new SolidColorBrush(color);
+
+            var selectionBrush = new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0.5),
+                EndPoint = new Point(1, 0.5),
+                RelativeTransform = new RotateTransform(0, 0.5, 0.5),
+            };
+            selectionBrush.GradientStops.Add(new GradientStop(ThemePalette.DarkenAccent(color, 0.72), 0));
+            selectionBrush.GradientStops.Add(new GradientStop(ThemePalette.DarkenAccent(color, 0.48), 0.5));
+            selectionBrush.GradientStops.Add(new GradientStop(ThemePalette.DarkenAccent(color, 0.72), 1));
+            Resources["TileSelectionBorderBrush"] = selectionBrush;
+
+            var modalBorderBrush = new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(1, 1),
+            };
+            modalBorderBrush.GradientStops.Add(new GradientStop(ThemePalette.DarkenAccent(color, 0.72), 0));
+            modalBorderBrush.GradientStops.Add(new GradientStop(ThemePalette.DarkenAccent(color, 0.48), 1));
+            Resources["ModalBorderBrush"] = modalBorderBrush;
         }
         catch (FormatException) { }
 
