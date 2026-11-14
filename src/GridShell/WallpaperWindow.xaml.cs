@@ -118,6 +118,22 @@ public partial class WallpaperWindow : Window
             // video as/Inspect) would look like a bug, not a feature.
             Web.CoreWebView2!.Settings.AreDefaultContextMenusEnabled = false;
             Web.CoreWebView2.Settings.AreDevToolsEnabled = false;
+
+            // A microphone-reactive Scene (see the Store's "Scenes" category) needs
+            // getUserMedia({audio: true}) to work - WebView2's own default is to show a
+            // permission prompt bar, which nothing could ever click on a window that's never
+            // activatable and sits at the very bottom of the z-order. Auto-granted rather than
+            // denied: this window only ever shows content the user themselves chose as their
+            // wallpaper (a Scene, or a custom .html/live URL they set in Settings), never
+            // arbitrary third-party content, and the mic is used locally for visualization only
+            // - nothing here has any way to transmit audio anywhere.
+            Web.CoreWebView2.PermissionRequested += (_, args) =>
+            {
+                if (args.PermissionKind == CoreWebView2PermissionKind.Microphone)
+                {
+                    args.State = CoreWebView2PermissionState.Allow;
+                }
+            };
         }
 
         var settings = AppSettingsStore.Load();
