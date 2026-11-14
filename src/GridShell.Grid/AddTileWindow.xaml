@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:local="clr-namespace:GridShell"
         mc:Ignorable="d"
         Title="Add Tile"
         Width="480" Height="560"
@@ -15,8 +14,6 @@
         FontFamily="{DynamicResource AppFontFamily}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-        <local:CountToVisibilityConverter x:Key="CountToVisibility" />
-        <local:CountToVisibilityInverseConverter x:Key="CountToVisibilityInverse" />
         <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
     </Window.Resources>
     <Grid Margin="16">
@@ -109,100 +106,30 @@
             </StackPanel>
 
             <StackPanel Margin="0,12,0,0" Visibility="{Binding IsGameKind, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                    <Button Content="Native" Padding="14,6" Margin="0,0,8,0" Click="NativeGameTab_Click">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                                <Setter Property="BorderThickness" Value="0" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsNativeGame}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
+                <TextBlock Text="Title" Margin="0,0,0,4" />
+                <TextBox Text="{Binding GameTitle, UpdateSourceTrigger=PropertyChanged}" Padding="4" Margin="0,0,0,12" />
+
+                <TextBlock Text="Path" Margin="0,0,0,4" />
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0" Text="{Binding GamePath, UpdateSourceTrigger=PropertyChanged}" Padding="4" />
+                    <Button Grid.Column="1" Margin="8,0,0,0" Padding="8,4"
+                            Click="BrowseGamePath_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}" FontSize="14" Margin="0,0,4,0" />
+                            <TextBlock Text="Browse..." />
+                        </StackPanel>
                     </Button>
-                    <Button Content="Emulated" Padding="14,6" Click="EmulatedGameTab_Click">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
-                                <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
-                                <Setter Property="BorderThickness" Value="0" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsEmulatedGame}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                </StackPanel>
+                </Grid>
 
-                <StackPanel Visibility="{Binding IsNativeGame, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Title" Margin="0,0,0,4" />
-                    <TextBox Text="{Binding GameTitle, UpdateSourceTrigger=PropertyChanged}" Padding="4" Margin="0,0,0,12" />
+                <CheckBox Content="Pause wallpaper while this is running"
+                          IsChecked="{Binding PauseWallpaperWhileRunning}" Margin="0,0,0,12" />
 
-                    <TextBlock Text="Path" Margin="0,0,0,4" />
-                    <Grid Margin="0,0,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Text="{Binding GamePath, UpdateSourceTrigger=PropertyChanged}" Padding="4" />
-                        <Button Grid.Column="1" Margin="8,0,0,0" Padding="8,4"
-                                Click="BrowseGamePath_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}" FontSize="14" Margin="0,0,4,0" />
-                                <TextBlock Text="Browse..." />
-                            </StackPanel>
-                        </Button>
-                    </Grid>
-
-                    <CheckBox Content="Pause wallpaper while this is running"
-                              IsChecked="{Binding PauseWallpaperWhileRunning}" Margin="0,0,0,12" />
-
-                    <Button Content="Add Game" Padding="8,4" HorizontalAlignment="Left"
-                            Click="AddGame_Click" />
-                </StackPanel>
-
-                <StackPanel Visibility="{Binding IsEmulatedGame, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="No emulators configured yet — set one up in Settings → Emulation first."
-                               Foreground="{DynamicResource ErrorForegroundBrush}" TextWrapping="Wrap" Margin="0,0,0,12"
-                               Visibility="{Binding ConfiguredPlatforms.Count, Converter={StaticResource CountToVisibilityInverse}}" />
-
-                    <StackPanel Visibility="{Binding ConfiguredPlatforms.Count, Converter={StaticResource CountToVisibility}}">
-                        <TextBlock Text="Platform" Margin="0,0,0,4" />
-                        <ComboBox ItemsSource="{Binding ConfiguredPlatforms}" SelectedItem="{Binding SelectedPlatform}"
-                                  DisplayMemberPath="DisplayName" Margin="0,0,0,12" />
-
-                        <TextBlock Text="Title (optional)" Margin="0,0,0,4" />
-                        <TextBox Text="{Binding EmulatedGameTitle, UpdateSourceTrigger=PropertyChanged}" Padding="4" Margin="0,0,0,12" />
-
-                        <TextBlock Text="ROM" Margin="0,0,0,4" />
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding RomPath, UpdateSourceTrigger=PropertyChanged}" Padding="4" />
-                            <Button Grid.Column="1" Margin="8,0,0,0" Padding="8,4"
-                                    Click="BrowseRomPath_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xe2c8;" FontFamily="{StaticResource IconFont}" FontSize="14" Margin="0,0,4,0" />
-                                    <TextBlock Text="Browse..." />
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-
-                        <CheckBox Content="Pause wallpaper while this is running"
-                                  IsChecked="{Binding PauseWallpaperWhileRunning}" Margin="0,0,0,12" />
-
-                        <Button Content="Add Game" Padding="8,4" HorizontalAlignment="Left"
-                                Click="AddEmulatedGame_Click" />
-                    </StackPanel>
-                </StackPanel>
+                <Button Content="Add Game" Padding="8,4" HorizontalAlignment="Left"
+                        Click="AddGame_Click" />
             </StackPanel>
         </Grid>
     </Grid>

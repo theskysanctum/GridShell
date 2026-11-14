@@ -23,10 +23,6 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
     private string _manualAppPath = "";
     private string _gameTitle = "";
     private string _gamePath = "";
-    private bool _isEmulatedGame;
-    private string _emulatedGameTitle = "";
-    private string _romPath = "";
-    private EmulationPlatform? _selectedPlatform;
 
     public ObservableCollection<Tile> FilteredApps { get; } = new();
     public ObservableCollection<DetectedBrowser> Browsers { get; } = new();
@@ -112,44 +108,6 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
         set { _gamePath = value; OnPropertyChanged(); }
     }
 
-    public ObservableCollection<EmulationPlatform> ConfiguredPlatforms { get; } = new();
-
-    public Dictionary<string, EmulatorConfig> EmulatorConfigs { get; set; } = new();
-
-    /// <summary>Which of Native/Emulated the Game tab shows — a toggle within the Game section
-    /// itself, same spirit as RequestedKind but one level down, so a native game's fields can
-    /// never be submitted as an emulated one or vice versa.</summary>
-    public bool IsEmulatedGame
-    {
-        get => _isEmulatedGame;
-        set
-        {
-            _isEmulatedGame = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsNativeGame));
-        }
-    }
-
-    public bool IsNativeGame => !IsEmulatedGame;
-
-    public string EmulatedGameTitle
-    {
-        get => _emulatedGameTitle;
-        set { _emulatedGameTitle = value; OnPropertyChanged(); }
-    }
-
-    public string RomPath
-    {
-        get => _romPath;
-        set { _romPath = value; OnPropertyChanged(); }
-    }
-
-    public EmulationPlatform? SelectedPlatform
-    {
-        get => _selectedPlatform;
-        set { _selectedPlatform = value; OnPropertyChanged(); }
-    }
-
     public Tile? ResultTile { get; private set; }
 
     private TileKind _requestedKind = TileKind.App;
@@ -215,16 +173,6 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(NoBrowsersFound));
         SelectedBrowser = Browsers.FirstOrDefault(b => b.ExecutablePath == DefaultBrowserExecutablePath)
             ?? Browsers.FirstOrDefault();
-
-        foreach (var platform in EmulationPlatforms.All)
-        {
-            if (EmulatorConfigs.TryGetValue(platform.Slug, out var config) &&
-                !string.IsNullOrWhiteSpace(config.EmulatorPath))
-            {
-                ConfiguredPlatforms.Add(platform);
-            }
-        }
-        SelectedPlatform = ConfiguredPlatforms.FirstOrDefault();
 
         _allApps = await Task.Run(() => AppTileEnumerator.EnumerateAppTiles().ToList());
         IsLoadingApps = false;
@@ -298,10 +246,6 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
         Close();
     }
 
-    private void NativeGameTab_Click(object sender, RoutedEventArgs e) => IsEmulatedGame = false;
-
-    private void EmulatedGameTab_Click(object sender, RoutedEventArgs e) => IsEmulatedGame = true;
-
     private void BrowseGamePath_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
@@ -335,66 +279,6 @@ public partial class AddTileWindow : Window, INotifyPropertyChanged
             TargetPath = path,
             Kind = TileKind.Game,
             IconSourcePath = path,
-            PauseWallpaperWhileRunning = PauseWallpaperWhileRunning,
-        };
-        DialogResult = true;
-        Close();
-    }
-
-    private void BrowseRomPath_Click(object sender, RoutedEventArgs e)
-    {
-        // .m3u (a multi-disc playlist, listing each disc's real image file) is always offered
-        // alongside the platform's own extensions, not just for platforms that happen to list
-        // it - it's a RetroArch-wide convention, not an emulator-core-specific format, and is
-        // what should be picked for a multi-disc game rather than browsing to one disc file.
-        var extensions = (SelectedPlatform?.RomExtensions ?? Array.Empty<string>()).Append(".m3u").Distinct();
-        var filter = $"ROM files|{string.Join(";", extensions.Select(ext => "*" + ext))}|All files (*.*)|*.*";
-
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = filter,
-            Title = "Choose a ROM",
-            InitialDirectory = SelectedPlatform is not null
-                ? System.IO.Path.Combine(EmulationPlatforms.RomsRootPath, SelectedPlatform.Slug)
-                : EmulationPlatforms.RomsRootPath,
-        };
-
-        if (dialog.ShowDialog(this) == true)
-        {
-            RomPath = dialog.FileName;
-            if (string.IsNullOrWhiteSpace(EmulatedGameTitle))
-            {
-                EmulatedGameTitle = RomTitleCleaner.Clean(System.IO.Path.GetFileNameWithoutExtension(dialog.FileName));
-            }
-        }
-    }
-
-    private void AddEmulatedGame_Click(object sender, RoutedEventArgs e)
-    {
-        var romPath = RomPath.Trim();
-        if (romPath.Length == 0 || SelectedPlatform is null)
-        {
-            return;
-        }
-
-        if (!EmulatorConfigs.TryGetValue(SelectedPlatform.Slug, out var config) ||
-            string.IsNullOrWhiteSpace(config.EmulatorPath))
-        {
-            return;
-        }
-
-        var name = string.IsNullOrWhiteSpace(EmulatedGameTitle)
-            ? RomTitleCleaner.Clean(System.IO.Path.GetFileNameWithoutExtension(romPath))
-            : EmulatedGameTitle.Trim();
-
-        ResultTile = new Tile
-        {
-            Name = name,
-            TargetPath = config.EmulatorPath,
-            Kind = TileKind.Game,
-            IconSourcePath = config.EmulatorPath,
-            Arguments = config.ArgumentTemplate.Replace("{rom}", romPath),
-            Platform = SelectedPlatform.Slug,
             PauseWallpaperWhileRunning = PauseWallpaperWhileRunning,
         };
         DialogResult = true;

@@ -9,6 +9,8 @@ public class TaskbarWindowEntry : INotifyPropertyChanged
 {
     public required HWND Handle { get; init; }
 
+    public bool IsGame { get; init; }
+
     private string _title = "";
     public string Title
     {

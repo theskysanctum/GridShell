@@ -5,10 +5,8 @@ namespace GridShell.Core.Store;
 /// <summary>A Store "Scene" - a self-contained animated wallpaper (plain HTML/CSS/JS, no
 /// external network resources) fetched directly over HTTP (see StoreSceneSync), not through
 /// StoreCatalogSync's full repo clone - a genuinely separate, on-demand download per scene.
-/// Applying one downloads its entry file (if not already cached) and points AppSettings.
-/// WallpaperUrl at the local cached path - the same mechanism Settings' own "Appearance"
-/// wallpaper picker already uses for a custom .html wallpaper, so WallpaperWindow needs no
-/// changes to render it.</summary>
+/// Applying one downloads its entry file (if not already cached) and stores its local cached
+/// path in AppSettings for WallpaperWindow to render.</summary>
 public sealed class StoreScene
 {
     [JsonPropertyName("id")]

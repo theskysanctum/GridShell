@@ -163,6 +163,11 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        if (!FileOperations.TryDeleteGameFile(tile, this))
+        {
+            return;
+        }
+
         _allTiles.Remove(tile);
         RefreshGameTiles();
         _onTilesChanged();
@@ -177,6 +182,25 @@ public partial class GameManagerWindow : Window, INotifyPropertyChanged
             _installedGameScanStatus = value;
             OnPropertyChanged();
         }
+    }
+
+    private void AddGameButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new AddTileWindow
+        {
+            Owner = this,
+            RequestedKind = TileKind.Game,
+        };
+
+        if (dialog.ShowDialog() != true || dialog.ResultTile is not { } tile)
+        {
+            return;
+        }
+
+        _allTiles.Add(tile);
+        _ = IconLoader.LoadIconAsync(tile, _settings);
+        RefreshGameTiles();
+        _onTilesChanged();
     }
 
     /// <summary>Same button now does both halves of "find games already on disk": installed

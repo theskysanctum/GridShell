@@ -35,6 +35,11 @@ public static class IconLoader
         }
 
         var icon = await ResolveIconAsync(tile, settings);
+        if (tile.Kind != TileKind.Game)
+        {
+            icon = IconColorFilter.ToMonochrome(icon);
+        }
+
         Cache[cacheKey] = icon;
         tile.Icon = icon;
     }

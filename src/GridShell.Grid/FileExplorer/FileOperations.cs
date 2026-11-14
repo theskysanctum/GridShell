@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using GridShell.Core.Tiles;
 using Microsoft.VisualBasic.FileIO;
 
 namespace GridShell;
@@ -57,6 +58,40 @@ public static class FileOperations
                 FileSystem.DeleteFile(path, UIOption.AllDialogs, RecycleOption.SendToRecycleBin, UICancelOption.DoNothing);
             }
         });
+
+    public static bool TryDeleteGameFile(Tile tile, Window owner)
+    {
+        if (tile.Kind != TileKind.Game || tile.Platform is null)
+        {
+            return true;
+        }
+
+        var path = GetRomPath(tile.Arguments);
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            new ToastWindow("Could not determine the ROM file for this game.", TimeSpan.FromSeconds(5), isWarning: true).Show();
+            return false;
+        }
+
+        return !File.Exists(path) || TryDelete(path, isDirectory: false, owner);
+    }
+
+    private static string? GetRomPath(string? arguments)
+    {
+        if (string.IsNullOrWhiteSpace(arguments))
+        {
+            return null;
+        }
+
+        var quotedPaths = arguments.Split('"')
+            .Where((_, index) => index % 2 == 1)
+            .Where(Path.IsPathFullyQualified)
+            .ToList();
+
+        return quotedPaths.LastOrDefault()
+            ?? arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault(Path.IsPathFullyQualified);
+    }
 
     public static bool TryRename(string path, string newName, bool isDirectory, Window owner)
     {

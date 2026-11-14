@@ -128,6 +128,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Button Grid.Column="0" Padding="12,4" Click="ScanInstalledGamesButton_Click">
@@ -136,7 +137,10 @@
                                     <TextBlock Text="Scan for games &amp; ROMs" />
                                 </StackPanel>
                             </Button>
-                            <TextBlock Grid.Column="1" Text="{Binding InstalledGameScanStatus}" FontSize="11"
+                            <Button Grid.Column="1" Padding="12,4" Margin="8,0,0,0" Click="AddGameButton_Click">
+                                <TextBlock Text="Add Game..." />
+                            </Button>
+                            <TextBlock Grid.Column="2" Text="{Binding InstalledGameScanStatus}" FontSize="11"
                                        Foreground="{DynamicResource MutedForegroundBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                         </Grid>
                     </StackPanel>

@@ -86,7 +86,7 @@
                      user-picked custom image when StartButtonIconImagePath is set. Swapped by
                      ApplyLauncherIcon, called whenever settings load or change. -->
                 <TextBlock x:Name="LauncherIconGlyph" Text="&#xe5c3;" FontFamily="{StaticResource IconFont}"
-                           Foreground="{DynamicResource PrimaryForegroundBrush}" FontSize="26" />
+                           Foreground="{DynamicResource AccentBrush}" FontSize="26" />
                 <Image x:Name="LauncherIconImage" Width="28" Height="28" Stretch="Uniform"
                        Visibility="Collapsed" />
             </Grid>
@@ -168,5 +168,8 @@
                            TextWrapping="Wrap" />
             </StackPanel>
         </Border>
+
+        <Border Grid.RowSpan="3" Width="1" HorizontalAlignment="Right"
+                Background="{DynamicResource AccentBrush}" />
     </Grid>
 </Window>

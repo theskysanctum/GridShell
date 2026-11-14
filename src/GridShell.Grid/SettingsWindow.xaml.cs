@@ -41,7 +41,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     private UiFontChoice _uiFont;
     private string? _startButtonIconImagePath;
     private bool _useGridShellAsSystemShell;
-    private string _wallpaperUrl = "";
     private bool _wallpaperMuted;
 
     private bool _isCheckingForUpdate;
@@ -57,7 +56,7 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
     public ObservableCollection<StoreSceneViewModel> Scenes { get; } = new();
 
     private static readonly string[] PresetAccentColors =
-        { "#4A90D9", "#D9534F", "#5CB85C", "#F0AD4E", "#9B59B6", "#1ABC9C" };
+        { "#F0AD4E", "#D9534F", "#5CB85C", "#4A90D9", "#9B59B6", "#1ABC9C" };
 
     public ObservableCollection<AccentSwatchItem> AccentSwatches { get; } = new();
 
@@ -707,19 +706,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public string WallpaperUrl
-    {
-        get => _wallpaperUrl;
-        set
-        {
-            _wallpaperUrl = value;
-            OnPropertyChanged();
-            _settings.WallpaperUrl = string.IsNullOrWhiteSpace(value) ? null : value;
-            _onSettingsChanged();
-            NotifyTaskbarSettingsChanged();
-        }
-    }
-
     public bool CanEditAppearance => !KioskModeEnabled;
 
     public string KioskModeButtonText => KioskModeEnabled ? "Disable Kiosk Mode..." : "Enable Kiosk Mode...";
@@ -773,21 +759,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private void BrowseWallpaperButton_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Title = "Choose a wallpaper image, video, or HTML page",
-            Filter = "Wallpaper files (*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.mp4;*.webm;*.mov;*.mkv;*.avi;*.html;*.htm)|" +
-                     "*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.mp4;*.webm;*.mov;*.mkv;*.avi;*.html;*.htm|All files (*.*)|*.*",
-        };
-
-        if (dialog.ShowDialog(this) == true)
-        {
-            WallpaperUrl = dialog.FileName;
-        }
-    }
-
     private async Task LoadScenesAsync()
     {
         var scenes = (await StoreSceneSync.FetchCatalogAsync()).Scenes
@@ -831,7 +802,9 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        WallpaperUrl = StoreSceneSync.GetLocalCachePath(scene.Scene.EntryFile);
+        _settings.WallpaperUrl = StoreSceneSync.GetLocalCachePath(scene.Scene.EntryFile);
+        _onSettingsChanged();
+        NotifyTaskbarSettingsChanged();
 
         foreach (var s in Scenes)
         {
@@ -1074,9 +1047,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(DownloadCookies));
         DownloadCookies = _settings.DownloadCookies ?? "";
         OnPropertyChanged(nameof(DownloadManagerFolder));
-
-        _wallpaperUrl = _settings.WallpaperUrl ?? "";
-        OnPropertyChanged(nameof(WallpaperUrl));
 
         _wallpaperMuted = _settings.WallpaperMuted;
         OnPropertyChanged(nameof(WallpaperMuted));

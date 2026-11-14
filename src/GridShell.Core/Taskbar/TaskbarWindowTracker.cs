@@ -109,15 +109,25 @@ public sealed class TaskbarWindowTracker : IDisposable
                     continue;
                 }
 
-                var customIconPath = FindMatchingCustomIconPath(hwnd, tileExePaths);
+                var matchingTile = FindMatchingTile(hwnd, tileExePaths);
+                var customIconPath = matchingTile?.CustomIconPath;
                 var ownIcon = customIconPath is null ? ShellIcons.GetWindowOwnIcon(hwnd) : null;
+                var icon = customIconPath is not null
+                    ? ImageLoader.LoadFromFile(customIconPath)
+                    : ownIcon ?? ShellIcons.GetProcessIconForWindow(hwnd);
+                if (matchingTile?.IsGame != true)
+                {
+                    icon = IconColorFilter.ToMonochrome(icon);
+                }
+
                 Windows.Add(new TaskbarWindowEntry
                 {
                     Handle = hwnd,
                     Title = title,
+                    IsGame = matchingTile?.IsGame == true,
                     // The same icon the grid itself shows for the matching tile, when one
                     // exists and has a custom icon - not a separately shell-extracted one.
-                    Icon = customIconPath is not null ? ImageLoader.LoadFromFile(customIconPath) : ownIcon ?? ShellIcons.GetProcessIconForWindow(hwnd),
+                    Icon = icon,
                     HasOwnIcon = customIconPath is not null || ownIcon is not null,
                 });
             }
@@ -137,22 +147,20 @@ public sealed class TaskbarWindowTracker : IDisposable
         {
             if (!entry.HasGlyph && !entry.HasOwnIcon && ShellIcons.GetWindowOwnIcon(entry.Handle) is { } ownIcon)
             {
-                entry.Icon = ownIcon;
+                entry.Icon = entry.IsGame ? ownIcon : IconColorFilter.ToMonochrome(ownIcon);
                 entry.HasOwnIcon = true;
             }
         }
     }
 
-    /// <summary>Every current Tile's own real exe path (App/Game: TargetPath, resolving an
-    /// "appx:" prefix the same way TileLauncher does; Website: BrowserExecutablePath) paired
-    /// with its CustomIconPath - null entries (no custom icon set) are skipped, since they'd
-    /// never win over the shell-icon fallback anyway.</summary>
-    private static List<(string ExePath, string CustomIconPath)> ResolveTileExePaths()
+    /// <summary>Game exe paths identify taskbar windows that should keep their original color;
+    /// custom icon paths preserve the grid's icon choice for matching app windows.</summary>
+    private static List<TileIconMatch> ResolveTileExePaths()
     {
-        var result = new List<(string ExePath, string CustomIconPath)>();
+        var result = new List<TileIconMatch>();
         foreach (var tile in TileStore.Load())
         {
-            if (tile.CustomIconPath is not { } customIconPath)
+            if (tile.Kind != TileKind.Game && tile.CustomIconPath is null)
             {
                 continue;
             }
@@ -163,14 +171,14 @@ public sealed class TaskbarWindowTracker : IDisposable
 
             if (exePath is not null)
             {
-                result.Add((exePath, customIconPath));
+                result.Add(new TileIconMatch(exePath, tile.CustomIconPath, tile.Kind == TileKind.Game));
             }
         }
 
         return result;
     }
 
-    private static string? FindMatchingCustomIconPath(HWND hwnd, List<(string ExePath, string CustomIconPath)> tileExePaths)
+    private static TileIconMatch? FindMatchingTile(HWND hwnd, List<TileIconMatch> tileExePaths)
     {
         if (tileExePaths.Count == 0)
         {
@@ -187,13 +195,23 @@ public sealed class TaskbarWindowTracker : IDisposable
                 return null;
             }
 
-            foreach (var (tileExePath, customIconPath) in tileExePaths)
+            TileIconMatch? customIconMatch = null;
+            foreach (var tile in tileExePaths)
             {
-                if (string.Equals(tileExePath, exePath, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(tile.ExePath, exePath, StringComparison.OrdinalIgnoreCase))
                 {
-                    return customIconPath;
+                    continue;
                 }
+
+                if (tile.IsGame || tile.CustomIconPath is null)
+                {
+                    return tile;
+                }
+
+                customIconMatch ??= tile;
             }
+
+            return customIconMatch;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -203,6 +221,8 @@ public sealed class TaskbarWindowTracker : IDisposable
 
         return null;
     }
+
+    private sealed record TileIconMatch(string ExePath, string? CustomIconPath, bool IsGame);
 
     private static string GetTitle(HWND hwnd)
     {

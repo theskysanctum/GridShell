@@ -57,9 +57,32 @@ public static class StoreSceneSync
 
     /// <summary>Where DownloadEntryAsync would put (or has already put) this scene's cached
     /// file - doesn't touch the network or the filesystem, just computes the path, so callers
-    /// can compare it against AppSettings.WallpaperUrl (e.g. "is this the current wallpaper?")
+    /// can compare it against AppSettings.WallpaperUrl (e.g. "is this the current scene?")
     /// without triggering a download just to check.</summary>
     public static string GetLocalCachePath(string entryFile) => Path.Combine(CacheDir, entryFile);
+
+    public static bool IsCachedScenePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path))
+        {
+            return false;
+        }
+
+        string fullPath;
+        try
+        {
+            fullPath = Path.GetFullPath(path);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+
+        var cacheRoot = Path.GetFullPath(CacheDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        return fullPath.StartsWith(cacheRoot, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(Path.GetExtension(fullPath), ".html", StringComparison.OrdinalIgnoreCase)
+            && File.Exists(fullPath);
+    }
 
     /// <summary>Whether DownloadEntryAsync has already fetched this scene - Store uses this to
     /// show "Downloaded" instead of "Download", and Settings uses it to decide which scenes are

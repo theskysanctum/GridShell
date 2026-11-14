@@ -1018,7 +1018,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _ => TileKind.App,
             },
             DefaultBrowserExecutablePath = _settings.DefaultBrowserExecutablePath,
-            EmulatorConfigs = _settings.EmulatorConfigs,
         };
 
         if (dialog.ShowDialog() == true && dialog.ResultTile is { } newTile)
@@ -1112,6 +1111,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void RemoveTile(Tile? tile)
     {
         if (tile is null || _settings.KioskModeEnabled)
+        {
+            return;
+        }
+
+        if (!FileOperations.TryDeleteGameFile(tile, this))
         {
             return;
         }

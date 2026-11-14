@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using GridShell.Core;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
+using GridShell.Core.Store;
 using Microsoft.Web.WebView2.Core;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.User32;
@@ -13,11 +14,10 @@ using static Vanara.PInvoke.User32;
 namespace GridShell;
 
 /// <summary>A borderless window spanning the full virtual screen, parked at the very bottom of
-/// the z-order and never activatable, hosting a WebView2 that renders whatever "wallpaper" the
-/// user wants. GridShell, as the registered shell, owns no desktop window of its own the way
+/// the z-order and never activatable, hosting a WebView2 that renders the selected Store Scene.
+/// GridShell, as the registered shell, owns no desktop window of its own the way
 /// Explorer does — without this, the background is just whatever was last drawn (typically
-/// black). Defaults to the actual current Windows desktop wallpaper image so it's never blank,
-/// but Settings can point it at a local image, video, .html file, or live URL instead.</summary>
+/// black). Defaults to the actual current Windows desktop wallpaper image when no Scene is selected.</summary>
 public partial class WallpaperWindow : Window
 {
     private static readonly string GeneratedWrapperPath = Path.Combine(
@@ -137,14 +137,10 @@ public partial class WallpaperWindow : Window
             Web.CoreWebView2!.Settings.AreDefaultContextMenusEnabled = false;
             Web.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
-            // A microphone-reactive Scene (see the Store's "Scenes" category) needs
-            // getUserMedia({audio: true}) to work - WebView2's own default is to show a
-            // permission prompt bar, which nothing could ever click on a window that's never
-            // activatable and sits at the very bottom of the z-order. Auto-granted rather than
-            // denied: this window only ever shows content the user themselves chose as their
-            // wallpaper (a Scene, or a custom .html/live URL they set in Settings), never
-            // arbitrary third-party content, and the mic is used locally for visualization only
-            // - nothing here has any way to transmit audio anywhere.
+            // A microphone-reactive Scene needs getUserMedia({audio: true}) to work - WebView2's
+            // own default is to show a permission prompt bar, which nothing could ever click on
+            // a window that's never activatable and sits at the very bottom of the z-order.
+            // Scenes are downloaded from the Store and the mic is used locally for visualization.
             Web.CoreWebView2.PermissionRequested += (_, args) =>
             {
                 if (args.PermissionKind == CoreWebView2PermissionKind.Microphone)
@@ -157,24 +153,9 @@ public partial class WallpaperWindow : Window
         var settings = AppSettingsStore.Load();
         Web.CoreWebView2!.IsMuted = settings.WallpaperMuted;
 
-        var url = settings.WallpaperUrl;
-        if (!string.IsNullOrWhiteSpace(url))
+        if (StoreSceneSync.IsCachedScenePath(settings.WallpaperUrl))
         {
-            var navigableUrl = MediaWrapperHtml.ToNavigableUrl(url);
-
-            if (MediaWrapperHtml.IsVideo(url))
-            {
-                NavigateToWrapperPage(MediaWrapperHtml.BuildVideoHtml(navigableUrl, muted: false));
-                return;
-            }
-
-            if (MediaWrapperHtml.IsImage(url))
-            {
-                NavigateToWrapperPage(MediaWrapperHtml.BuildImageHtml(navigableUrl));
-                return;
-            }
-
-            Web.CoreWebView2.Navigate(navigableUrl);
+            Web.CoreWebView2.Navigate(new Uri(settings.WallpaperUrl!).AbsoluteUri);
             return;
         }
 
