@@ -262,16 +262,40 @@
               Margin="24,72,24,24">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ListBox x:Name="PlatformList" Grid.Column="0" Margin="0,0,16,0"
+            <ListBox x:Name="PlatformList" Grid.Column="0"
                      ItemsSource="{Binding Platforms}"
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
+                     ClipToBounds="True"
                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     SelectedItem="{Binding SelectedPlatform, Mode=TwoWay}"
                      SelectionChanged="PlatformList_SelectionChanged">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <!-- ClipBorder is the hard boundary nothing may render past - a name
+                             too long to fit shows an ellipsis normally, or (only while its item
+                             is selected) scrolls left-to-right in place instead, both still
+                             confined to this same clipped width. -->
+                        <Border x:Name="ClipBorder" ClipToBounds="True">
+                            <TextBlock x:Name="PlatformNameText" Text="{Binding}"
+                                       TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                                <TextBlock.RenderTransform>
+                                    <TranslateTransform x:Name="MarqueeTransform" X="0" />
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="PlatformNameText" Property="TextTrimming" Value="None" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Padding" Value="12,10" />
@@ -282,7 +306,7 @@
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
                                     <Border x:Name="Bd" CornerRadius="8" Background="Transparent"
-                                            Padding="{TemplateBinding Padding}">
+                                            Padding="{TemplateBinding Padding}" ClipToBounds="True">
                                         <ContentPresenter />
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -300,10 +324,20 @@
                 </ListBox.ItemContainerStyle>
             </ListBox>
 
-            <ListBox x:Name="GamesGrid" Grid.Column="1"
+            <!-- The visible divider between the platform list and the games grid - nothing
+                 from either side (long platform names, the box-art grid) is allowed to render
+                 past it, see ClipToBounds above and on GamesGrid below. -->
+            <Border Grid.Column="1" Width="1" Margin="16,0" Background="{DynamicResource PanelBorderBrush}" />
+
+            <ListBox x:Name="GamesGrid" Grid.Column="2"
                      ItemsSource="{Binding GamesForSelectedPlatform}"
                      Background="Transparent" BorderThickness="0"
                      FocusVisualStyle="{x:Null}"
+                     ClipToBounds="True"
+                     VerticalAlignment="Top"
+                     MaxHeight="{DynamicResource GamesGridVisibleHeight}"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.CanContentScroll="True"
                      VirtualizingPanel.IsVirtualizing="True"
                      VirtualizingPanel.VirtualizationMode="Recycling"

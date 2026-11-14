@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using GridShell.Core.Interop;
 using GridShell.Core.Settings;
 using GridShell.Core.Tiles;
@@ -416,6 +417,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Resources["GameTileWidth"] = w;
         Resources["GameTileHeight"] = w * 1.4;
 
+        // Exactly 2 rows (6 tiles, GamesGrid's own UniformGrid is 3 columns) tall - GameTileTemplate's
+        // own Border carries a uniform 8px Margin, so each row's real height is GameTileHeight + 16.
+        Resources["GamesGridVisibleHeight"] = (w * 1.4 + 16) * 2;
+
         try
         {
             var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.AccentColor)!;
@@ -591,12 +596,91 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         GamesGrid.SelectedIndex = GamesForSelectedPlatform.Count > 0 ? 0 : -1;
     }
 
+    private TranslateTransform? _platformMarqueeTransform;
+
     private void PlatformList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (PlatformList.SelectedItem is string platform)
         {
             SelectedPlatform = platform;
         }
+
+        // Dispatcher.BeginInvoke at Loaded priority - Platforms may have just been
+        // repopulated (RefreshPlatforms) this same tick, so the newly selected item's
+        // container isn't realized/measured yet at the moment this event fires.
+        Dispatcher.BeginInvoke(new Action(UpdatePlatformNameMarquee), DispatcherPriority.Loaded);
+    }
+
+    /// <summary>Only the selected platform's own name ever scrolls - every other entry just
+    /// shows a static ellipsis (see PlatformList's ItemTemplate) - so a name too long to fit
+    /// is still fully readable without anything spilling past ClipBorder's own hard edge.</summary>
+    private void UpdatePlatformNameMarquee()
+    {
+        if (_platformMarqueeTransform is not null)
+        {
+            _platformMarqueeTransform.BeginAnimation(TranslateTransform.XProperty, null);
+            _platformMarqueeTransform.X = 0;
+            _platformMarqueeTransform = null;
+        }
+
+        if (PlatformList.SelectedItem is not string platform ||
+            PlatformList.ItemContainerGenerator.ContainerFromItem(platform) is not ListBoxItem container)
+        {
+            return;
+        }
+
+        container.UpdateLayout();
+        if (FindVisualChild<ContentPresenter>(container) is not { } presenter)
+        {
+            return;
+        }
+
+        presenter.ApplyTemplate();
+        if (PlatformList.ItemTemplate.FindName("PlatformNameText", presenter) is not TextBlock textBlock ||
+            PlatformList.ItemTemplate.FindName("ClipBorder", presenter) is not FrameworkElement clipBorder ||
+            textBlock.RenderTransform is not TranslateTransform transform)
+        {
+            return;
+        }
+
+        textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var overflow = textBlock.DesiredSize.Width - clipBorder.ActualWidth;
+        if (overflow <= 1)
+        {
+            return;
+        }
+
+        _platformMarqueeTransform = transform;
+        var anim = new DoubleAnimationUsingKeyFrames
+        {
+            Duration = TimeSpan.FromSeconds(Math.Max(4, 4 + overflow / 20)),
+            RepeatBehavior = RepeatBehavior.Forever,
+        };
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(0)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(0.12)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(-overflow, KeyTime.FromPercent(0.55)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(-overflow, KeyTime.FromPercent(0.75)));
+        anim.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(1)));
+        transform.BeginAnimation(TranslateTransform.XProperty, anim);
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T typed)
+            {
+                return typed;
+            }
+
+            if (FindVisualChild<T>(child) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private void AppsTab_Click(object sender, RoutedEventArgs e) => ActiveTab = GridTab.Apps;
