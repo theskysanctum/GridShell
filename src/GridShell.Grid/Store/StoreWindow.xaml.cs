@@ -35,6 +35,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
     private List<StoreAppViewModel> _allApps = new();
     private List<StoreSceneViewModel> _allScenes = new();
+    private List<GameLinkEntryViewModel> _currentPlatformEntries = new();
     private bool _gamesRepoSynced;
 
     public ObservableCollection<StoreAppViewModel> Apps { get; } = new();
@@ -258,6 +259,10 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         RefreshGameLinkEntries();
     }
 
+    /// <summary>Rebuilds _currentPlatformEntries (the selected platform's full, unfiltered
+    /// list) and hands the visible GameLinkEntries list over to ApplyFilter, which narrows it
+    /// to the current search text - the Games category searches only the selected platform,
+    /// never across platforms, unlike Apps' own cross-category search.</summary>
     private void RefreshGameLinkEntries()
     {
         // Switching platforms otherwise leaves the grid scrolled wherever the previous
@@ -265,22 +270,12 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
         // list is missing" until the user notices and scrolls back up themselves.
         GameLinkEntriesScrollViewer.ScrollToTop();
 
-        GameLinkEntries.Clear();
-        if (SelectedGamePlatform is not { } platform)
-        {
-            return;
-        }
+        _currentPlatformEntries = SelectedGamePlatform is { } platform
+            ? GameLinksRepoSync.GetEntries(platform.Slug).Select(e => new GameLinkEntryViewModel { Entry = e }).ToList()
+            : new List<GameLinkEntryViewModel>();
 
-        var entries = GameLinksRepoSync.GetEntries(platform.Slug)
-            .Select(e => new GameLinkEntryViewModel { Entry = e })
-            .ToList();
-
-        foreach (var entry in entries)
-        {
-            GameLinkEntries.Add(entry);
-        }
-
-        _ = LoadGameLinkCoversAsync(entries);
+        ApplyFilter();
+        _ = LoadGameLinkCoversAsync(_currentPlatformEntries);
     }
 
     /// <summary>Same IGDB lookup/cache IconLoader already uses for real Game tiles' cover art
@@ -467,6 +462,22 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
 
             return;
         }
+
+        if (IsGamesCategory)
+        {
+            Apps.Clear();
+            Scenes.Clear();
+            GameLinkEntries.Clear();
+            foreach (var entry in _currentPlatformEntries.Where(e => string.IsNullOrWhiteSpace(query)
+                || e.Name.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            {
+                GameLinkEntries.Add(entry);
+            }
+
+            return;
+        }
+
+        GameLinkEntries.Clear();
 
         // A search query searches every app regardless of the selected category - there's no
         // catch-all "All Apps" category to switch to first, so search would otherwise only ever
