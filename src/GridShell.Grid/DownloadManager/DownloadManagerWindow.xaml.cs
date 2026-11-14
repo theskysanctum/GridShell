@@ -252,6 +252,13 @@ public partial class DownloadManagerWindow : Window, INotifyPropertyChanged
             }
 
             item.State = DownloadState.Completed;
+
+            // item.Name at this point is still whatever AddDownload's suggestedName was (the
+            // Store's Games category passes the raw filename, e.g. "Ace_Combat_2.7z" - see
+            // GameLinkEntryViewModel's own remarks on why that's kept separate from the cleaned
+            // title) or, for a plain pasted link with no suggested name, the resolved filename a
+            // hoster/aria2 reported - either way, cleaning it is harmless and reads better here.
+            new ToastWindow($"{RomTitleCleaner.CleanFileName(item.Name)} downloaded.", TimeSpan.FromSeconds(5)).Show();
         }
         catch (OperationCanceledException)
         {

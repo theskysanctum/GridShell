@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using GridShell.Core.GameLibraries;
@@ -25,7 +24,7 @@ public sealed class GameLinkEntryViewModel : INotifyPropertyChanged
     /// "Ace Combat 2", which is the exact kind of search-term noise that risks matching the
     /// wrong game's cover (e.g. onto plain "Ace Combat" instead) - a different failure mode from
     /// GameLinkEntry's own strict exact-filename mirror grouping, but the same underlying worry.</summary>
-    public string Name => RomTitleCleaner.Clean(Path.GetFileNameWithoutExtension(Entry.Name).Replace('_', ' '));
+    public string Name => RomTitleCleaner.CleanFileName(Entry.Name);
 
     public string SizeDisplay => Entry.SizeDisplay;
     public string MirrorCountDisplay => Entry.Mirrors.Count > 1 ? $"{Entry.Mirrors.Count} mirrors" : "";

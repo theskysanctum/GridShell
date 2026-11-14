@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace GridShell.Core.Tiles;
@@ -15,4 +16,11 @@ public static class RomTitleCleaner
         var collapsed = Regex.Replace(withoutTags, @"\s{2,}", " ").Trim(' ', '-', '_');
         return collapsed.Length > 0 ? collapsed : fileNameWithoutExtension;
     }
+
+    /// <summary>Same cleanup, starting from a full filename rather than an already-extensionless
+    /// title - strips the extension, then swaps underscores for spaces first (the game-links
+    /// repo's own naming convention, e.g. "Ace_Combat_2.7z" - see GameLinkEntryViewModel's own
+    /// remarks) before the usual region/revision tag stripping above.</summary>
+    public static string CleanFileName(string fileName) =>
+        Clean(Path.GetFileNameWithoutExtension(fileName).Replace('_', ' '));
 }
