@@ -412,13 +412,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Resources["TileWidth"] = w;
         Resources["TileHeight"] = h;
 
-        // Portrait box-art ratio (~1:1.4, close to a standard game cover) at the same width as
-        // the other tile kinds, so the Small/Medium/Large setting still scales Games sensibly.
+        // Initial size until the Games grid is measured; GamesGrid_SizeChanged scales covers to
+        // the available display area while preserving this setting's relative size.
         Resources["GameTileWidth"] = w;
         Resources["GameTileHeight"] = w * 1.4;
 
-        // Exactly 1 row (3 tiles, GamesGrid's own UniformGrid is 3 columns) tall - GameTileTemplate's
-        // own Border carries a uniform 8px Margin, so each row's real height is GameTileHeight + 16.
+        // Exactly 1 row (3 tiles) tall; each cover has an 8px margin on every side.
         Resources["GamesGridVisibleHeight"] = w * 1.4 + 16;
 
         try
@@ -440,6 +439,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // attempt to guess a PIN, not several.
         AddTileButton.IsEnabled = !_settings.KioskModeEnabled;
         PowerButton.IsEnabled = !_settings.KioskModeEnabled;
+    }
+
+    private void GamesGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (GamesGrid.Parent is not Grid gamesPane || GamesGrid.ActualWidth <= 0 || gamesPane.ActualHeight <= 0)
+        {
+            return;
+        }
+
+        var (baseTileWidth, _) = _settings.TileSize switch
+        {
+            TileSize.Small => (100.0, 80.0),
+            TileSize.Large => (180.0, 140.0),
+            _ => (140.0, 110.0),
+        };
+        var sizeScale = baseTileWidth / 140.0;
+        var widthLimit = (GamesGrid.ActualWidth / 3) - 16;
+        var heightLimit = (gamesPane.ActualHeight - 16) / 1.4;
+        var maxTileWidth = Math.Min(widthLimit, heightLimit);
+        var tileWidth = maxTileWidth * Math.Min(sizeScale, 1.0);
+        if (tileWidth <= 0)
+        {
+            return;
+        }
+
+        var tileHeight = tileWidth * 1.4;
+        Resources["GameTileWidth"] = tileWidth;
+        Resources["GameTileHeight"] = tileHeight;
+        Resources["GamesGridVisibleHeight"] = tileHeight + 16;
     }
 
     public void OpenSettings()

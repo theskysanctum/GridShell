@@ -25,6 +25,7 @@
         <sys:Double x:Key="TileHeight">110</sys:Double>
         <sys:Double x:Key="GameTileWidth">140</sys:Double>
         <sys:Double x:Key="GameTileHeight">196</sys:Double>
+        <sys:Double x:Key="GamesGridVisibleHeight">212</sys:Double>
         <FontFamily x:Key="IconFont">./Fonts/#Material Symbols Outlined</FontFamily>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
@@ -226,12 +227,12 @@
              as a hairline. -->
         <Border x:Name="ScrimBorder" Background="Black" Opacity="0.45" Margin="-1" />
 
-        <!-- The actual grid, as a centered modal panel instead of filling the screen. Its own
-             background is a separate sibling Border at reduced opacity (same trick the old
+        <!-- The actual grid nearly fills the screen. Its own background is a separate sibling
+             Border at reduced opacity (same trick the old
              full-screen background used) so the translucency affects only that fill, never the
              fully-opaque tiles/buttons/etc. stacked on top of it. -->
-        <Border x:Name="ModalPanel" Width="1200" Height="800" CornerRadius="16"
-                HorizontalAlignment="Center" VerticalAlignment="Center"
+        <Border x:Name="ModalPanel" Margin="32" CornerRadius="16"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 Effect="{StaticResource CardShadow}">
             <Grid>
                 <Border Background="{DynamicResource WindowBackgroundBrush}" Opacity="0.94" CornerRadius="16" />
@@ -343,6 +344,7 @@
                      VirtualizingPanel.VirtualizationMode="Recycling"
                      ItemTemplate="{StaticResource GameTileTemplate}"
                      ItemContainerStyle="{StaticResource TileContainerStyle}"
+                     SizeChanged="GamesGrid_SizeChanged"
                      MouseDoubleClick="TileList_MouseDoubleClick">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
