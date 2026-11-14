@@ -456,7 +456,7 @@ public partial class StoreWindow : Window, INotifyPropertyChanged
             await throttle.WaitAsync();
             try
             {
-                var coverUrl = await IgdbCoverService.GetCoverImageUrlAsync(entry.Name, clientId, clientSecret, platformId);
+                var coverUrl = await IgdbCoverService.GetCoverImageUrlAsync(entry.CoverSearchName, clientId, clientSecret, platformId);
                 if (coverUrl is not null)
                 {
                     entry.Cover = LoadRemoteBitmap(coverUrl);

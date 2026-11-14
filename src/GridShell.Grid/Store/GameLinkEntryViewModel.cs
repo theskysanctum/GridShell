@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using GridShell.Core.GameLibraries;
@@ -17,14 +18,14 @@ public sealed class GameLinkEntryViewModel : INotifyPropertyChanged
     /// logic). Name below is what every other piece of this view model means.</summary>
     public string FileName => Entry.Name;
 
-    /// <summary>A real game title, cleaned from Entry.Name's raw filename convention (repo-
-    /// confirmed: underscores instead of spaces, plus the usual RomTitleCleaner region/revision
-    /// tags) - both what the UI shows AND what gets searched against IGDB for cover art.
-    /// Without this, "Ace_Combat_2.7z" would search IGDB for literally that string rather than
-    /// "Ace Combat 2", which is the exact kind of search-term noise that risks matching the
-    /// wrong game's cover (e.g. onto plain "Ace Combat" instead) - a different failure mode from
-    /// GameLinkEntry's own strict exact-filename mirror grouping, but the same underlying worry.</summary>
-    public string Name => RomTitleCleaner.CleanFileName(Entry.Name);
+    /// <summary>Filename without its extension and with underscores replaced by spaces. Keep
+    /// parenthetical qualifiers such as demos and revisions visible so distinct releases aren't
+    /// presented as if they were the same game.</summary>
+    public string Name => Path.GetFileNameWithoutExtension(Entry.Name).Replace('_', ' ');
+
+    /// <summary>Cleaned title for IGDB cover lookup; unlike the Store label, the lookup should
+    /// omit filename tags that make matching the base game less reliable.</summary>
+    public string CoverSearchName => RomTitleCleaner.CleanFileName(Entry.Name);
 
     public string SizeDisplay => Entry.SizeDisplay;
     public string MirrorCountDisplay => Entry.Mirrors.Count > 1 ? $"{Entry.Mirrors.Count} mirrors" : "";
