@@ -72,7 +72,7 @@ public class AppSettings
     /// pointed at a repo the user picks rather than GridShell's own.</summary>
     public string? GameLinksRepoUrl { get; set; }
 
-    /// <summary>Locks down editing widgets/tiles/wallpaper-appearance and exiting GridShell
+    /// <summary>Locks down editing tiles/wallpaper-appearance and exiting GridShell
     /// (Settings' Exit button, the power menu) - a PIN set via KioskPinWindow, hashed by
     /// PinHasher, is required to turn this back off. Intended for handing the PC to a kid
     /// without worrying about things getting changed or GridShell itself getting closed.</summary>

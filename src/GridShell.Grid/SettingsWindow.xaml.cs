@@ -36,7 +36,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
     private bool _autostartEnabled;
     private DetectedBrowser? _selectedDefaultBrowser;
-    private bool _winKeyHookEnabled;
     private TileSizeOption _tileSize;
     private AppTheme _theme;
     private UiFontChoice _uiFont;
@@ -67,7 +66,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         ("e5c3", "Apps"),
         ("e9b0", "Grid"),
         ("e871", "Dashboard"),
-        ("e1bd", "Widgets"),
     };
 
     public ObservableCollection<StartIconOption> StartIconOptions { get; } = new();
@@ -672,18 +670,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
         Application.Current.Shutdown();
     }
 
-    public bool WinKeyHookEnabled
-    {
-        get => _winKeyHookEnabled;
-        set
-        {
-            _winKeyHookEnabled = value;
-            OnPropertyChanged();
-            _settings.WinKeyHookEnabled = value;
-            _onSettingsChanged();
-        }
-    }
-
     private void RealDebridApiTokenBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
         _settings.RealDebridApiToken = RealDebridApiTokenBox.Password;
@@ -1124,9 +1110,6 @@ public partial class SettingsWindow : Window, INotifyPropertyChanged
 
         _autostartEnabled = AutostartManager.IsEnabled;
         OnPropertyChanged(nameof(AutostartEnabled));
-
-        _winKeyHookEnabled = _settings.WinKeyHookEnabled;
-        OnPropertyChanged(nameof(WinKeyHookEnabled));
 
         RealDebridApiTokenBox.Password = _settings.RealDebridApiToken ?? "";
         OnPropertyChanged(nameof(DownloadManagerFolder));
